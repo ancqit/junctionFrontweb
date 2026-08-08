@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "@angular/core": "_angular_core.xf7YdQh3aN.js",
+    "@angular/common": "_angular_common.pMR9P9aBbl.js",
+    "@angular/common/http": "_angular_common_http.oFYhGqLKxl.js",
+    "@angular/forms": "_angular_forms.dFYux5lsZZ.js",
+    "@angular/router": "_angular_router.hWjFNVkZHV.js",
+    "rxjs": "rxjs.UY6Q7Q3S8q.js",
+    "@nf-internal/chunk-2ZBMSWS6": "chunk-2ZBMSWS6.js",
+    "@nf-internal/chunk-PZNONLPT": "chunk-PZNONLPT.js"
+  }
+}

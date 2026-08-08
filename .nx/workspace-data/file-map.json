@@ -1,0 +1,317 @@
+{
+  "version": "6.0",
+  "nxVersion": "23.1.1",
+  "pathMappings": {},
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "nonProjectFiles": [
+      {
+        "file": ".editorconfig",
+        "hash": "8037249353422744134"
+      },
+      {
+        "file": ".gitignore",
+        "hash": "5024476166486271931"
+      },
+      {
+        "file": ".prettierignore",
+        "hash": "14688272390704683536"
+      },
+      {
+        "file": ".prettierrc",
+        "hash": "7467919868826279542"
+      },
+      {
+        "file": ".vscode/extensions.json",
+        "hash": "11761272470041752234"
+      },
+      {
+        "file": ".vscode/launch.json",
+        "hash": "17406702432687230417"
+      },
+      {
+        "file": ".vscode/tasks.json",
+        "hash": "11080398893561185157"
+      },
+      {
+        "file": "README.md",
+        "hash": "15571634754499562465"
+      },
+      {
+        "file": "libs/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "local.md",
+        "hash": "2554806148177169453"
+      },
+      {
+        "file": "nx.json",
+        "hash": "4356127021539525358"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "1914423076916572232"
+      },
+      {
+        "file": "package.json",
+        "hash": "7066938688015775501"
+      },
+      {
+        "file": "tools/generators/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "tools/tsconfig.tools.json",
+        "hash": "16088922570277978783"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "7542616330893830164"
+      }
+    ],
+    "projectFileMap": {
+      "back-office": [
+        {
+          "file": "apps/back-office/federation.config.mjs",
+          "hash": "10576299285498793856",
+          "deps": [
+            "npm:@angular-architects/native-federation"
+          ]
+        },
+        {
+          "file": "apps/back-office/project.json",
+          "hash": "4837077817783668450"
+        },
+        {
+          "file": "apps/back-office/public/favicon.ico",
+          "hash": "3988961587069885523"
+        },
+        {
+          "file": "apps/back-office/src/app/app.config.ts",
+          "hash": "7632012812733097212",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/back-office/src/app/app.html",
+          "hash": "16972059146612425205"
+        },
+        {
+          "file": "apps/back-office/src/app/app.routes.ts",
+          "hash": "12397496131277534773",
+          "deps": [
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/back-office/src/app/app.scss",
+          "hash": "6859329485381998385"
+        },
+        {
+          "file": "apps/back-office/src/app/app.ts",
+          "hash": "7454807464194035158",
+          "deps": [
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "apps/back-office/src/bootstrap.ts",
+          "hash": "3314327030169821486",
+          "deps": [
+            "npm:@angular/platform-browser"
+          ]
+        },
+        {
+          "file": "apps/back-office/src/index.html",
+          "hash": "17399732237023613399"
+        },
+        {
+          "file": "apps/back-office/src/main.ts",
+          "hash": "4543821200387006193",
+          "deps": [
+            "npm:@angular-architects/native-federation"
+          ]
+        },
+        {
+          "file": "apps/back-office/src/styles.scss",
+          "hash": "3073722353655378286"
+        },
+        {
+          "file": "apps/back-office/tsconfig.app.json",
+          "hash": "13793786716214574222"
+        },
+        {
+          "file": "apps/back-office/tsconfig.spec.json",
+          "hash": "13467909576521344957"
+        }
+      ],
+      "shell": [
+        {
+          "file": "apps/shell/federation.config.mjs",
+          "hash": "14050966439100374301",
+          "deps": [
+            "npm:@angular-architects/native-federation"
+          ]
+        },
+        {
+          "file": "apps/shell/project.json",
+          "hash": "17322695817057393400"
+        },
+        {
+          "file": "apps/shell/public/favicon.ico",
+          "hash": "3988961587069885523"
+        },
+        {
+          "file": "apps/shell/public/federation.manifest.json",
+          "hash": "4194076075942572816"
+        },
+        {
+          "file": "apps/shell/src/app/app.config.ts",
+          "hash": "4761115939075047743",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router",
+            "npm:@angular/common"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/app.html",
+          "hash": "1668387783588433222"
+        },
+        {
+          "file": "apps/shell/src/app/app.routes.ts",
+          "hash": "6010542386869908642",
+          "deps": [
+            "npm:@angular-architects/native-federation",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/app.scss",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "apps/shell/src/app/app.spec.ts",
+          "hash": "9249298916175745375",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/app.ts",
+          "hash": "8118204723294319048",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/core/api.config.ts",
+          "hash": "8044159047616460776",
+          "deps": [
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/core/api.service.ts",
+          "hash": "11434390715458810324",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:rxjs"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/core/auth.guard.ts",
+          "hash": "12789502838856551931",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/core/auth.interceptor.ts",
+          "hash": "12072631529167815719",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:rxjs"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/core/auth.models.ts",
+          "hash": "9786125345625111779"
+        },
+        {
+          "file": "apps/shell/src/app/core/auth.service.ts",
+          "hash": "1571404660836454097",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router",
+            "npm:rxjs"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/core/token.service.ts",
+          "hash": "13234565483927464793",
+          "deps": [
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "apps/shell/src/app/login/login.html",
+          "hash": "2829585334809104577"
+        },
+        {
+          "file": "apps/shell/src/app/login/login.scss",
+          "hash": "3625259358807090607"
+        },
+        {
+          "file": "apps/shell/src/app/login/login.ts",
+          "hash": "5820497104538639498",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/forms",
+            "npm:@angular/router",
+            "npm:rxjs"
+          ]
+        },
+        {
+          "file": "apps/shell/src/bootstrap.ts",
+          "hash": "3314327030169821486",
+          "deps": [
+            "npm:@angular/platform-browser"
+          ]
+        },
+        {
+          "file": "apps/shell/src/index.html",
+          "hash": "7618062614435508730"
+        },
+        {
+          "file": "apps/shell/src/main.ts",
+          "hash": "1387452382322283379",
+          "deps": [
+            "npm:@angular-architects/native-federation"
+          ]
+        },
+        {
+          "file": "apps/shell/src/styles.scss",
+          "hash": "5295992808171551110"
+        },
+        {
+          "file": "apps/shell/tsconfig.app.json",
+          "hash": "5906776223953068793"
+        },
+        {
+          "file": "apps/shell/tsconfig.spec.json",
+          "hash": "10761066544284093344"
+        }
+      ]
+    }
+  },
+  "externalNodesHash": "6332746576076015016"
+}

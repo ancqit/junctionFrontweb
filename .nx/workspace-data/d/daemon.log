@@ -1,0 +1,130 @@
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:43.455Z - [Client] Starting new daemon server in background
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:44.172Z - [Client] Waiting for server (max: 6000 attempts, 10ms interval)
+DEBUG nx::native::watch::watcher: watching started origin=c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.542Z - [WATCHER]: Subscribed to changes within: c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web (native)
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.545Z - New daemon starting from: c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\daemon\server\server.js
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.545Z - New daemon __dirname: c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\daemon\server
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.545Z - New daemon nxVersion: 23.1.1
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.546Z - New daemon getInstalledNxVersion(): 23.1.1
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.549Z - Time taken for 'workspace context init' 0.4955999999999676ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.550Z - [Server] Starting outdated check interval (20ms)
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.552Z - Started listening on: \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\5592466832ced5863e85\d.sock
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:44.562Z - [Client] Server available
+DEBUG nx::native::watch::watcher: watching started origin=c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:44.562Z - [Client] Daemon server started, pid=7256
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.566Z - [LATEST-NX]: Pulling latest Nx...
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:44.581Z - [AI-AGENTS]: Starting agent configuration status computation
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:44.839Z - [Messenger] Setting up socket listeners
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:44.840Z - [Messenger] listen() complete
+[isolated-plugin] spawned worker for "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js" (pid: 30632, socket: \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\plugin7256-0-392.4505.sock)
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:45.155Z - [Messenger] Sending message type: REQUEST_PROJECT_GRAPH
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:45.156Z - [Messenger] Message sent
+[isolated-plugin] spawned worker for "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json" (pid: 24056, socket: \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\plugin7256-1-966.7865.sock)
+[isolated-plugin] spawned worker for "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json" (pid: 22672, socket: \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\plugin7256-2-1526.7501.sock)
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.126Z - Time taken for 'hash changed files from watcher' 0.015600000000006276ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.126Z - Time taken for 'loadSpecifiedNxPlugins' 1559.6136999999999ms
+[isolated-plugin] connected to worker for "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js" (pid: 30632)
+[isolated-plugin] connected to worker for "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json" (pid: 24056)
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.131Z - Established a connection. Number of open connections: 1
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.131Z - Established a connection. Number of open connections: 2
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.131Z - Established a connection. Number of open connections: 3
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js" (pid: 30632) listening on \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\plugin7256-0-392.4505.sock
+[1m[33mTime taken for 'plugin worker 30632 code loading' 212.0421ms[39m[22m
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js" (pid: 30632) connected
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json" (pid: 24056) listening on \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\plugin7256-1-966.7865.sock
+[1m[33mTime taken for 'plugin worker 24056 code loading' 210.57739999999998ms[39m[22m
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json" (pid: 24056) connected
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.133Z - Time taken for 'start-plugin-worker:c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js' 1548.3611ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.133Z - Time taken for 'start-plugin-worker:c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json' 974.7850000000001ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.133Z - Closed a connection. Number of open connections: 2
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.133Z - Closed a connection. Number of open connections: 1
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.133Z - Received raw message of length 2900
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.133Z - Received json message of type REQUEST_PROJECT_GRAPH
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.134Z - Graph recompute necessary due to env variable refresh. Changed keys: COLOR, EDITOR, HOME, INIT_CWD, NODE, NODE_EXE, NPM_PREFIX_JS, NPM_PREFIX_NPX_CLI_JS, NPX_CLI_JS, NX_CLI_SET, Path, PROMPT
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.134Z - [REQUEST]: Client Request for Project Graph Received
+DEBUG nx::native::watch::watcher: force-flush END count=0 replies=1 elapsed=21.5972ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.157Z - No in-memory cached project graph found. Recomputing it...
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json" (pid: 24056) loaded successfully
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js" (pid: 30632) loaded successfully
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.162Z - Time taken for 'Load Nx Plugin: c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\js' 1597.7891ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.162Z - Time taken for 'Load Nx Plugin: c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\package-json' 1596.8883ms
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json" (pid: 22672) listening on \\.\pipe\nx\C:\Users\ANCQIT~1\AppData\Local\Temp\plugin7256-2-1526.7501.sock
+[1m[33mTime taken for 'plugin worker 22672 code loading' 179.6106ms[39m[22m
+[isolated-plugin] connected to worker for "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json" (pid: 22672)
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.370Z - Time taken for 'start-plugin-worker:c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json' 654.8573999999999ms
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json" (pid: 22672) connected
+[plugin-worker] "c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json" (pid: 22672) loaded successfully
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.392Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.392Z - [REQUEST]: 
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.392Z - [REQUEST]: 
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.393Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.393Z - [REQUEST]: 
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.393Z - [REQUEST]: 
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.394Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.395Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.395Z - Time taken for 'loadDefaultNxPlugins' 1827.6383999999998ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.395Z - Time taken for 'Load Nx Plugin: c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\nx\dist\src\plugins\project-json\build-nodes\project-json' 1826.1307000000002ms
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.394Z - [Messenger] Received message, length: 47
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.394Z - [Messenger] Received message, length: 47
+[1m[33mTime taken for 'nx/core/project-json:createNodes' 0.5494000000000199ms[39m[22m
+[1m[33mTime taken for 'nx/core/project-json:createNodes' 0.782100000000014ms[39m[22m
+[1m[33mTime taken for 'nx/core/package-json:createNodes' 1.1780999999999722ms[39m[22m
+[1m[33mTime taken for 'nx/core/package-json:createNodes' 1.3293999999999642ms[39m[22m
+[isolated-plugin] shutting down worker for "nx/core/project-json" after createNodes
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.400Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.401Z - Streaming message to client: progress update for topic graph-construction
+[isolated-plugin] shutting down worker for "nx/core/package-json" after createNodes
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.401Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.401Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.400Z - [Messenger] Received message, length: 153
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.401Z - [Messenger] Received message, length: 153
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.401Z - [Messenger] Received message, length: 112
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.401Z - [Messenger] Received message, length: 112
+[1m[33mTime taken for 'nx/js/dependencies-and-lockfile:createNodes' 10.436999999999898ms[39m[22m
+[1m[33mTime taken for 'nx/js/dependencies-and-lockfile:createNodes' 10.67529999999988ms[39m[22m
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.428Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.428Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.427Z - [Messenger] Received message, length: 47
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.465Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'build-project-configs' 44.904199999999946ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'build-project-configs' 47.38850000000002ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'createNodes:merge' 11.292199999999866ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'createNodes:merge' 2.432300000000396ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'native-file-deps' 0.00959999999986394ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'get-workspace-files' 0.4938999999999396ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.468Z - Time taken for 'read cache' 0.6754000000000815ms
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.470Z - [Messenger] Received message, length: 47
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.470Z - [Messenger] Received message, length: 47
+[1m[33mTime taken for 'build typescript dependencies' 5.480299999999943ms[39m[22m
+[isolated-plugin] shutting down worker for "nx/js/dependencies-and-lockfile" after createDependencies
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.491Z - Streaming message to client: progress update for topic graph-construction
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.490Z - [Messenger] Received message, length: 47
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.498Z - [SYNC]: collect registered sync generators
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.505Z - Wrote project graph cache to c:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\.nx\workspace-data\project-graph.json
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Serializing response for REQUEST_PROJECT_GRAPH message in json mode
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Responding to REQUEST_PROJECT_GRAPH message
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - [REQUEST]: Responding to the client. project-graph
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'total for creating and serializing project graph' 371.0252999999998ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'total execution time for createProjectGraph()' 39.7808ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'createDependencies' 29.515800000000127ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'nx/js/dependencies-and-lockfile:createDependencies' 28.898599999999988ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'createMetadata' 0.015900000000328873ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'serialize graph' 2.000800000000254ms
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.506Z - Time taken for 'write cache' 7.0024999999996ms
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.507Z - [Messenger] Received message, length: 646715
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.510Z - Done responding to the client project-graph
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.510Z - Handled json message REQUEST_PROJECT_GRAPH. Handling time: 372. Response time: 4.
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.510Z - [Messenger] Sending message type: GET_CONTEXT_FILE_DATA
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.510Z - [Messenger] Message sent
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - Received raw message of length 32
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - Received json message of type GET_CONTEXT_FILE_DATA
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - Serializing response for GET_CONTEXT_FILE_DATA message in json mode
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - Responding to GET_CONTEXT_FILE_DATA message
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - [REQUEST]: Responding to the client. handleContextFileData
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - Done responding to the client handleContextFileData
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.512Z - Handled json message GET_CONTEXT_FILE_DATA. Handling time: 0. Response time: 0.
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.511Z - [Messenger] Received message, length: 3858
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.961Z - [Messenger] Setting up socket listeners
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.962Z - [Messenger] listen() complete
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.962Z - [Messenger] Sending message type: REGISTER_PROJECT_GRAPH_LISTENER
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.962Z - [Messenger] Message sent

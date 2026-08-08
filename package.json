@@ -1,0 +1,51 @@
+{
+  "name": "back-web",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "nx run-many --target=serve --projects=shell,back-office --parallel=2",
+    "start:mfe": "nx run-many --target=serve --projects=shell,back-office --parallel=2",
+    "start:all": "nx run-many --target=serve --projects=shell,back-office --parallel=2",
+    "start:shell": "nx serve shell",
+    "start:back-office": "nx serve back-office --port 4201",
+    "build": "nx run-many --target=build --projects=shell,back-office",
+    "build:shell": "nx build shell",
+    "build:back-office": "nx build back-office",
+    "watch": "nx build --watch --configuration development",
+    "test": "nx test"
+  },
+  "private": true,
+  "packageManager": "npm@11.17.0",
+  "dependencies": {
+    "@angular-architects/native-federation": "^22.1.0",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/forms": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@nx/angular": "23.1.1",
+    "es-module-shims": "^2.8.4",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^22.1.3",
+    "@angular-devkit/core": "^22.1.3",
+    "@angular-devkit/schematics": "^22.1.3",
+    "@angular/build": "^22.1.3",
+    "@angular/cli": "^22.1.3",
+    "@angular/compiler-cli": "^22.1.0",
+    "@module-federation/enhanced": "^2.1.0",
+    "@nx/js": "23.1.1",
+    "@nx/module-federation": "23.1.1",
+    "@nx/webpack": "23.1.1",
+    "@nx/workspace": "23.1.1",
+    "@schematics/angular": "^22.1.3",
+    "@swc/helpers": "~0.5.18",
+    "nx": "23.1.1",
+    "prettier": "^3.8.1",
+    "ts-node": "10.9.1",
+    "typescript": "~6.0.2"
+  }
+}

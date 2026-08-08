@@ -1,0 +1,16 @@
+[42m[38;5;15m INFO [39m[49m @angular/build was already loaded when this builder started (Nx preloads it), so its build environment was stale; re-applied useParallelTs=false, optimizeChunksThreshold=Infinity.
+
+[7m[1m[31m NX [39m[22m[27m  [31mEPERM: operation not permitted, lstat 'C:\DumpStack.log.tmp'[39m
+
+Error: EPERM: operation not permitted, lstat 'C:\DumpStack.log.tmp'
+    at Object.lstatSync (node:fs:1771:25)
+    at DefaultFs.findNearestParentFile (C:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\@softarc\sheriff-core\src\lib\fs\default-fs.js:70:37)
+    at init (C:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\@softarc\sheriff-core\src\lib\main\init.js:20:53)
+    at Object.getProjectData (C:\Users\ancqitBhargav\Desktop\workspace\codex\junction\back-web\node_modules\@softarc\sheriff-core\src\lib\api\get-project-data.js:34:41)
+    at file:///C:/Users/ancqitBhargav/Desktop/workspace/codex/junction/back-web/node_modules/@softarc/native-federation/dist/lib/config/get-used-dependencies.js:27:17
+    at Array.reduce (<anonymous>)
+    at file:///C:/Users/ancqitBhargav/Desktop/workspace/codex/junction/back-web/node_modules/@softarc/native-federation/dist/lib/config/get-used-dependencies.js:24:56
+    at normalizeFederationOptionsCore (file:///C:/Users/ancqitBhargav/Desktop/workspace/codex/junction/back-web/node_modules/@softarc/native-federation/dist/lib/core/normalize-options.js:44:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async runBuilder (file:///C:/Users/ancqitBhargav/Desktop/workspace/codex/junction/back-web/node_modules/@angular-architects/native-federation/src/builders/build/builder.js:144:24)
+

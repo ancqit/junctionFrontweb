@@ -1,0 +1,542 @@
+{
+  "apps/back-office": {
+    "root": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.dependsOn.0": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.dependsOn": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs.0": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs.1": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.cache": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.executor": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.cache": [
+      "nx.json#targetDefaults.esbuild",
+      "nx/target-defaults"
+    ],
+    "targets.esbuild.executor": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "prefix": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.defaultConfiguration": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.cacheExternalArtifacts": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.target": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.target": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.dev": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.executor": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.target": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.rebuildDelay": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.cacheExternalArtifacts": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.dev": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.devServer": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.port": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.outputs.0": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.outputs": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.defaultConfiguration": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.outputPath": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.browser": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.tsConfig": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.inlineStyleLanguage": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.assets.0": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.assets": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.styles.0": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.styles": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.polyfills.0": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.polyfills": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.production.outputHashing": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.production": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development.optimization": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development.extractLicenses": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development.sourceMap": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.executor": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.defaultConfiguration": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.options.port": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.options": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.production.buildTarget": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.production": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.development.buildTarget": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.development": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ]
+  },
+  "apps/shell": {
+    "root": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.dependsOn.0": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.dependsOn": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs.0": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs.1": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.cache": [
+      "nx.json#targetDefaults.build",
+      "nx/target-defaults"
+    ],
+    "targets.build.executor": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.cache": [
+      "nx.json#targetDefaults.esbuild",
+      "nx/target-defaults"
+    ],
+    "targets.esbuild.executor": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "prefix": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.defaultConfiguration": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.cacheExternalArtifacts": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.target": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.target": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.dev": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.executor": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.target": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.rebuildDelay": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.cacheExternalArtifacts": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.dev": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.devServer": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.port": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.outputs.0": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.outputs": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.defaultConfiguration": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.outputPath": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.browser": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.tsConfig": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.inlineStyleLanguage": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.assets.0": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.assets": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.styles.0": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.styles": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.polyfills.0": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options.polyfills": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.options": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.production.outputHashing": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.production": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development.optimization": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development.extractLicenses": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development.sourceMap": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations.development": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.esbuild.configurations": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.executor": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.defaultConfiguration": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.options.port": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.options": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.production.buildTarget": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.production": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.development.buildTarget": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations.development": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve-original.configurations": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ]
+  }
+}

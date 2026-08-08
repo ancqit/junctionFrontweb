@@ -1,0 +1,36 @@
+[1m[33mThe "@angular-devkit/build-angular:browser" builder is deprecated as part of Angular's Webpack support deprecation. Use "@angular/build:application" instead. For more information, see https://angular.dev/tools/cli/build-system-migration.[39m[22m
+- Generating browser application bundles (phase: setup)...
+[1m[33m[7m[1m[36m NX [33m[22m[1m[27m Falling back to ts-node for local typescript execution. This may be a little slower.
+  - To fix this, ensure @swc-node/register and @swc/core have been installed[39m[22m
+[1m[33mCould not find a version for "@angular/animations" in the root "package.json" when collecting shared packages for the Module Federation setup. The package will not be shared.[39m[22m
+[32m√[39m Browser application bundle generation complete.
+[32m√[39m Browser application bundle generation complete.
+- Copying assets...
+[32m√[39m Copying assets complete.
+- Generating index html...
+[32m√[39m Index html generation complete.
+[37m[0m[0m
+[0m[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[0m
+[0m[32mremoteEntry.mjs[37m    [2m | [22m[2mback_office[22m  [2m | [22m[36m367.74 kB[37m[2m | [22m[0m
+[0m[32mmain.js[37m            [2m | [22m[2mmain[22m         [2m | [22m[36m367.37 kB[37m[2m | [22m[0m
+[0m[32mstyles.css[37m         [2m | [22m[2mstyles[22m       [2m | [22m  [36m1.54 kB[37m[2m | [22m[0m
+[0m[0m
+[0m[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m[1m736.66 kB[22m[0m
+[0m[0m
+[0m[1mLazy chunk files[22m   [2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[0m
+[0m[32m580.js[37m             [2m | [22m[2m-[22m            [2m | [22m  [36m1.33 MB[37m[2m | [22m[0m
+[0m[32m72.js[37m              [2m | [22m[2m-[22m            [2m | [22m[36m309.19 kB[37m[2m | [22m[0m
+[0m[32m316.js[37m             [2m | [22m[2m-[22m            [2m | [22m[36m213.31 kB[37m[2m | [22m[0m
+[0m[32m443.js[37m             [2m | [22m[2m-[22m            [2m | [22m[36m119.77 kB[37m[2m | [22m[0m
+[0m[32m285.js[37m             [2m | [22m[2m-[22m            [2m | [22m [36m69.61 kB[37m[2m | [22m[0m
+[0m[32m436.js[37m             [2m | [22m[2m-[22m            [2m | [22m [36m67.15 kB[37m[2m | [22m[0m
+[0m[32m942.js[37m             [2m | [22m[2m-[22m            [2m | [22m [36m26.53 kB[37m[2m | [22m[0m
+[0m[32m907.js[37m             [2m | [22m[2m-[22m            [2m | [22m [36m24.29 kB[37m[2m | [22m[0m
+[0m[32m334.js[37m             [2m | [22m[2m-[22m            [2m | [22m [36m21.10 kB[37m[2m | [22m[0m
+[0m[32mcommon.js[37m          [2m | [22m[2mcommon[22m       [2m | [22m [36m15.32 kB[37m[2m | [22m[0m
+[0m[32m274.js[37m             [2m | [22m[2mbootstrap[22m    [2m | [22m  [36m2.51 kB[37m[2m | [22m[0m
+[0m[32m[37m                   [2m | [22m[2m-[22m     [39m[37m       [2m | [22m  [36m0 bytes[37m[2m | [22m[0m
+[0m[32m[37m                   [2m | [22m[2m-[22m            [2m | [22m  [36m0 bytes[37m[2m | [22m[0m
+[0m[32m[37m                   [2m | [22m[2m-[22m            [2m | [22m  [36m0 bytes[37m[2m | [22m[0m
+[0m[0m
+[0mBuild at: [1m[37m2026-08-08T14:20:26.406Z[37m[22m - Hash: [1m[37m126f5deb86a9205a[37m[22m - Time: [1m[37m8154[37m[22mms[0m[39m

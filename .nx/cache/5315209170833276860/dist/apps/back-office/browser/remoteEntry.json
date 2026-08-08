@@ -1,0 +1,73 @@
+{
+  "$version": "v4",
+  "name": "back-office",
+  "shared": [
+    {
+      "packageName": "@angular/core",
+      "outFileName": "_angular_core.xf7YdQh3aN.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/common",
+      "outFileName": "_angular_common.pMR9P9aBbl.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/common/http",
+      "outFileName": "_angular_common_http.oFYhGqLKxl.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/forms",
+      "outFileName": "_angular_forms.dFYux5lsZZ.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/router",
+      "outFileName": "_angular_router.hWjFNVkZHV.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "rxjs",
+      "outFileName": "rxjs.UY6Q7Q3S8q.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "7.8.2",
+      "bundle": "browser-shared"
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./Component",
+      "outFileName": "Component-L34KAH4D.js"
+    }
+  ],
+  "chunks": {
+    "browser-shared": [
+      "chunk-2ZBMSWS6.js",
+      "chunk-PZNONLPT.js"
+    ],
+    "mapping-or-exposed": []
+  }
+}
