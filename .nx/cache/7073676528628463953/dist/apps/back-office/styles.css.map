@@ -1,0 +1,1 @@
+{"version":3,"file":"styles.css","mappings":";;;AAAA;EAAa;EAAW;AAGxB,C","sources":["./apps/back-office/src/styles.scss"],"sourcesContent":["html, body { margin: 0; min-height: 100%; }\n"],"names":[],"sourceRoot":"webpack:///","x_google_ignoreList":[]}

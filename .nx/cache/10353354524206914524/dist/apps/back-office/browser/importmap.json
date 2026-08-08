@@ -1,0 +1,21 @@
+{
+  "imports": {
+    "@angular/core": "_angular_core.q1hncMkDk9-dev.js",
+    "@angular/core/primitives/signals": "_angular_core_primitives_signals.NL41eWsjdh-dev.js",
+    "@angular/core/primitives/di": "_angular_core_primitives_di.cBxMhrvrKc-dev.js",
+    "@angular/core/rxjs-interop": "_angular_core_rxjs_interop.RdCc5VyZiq-dev.js",
+    "@angular/common": "_angular_common.Ey4it-4Ci5-dev.js",
+    "@angular/common/http": "_angular_common_http.tB0W2ucaeg-dev.js",
+    "@angular/forms": "_angular_forms.b-MjI2zAhK-dev.js",
+    "@angular/router": "_angular_router.bfitDc4xMm-dev.js",
+    "rxjs": "rxjs.qcqHqhwQJA-dev.js",
+    "rxjs/operators": "rxjs_operators.6DJw4eoGZF-dev.js",
+    "@nf-internal/chunk-2UWBHX2Q": "chunk-2UWBHX2Q.js",
+    "@nf-internal/chunk-PWK6T57A": "chunk-PWK6T57A.js",
+    "@nf-internal/chunk-4OF3K6IY": "chunk-4OF3K6IY.js",
+    "@nf-internal/chunk-MQ44NPZ3": "chunk-MQ44NPZ3.js",
+    "@nf-internal/chunk-SPLD4HVS": "chunk-SPLD4HVS.js",
+    "@nf-internal/chunk-A47LNQQB": "chunk-A47LNQQB.js",
+    "@nf-internal/chunk-7IBJPHM5": "chunk-7IBJPHM5.js"
+  }
+}

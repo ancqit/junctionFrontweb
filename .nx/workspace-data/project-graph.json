@@ -63,7 +63,7 @@
               "development": {
                 "optimization": false,
                 "extractLicenses": false,
-                "sourceMap": true
+                "sourceMap": false
               }
             },
             "parallelism": true
@@ -72,11 +72,12 @@
             "executor": "@angular-architects/native-federation:build",
             "options": {
               "target": "back-office:serve-original:development",
-              "rebuildDelay": 500,
+              "rebuildDelay": 100,
               "cacheExternalArtifacts": true,
               "dev": true,
               "devServer": true,
-              "port": 0
+              "port": 0,
+              "poll": false
             },
             "configurations": {},
             "parallelism": true
@@ -170,7 +171,7 @@
               "development": {
                 "optimization": false,
                 "extractLicenses": false,
-                "sourceMap": true
+                "sourceMap": false
               }
             },
             "parallelism": true
@@ -179,11 +180,12 @@
             "executor": "@angular-architects/native-federation:build",
             "options": {
               "target": "shell:serve-original:development",
-              "rebuildDelay": 500,
+              "rebuildDelay": 100,
               "cacheExternalArtifacts": true,
               "dev": true,
               "devServer": true,
-              "port": 0
+              "port": 0,
+              "poll": false
             },
             "configurations": {},
             "parallelism": true
@@ -29477,5 +29479,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1786201906498
+  "computedAt": 1786214115346
 }

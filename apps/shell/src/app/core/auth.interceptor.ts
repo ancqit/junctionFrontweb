@@ -15,7 +15,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     ? request.clone({ setHeaders: { Authorization: `Bearer ${tokens.accessToken}` } })
     : request;
   return next(outgoing).pipe(catchError((error: HttpErrorResponse) => {
-    if (error.status !== 401 || !isApiCall || isAuthCall || !tokens.refreshToken) return throwError(() => error);
+    if (error.status !== 401 || !isApiCall || isAuthCall || !tokens.accessToken) return throwError(() => error);
     return auth.refresh().pipe(
       switchMap(() => next(request.clone({ setHeaders: { Authorization: `Bearer ${tokens.accessToken}` } }))),
       catchError((refreshError) => { auth.logout(); return throwError(() => refreshError); }),

@@ -1,0 +1,150 @@
+[42m[38;5;15m INFO [39m[49m @angular/build was already loaded when this builder started (Nx preloads it), so its build environment was stale; re-applied useParallelTs=false, optimizeChunksThreshold=Infinity.
+[42m[38;5;15m INFO [39m[49m Building federation artifacts
+[103m[30m NOTE [39m[49m Skip packages you don't want to share in your federation config
+[42m[38;5;15m INFO [39m[49m Bundling external npm packages with bundle type 'browser-shared'
+X [ERROR] TS2322: Type 'Observable<ArrayBuffer>' is not assignable to type 'Observable<T>'.
+  Types of property 'operator' are incompatible.
+    Type 'Operator<any, ArrayBuffer> | undefined' is not assignable to type 'Operator<any, T> | undefined'.
+      Type 'Operator<any, ArrayBuffer>' is not assignable to type 'Operator<any, T>'.
+        Type 'ArrayBuffer' is not assignable to type 'T'.
+          'T' could be instantiated with an arbitrary type which could be unrelated to 'ArrayBuffer'. [plugin angular-compiler]
+
+    apps/shell/src/app/core/api.service.ts:14:4:
+      14 │     return this.http.get<T>(this.url(path), {
+         ╵     ~~~~~~
+
+X [ERROR] TS2769: No overload matches this call.
+  Overload 1 of 15, '(url: string, options: { observe: "events"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpEvent<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 2 of 15, '(url: string, options: { observe: "response"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpResponse<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 3 of 15, '(url: string, options?: ({ observe?: "body" | undefined; responseType?: "json" | undefined; } & HttpClientCommonOptions) | undefined): Observable<T>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'. [plugin angular-compiler]
+
+    apps/shell/src/app/core/api.service.ts:16:6:
+      16 │       headers: this.getAuthHeaders(),
+         ╵       ~~~~~~~
+
+  The expected type comes from property 'headers' which is declared here on type '{ observe: "events"; responseType?: "json" | undefined; } & HttpClientCommonOptions'
+
+    node_modules/@angular/common/types/http.d.ts:64:4:
+      64 │     headers?: HttpHeaders | {
+         ╵     ~~~~~~~
+
+  The expected type comes from property 'headers' which is declared here on type '{ observe: "response"; responseType?: "json" | undefined; } & HttpClientCommonOptions'
+
+    node_modules/@angular/common/types/http.d.ts:64:4:
+      64 │     headers?: HttpHeaders | {
+         ╵     ~~~~~~~
+
+X [ERROR] TS2322: Type 'Observable<ArrayBuffer>' is not assignable to type 'Observable<T>'.
+  Types of property 'operator' are incompatible.
+    Type 'Operator<any, ArrayBuffer> | undefined' is not assignable to type 'Operator<any, T> | undefined'.
+      Type 'Operator<any, ArrayBuffer>' is not assignable to type 'Operator<any, T>'.
+        Type 'ArrayBuffer' is not assignable to type 'T'.
+          'T' could be instantiated with an arbitrary type which could be unrelated to 'ArrayBuffer'. [plugin angular-compiler]
+
+    apps/shell/src/app/core/api.service.ts:21:4:
+      21 │     return this.http.post<T>(this.url(path), body, {
+         ╵     ~~~~~~
+
+X [ERROR] TS2769: No overload matches this call.
+  Overload 1 of 15, '(url: string, body: any, options: { observe: "events"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpEvent<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 2 of 15, '(url: string, body: any, options: { observe: "response"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpResponse<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 3 of 15, '(url: string, body: any, options?: HttpClientCommonOptions | undefined): Observable<T>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'. [plugin angular-compiler]
+
+    apps/shell/src/app/core/api.service.ts:22:6:
+      22 │       headers: this.getAuthHeaders(),
+         ╵       ~~~~~~~
+
+  The expected type comes from property 'headers' which is declared here on type '{ observe: "events"; responseType?: "json" | undefined; } & HttpClientCommonOptions'
+
+    node_modules/@angular/common/types/http.d.ts:64:4:
+      64 │     headers?: HttpHeaders | {
+         ╵     ~~~~~~~
+
+  The expected type comes from property 'headers' which is declared here on type '{ observe: "response"; responseType?: "json" | undefined; } & HttpClientCommonOptions'
+
+    node_modules/@angular/common/types/http.d.ts:64:4:
+      64 │     headers?: HttpHeaders | {
+         ╵     ~~~~~~~
+
+[41m[38;5;15m ERRR [39m[49m Error building federation artifacts
+[41m[38;5;15m ERRR [39m[49m Build failed with 4 errors:
+apps/shell/src/app/core/api.service.ts:14:4: ERROR: [plugin: angular-compiler] TS2322: Type 'Observable<ArrayBuffer>' is not assignable to type 'Observable<T>'.
+  Types of property 'operator' are incompatible.
+    Type 'Operator<any, ArrayBuffer> | undefined' is not assignable to type 'Operator<any, T> | undefined'.
+      Type 'Operator<any, ArrayBuffer>' is not assignable to type 'Operator<any, T>'.
+        Type 'ArrayBuffer' is not assignable to type 'T'.
+          'T' could be instantiated with an arbitrary type which could be unrelated to 'ArrayBuffer'.
+apps/shell/src/app/core/api.service.ts:16:6: ERROR: [plugin: angular-compiler] TS2769: No overload matches this call.
+  Overload 1 of 15, '(url: string, options: { observe: "events"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpEvent<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 2 of 15, '(url: string, options: { observe: "response"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpResponse<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 3 of 15, '(url: string, options?: ({ observe?: "body" | undefined; responseType?: "json" | undefined; } & HttpClientCommonOptions) | undefined): Observable<T>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+apps/shell/src/app/core/api.service.ts:21:4: ERROR: [plugin: angular-compiler] TS2322: Type 'Observable<ArrayBuffer>' is not assignable to type 'Observable<T>'.
+  Types of property 'operator' are incompatible.
+    Type 'Operator<any, ArrayBuffer> | undefined' is not assignable to type 'Operator<any, T> | undefined'.
+      Type 'Operator<any, ArrayBuffer>' is not assignable to type 'Operator<any, T>'.
+        Type 'ArrayBuffer' is not assignable to type 'T'.
+          'T' could be instantiated with an arbitrary type which could be unrelated to 'ArrayBuffer'.
+apps/shell/src/app/core/api.service.ts:22:6: ERROR: [plugin: angular-compiler] TS2769: No overload matches this call.
+  Overload 1 of 15, '(url: string, body: any, options: { observe: "events"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpEvent<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 2 of 15, '(url: string, body: any, options: { observe: "response"; responseType?: "json" | undefined; } & HttpClientCommonOptions): Observable<HttpResponse<T>>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.
+  Overload 3 of 15, '(url: string, body: any, options?: HttpClientCommonOptions | undefined): Observable<T>', gave the following error.
+    Type '{ Authorization: string; } | { Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+      Type '{ Authorization?: undefined; }' is not assignable to type 'HttpHeaders | { [header: string]: string | string[]; } | undefined'.
+        Type '{ Authorization?: undefined; }' is not assignable to type '{ [header: string]: string | string[]; }'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string | string[]'.

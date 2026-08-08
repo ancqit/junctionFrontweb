@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { AuthTokens, OtpChallenge, OtpRequest, OtpVerification } from './auth.models';
+import { AuthTokens, OtpChallenge, OtpRequest, OtpVerification, RefreshResponse } from './auth.models';
 import { TokenService } from './token.service';
 
 @Injectable({ providedIn: 'root' })
@@ -16,11 +16,25 @@ export class AuthService {
   requestOtp(payload: OtpRequest): Observable<OtpChallenge> {
     return this.api.post<OtpChallenge>('/auth/otp/request', payload);
   }
-  verifyOtp(challengeId: string, otp: string): Observable<OtpVerification> {
-    return this.api.post<OtpVerification>('/auth/otp/verify', { challengeId, otp }).pipe(tap((value) => this.acceptTokens(value)));
+  verifyOtp(challengeId: string, otp: string, phoneNumber: string, sessionInfo: string): Observable<OtpVerification> {
+    const payload = {
+      challenge_id: challengeId,
+      otp,
+      phone_number: phoneNumber,
+      session_info: sessionInfo,
+    };
+    return this.api.post<OtpVerification>('/auth/otp/verify', payload).pipe(
+      tap((value) => this.acceptAccessToken(value.access_token)),
+    );
   }
-  refresh(): Observable<AuthTokens> {
-    return this.api.post<AuthTokens>('/auth/refresh', { refreshToken: this.tokens.refreshToken }).pipe(tap((value) => this.acceptTokens(value)));
+  refresh(): Observable<RefreshResponse> {
+    return this.api.post<RefreshResponse>('/auth/refresh', {}).pipe(
+      tap((value) => {
+        this.tokens.updateAccessToken(value.access_token);
+        this.authenticated$.next(true);
+        this.scheduleRefresh();
+      }),
+    );
   }
   startSession(): void { if (this.tokens.isAuthenticated) this.scheduleRefresh(); }
   logout(): void {
@@ -31,6 +45,11 @@ export class AuthService {
   }
   private acceptTokens(tokens: AuthTokens): void {
     this.tokens.save(tokens);
+    this.authenticated$.next(true);
+    this.scheduleRefresh();
+  }
+  private acceptAccessToken(accessToken: string): void {
+    this.tokens.saveAccessToken(accessToken);
     this.authenticated$.next(true);
     this.scheduleRefresh();
   }
