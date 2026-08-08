@@ -128,3 +128,15 @@ DEBUG nx::native::watch::watcher: force-flush END count=0 replies=1 elapsed=21.5
 [NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.962Z - [Messenger] listen() complete
 [NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.962Z - [Messenger] Sending message type: REGISTER_PROJECT_GRAPH_LISTENER
 [NX v23.1.1 Daemon Client] - 2026-08-08T15:11:46.962Z - [Messenger] Message sent
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.967Z - Established a connection. Number of open connections: 2
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.967Z - Established a connection. Number of open connections: 3
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.967Z - Closed a connection. Number of open connections: 2
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.969Z - Received raw message of length 42
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:46.969Z - Received json message of type REGISTER_PROJECT_GRAPH_LISTENER
+Fetching nx...
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.689Z - [LATEST-NX]: Successfully pulled latest Nx to C:\Users\ANCQIT~1\AppData\Local\Temp\tmp-7256-dWDSR2yP52Ty
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.690Z - [NX-CONSOLE]: Using local implementation (NX_USE_LOCAL=true or inner call)
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.690Z - [AI-AGENTS]: Failed to compute agent configuration status from latest Nx. Error: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.690Z - [AI-AGENTS]: Agent configuration status computation completed: 0 fully configured, 0 outdated, 0 partially configured, 0 non-configured
+DEBUG nx::native::ide::install: Detected editor: Unknown
+[NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.690Z - [NX-CONSOLE]: Console status check completed, shouldPrompt: false
