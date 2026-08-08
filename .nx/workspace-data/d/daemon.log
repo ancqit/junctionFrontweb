@@ -140,3 +140,6 @@ Fetching nx...
 [NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.690Z - [AI-AGENTS]: Agent configuration status computation completed: 0 fully configured, 0 outdated, 0 partially configured, 0 non-configured
 DEBUG nx::native::ide::install: Detected editor: Unknown
 [NX v23.1.1 Daemon Server] - 2026-08-08T15:11:53.690Z - [NX-CONSOLE]: Console status check completed, shouldPrompt: false
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:21:22.358Z - [ProjectGraphListener] Socket closed, triggering reconnection
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:21:22.358Z - [ProjectGraphListener] Starting reconnection for 1 callbacks
+[NX v23.1.1 Daemon Client] - 2026-08-08T15:21:22.359Z - [Client] Waiting for server (max: 6000 attempts, 10ms interval)
