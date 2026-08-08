@@ -18,7 +18,8 @@
             "executor": "@angular-architects/native-federation:build",
             "defaultConfiguration": "production",
             "options": {
-              "cacheExternalArtifacts": true
+              "cacheExternalArtifacts": true,
+              "outputPath": "dist/apps/back-office"
             },
             "configurations": {
               "production": {
@@ -29479,5 +29480,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1786214546334
+  "computedAt": 1786214858242
 }

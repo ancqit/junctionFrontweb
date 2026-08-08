@@ -1,0 +1,114 @@
+{
+  "$version": "v4",
+  "name": "backOffice",
+  "shared": [
+    {
+      "packageName": "@angular/core",
+      "outFileName": "_angular_core.mBpKy5SLwZ.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/core/primitives/signals",
+      "outFileName": "_angular_core_primitives_signals.2-Mwz_iG6_.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/core/primitives/di",
+      "outFileName": "_angular_core_primitives_di.dRH4t8uyD3.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/core/rxjs-interop",
+      "outFileName": "_angular_core_rxjs_interop.bW3-xWgTJx.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/common",
+      "outFileName": "_angular_common.pMR9P9aBbl.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/common/http",
+      "outFileName": "_angular_common_http.oFYhGqLKxl.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/forms",
+      "outFileName": "_angular_forms.dFYux5lsZZ.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "@angular/router",
+      "outFileName": "_angular_router.hWjFNVkZHV.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.1.1",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "rxjs",
+      "outFileName": "rxjs.Foro3DT3gO.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "7.8.2",
+      "bundle": "browser-shared"
+    },
+    {
+      "packageName": "rxjs/operators",
+      "outFileName": "rxjs_operators.YwojDQfJTa.js",
+      "requiredVersion": "auto",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "7.8.2",
+      "bundle": "browser-shared"
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./Component",
+      "outFileName": "Component-L34KAH4D.js"
+    }
+  ],
+  "chunks": {
+    "browser-shared": [
+      "chunk-K4SXEO5T.js",
+      "chunk-CSCN5ZPG.js",
+      "chunk-COJS5X62.js",
+      "chunk-AGHEGZ63.js",
+      "chunk-Q4YTATXA.js",
+      "chunk-2ZBMSWS6.js",
+      "chunk-PZNONLPT.js"
+    ],
+    "mapping-or-exposed": []
+  }
+}
