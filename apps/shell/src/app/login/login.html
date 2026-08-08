@@ -17,15 +17,10 @@
         <h2 id="login-title">Let’s get you set up</h2>
         <p class="subcopy">A few details, then we’ll verify your mobile number.</p>
         <form [formGroup]="details" (ngSubmit)="sendOtp()">
-          <label>Full name<input formControlName="name" autocomplete="name" placeholder="e.g. Aarav Kumar" /></label>
-          @if (details.controls.name.touched && details.controls.name.invalid) { <small>Please enter your name.</small> }
-          <label>Mobile number<div class="phone"><span>+91</span><input formControlName="mobileNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="98765 43210" /></div></label>
-          @if (details.controls.mobileNumber.touched && details.controls.mobileNumber.invalid) { <small>Enter a valid 10-digit Indian mobile number.</small> }
-          <div class="location">
-            <label>City<input formControlName="city" /></label>
-            <label>Locality<input formControlName="locality" /></label>
-          </div>
-          <p class="locked">Development location is fixed to Ranchi · Main Road</p>
+          <label>Full name<input formControlName="display_name" autocomplete="name" placeholder="e.g. Aarav Kumar" /></label>
+          @if (details.controls.display_name.touched && details.controls.display_name.invalid) { <small>Please enter your name.</small> }
+          <label>Mobile number<div class="phone"><span>+91</span><input formControlName="phone_number" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="98765 43210" /></div></label>
+          @if (details.controls.phone_number.touched && details.controls.phone_number.invalid) { <small>Enter a valid 10-digit Indian mobile number.</small> }
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
           <button type="submit" [disabled]="busy()">{{ busy() ? 'Sending…' : 'Send OTP' }}</button>
         </form>
@@ -33,7 +28,7 @@
         <button class="back" type="button" (click)="editNumber()">← Edit details</button>
         <p class="kicker">One quick check</p>
         <h2 id="login-title">Enter your OTP</h2>
-        <p class="subcopy">We sent a 6-digit code to +91 {{ details.getRawValue().mobileNumber }}.</p>
+        <p class="subcopy">We sent a 6-digit code to +91 {{ details.getRawValue().phone_number }}.</p>
         <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
           <label>Verification code<input class="otp" formControlName="otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" /></label>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }

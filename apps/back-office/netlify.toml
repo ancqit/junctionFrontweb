@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build:back-office"
+  publish = "dist/apps/back-office"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"

@@ -80,6 +80,10 @@
       "apps/back-office/project.json",
       "nx/core/project-json"
     ],
+    "targets.build.options.outputPath": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
     "targets.build.options": [
       "apps/back-office/project.json",
       "nx/core/project-json"
@@ -137,6 +141,10 @@
       "nx/core/project-json"
     ],
     "targets.serve.options.port": [
+      "apps/back-office/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.poll": [
       "apps/back-office/project.json",
       "nx/core/project-json"
     ],
@@ -407,6 +415,10 @@
       "nx/core/project-json"
     ],
     "targets.serve.options.port": [
+      "apps/shell/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.poll": [
       "apps/shell/project.json",
       "nx/core/project-json"
     ],

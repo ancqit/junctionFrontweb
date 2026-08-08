@@ -7,7 +7,10 @@
   "targets": {
     "build": {
       "executor": "@angular-architects/native-federation:build",
-      "options": { "cacheExternalArtifacts": true },
+      "options": {
+        "cacheExternalArtifacts": true,
+        "outputPath": "dist/apps/back-office"
+      },
       "configurations": {
         "production": { "target": "back-office:esbuild:production" },
         "development": { "target": "back-office:esbuild:development", "dev": true }
@@ -18,11 +21,12 @@
       "executor": "@angular-architects/native-federation:build",
       "options": {
         "target": "back-office:serve-original:development",
-        "rebuildDelay": 500,
+        "rebuildDelay": 100,
         "cacheExternalArtifacts": true,
         "dev": true,
         "devServer": true,
-        "port": 0
+        "port": 0,
+        "poll": false
       }
     },
     "esbuild": {
@@ -39,7 +43,7 @@
       },
       "configurations": {
         "production": { "outputHashing": "all" },
-        "development": { "optimization": false, "extractLicenses": false, "sourceMap": true }
+        "development": { "optimization": false, "extractLicenses": false, "sourceMap": false }
       },
       "defaultConfiguration": "production"
     },

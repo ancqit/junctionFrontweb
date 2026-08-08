@@ -18,26 +18,36 @@ export class Login {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly challengeId = signal('');
+  readonly sessionInfo = signal('');
   readonly details = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    mobileNumber: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
-    city: [{ value: 'Ranchi', disabled: true }],
-    locality: [{ value: 'Main Road', disabled: true }],
+    display_name: ['', [Validators.required, Validators.minLength(2)]],
+    phone_number: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
+    recaptcha_token: ['test-token'], // TODO: Integrate Google reCAPTCHA v3
   });
   readonly otpForm = this.fb.nonNullable.group({ otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]] });
 
   sendOtp(): void {
     if (this.details.invalid) { this.details.markAllAsTouched(); return; }
     this.busy.set(true); this.error.set('');
-    this.auth.requestOtp(this.details.getRawValue()).pipe(finalize(() => this.busy.set(false))).subscribe({
-      next: ({ challengeId }) => { this.challengeId.set(challengeId); this.step.set('otp'); },
+    const formValue = this.details.getRawValue();
+    const payload = {
+      ...formValue,
+      phone_number: `+91${formValue.phone_number}`, // Prepend country code
+    };
+    this.auth.requestOtp(payload).pipe(finalize(() => this.busy.set(false))).subscribe({
+      next: (response) => { 
+        this.challengeId.set(response.challengeId); 
+        this.sessionInfo.set(response.session_info);
+        this.step.set('otp');
+      },
       error: () => this.error.set('We could not send the OTP. Check the local API and try again.'),
     });
   }
   verifyOtp(): void {
     if (this.otpForm.invalid) { this.otpForm.markAllAsTouched(); return; }
     this.busy.set(true); this.error.set('');
-    this.auth.verifyOtp(this.challengeId(), this.otpForm.getRawValue().otp).pipe(finalize(() => this.busy.set(false))).subscribe({
+    const phoneNumber = `+91${this.details.getRawValue().phone_number}`;
+    this.auth.verifyOtp(this.challengeId(), this.otpForm.getRawValue().otp, phoneNumber, this.sessionInfo()).pipe(finalize(() => this.busy.set(false))).subscribe({
       next: () => void this.router.navigateByUrl('/back-office'),
       error: () => this.error.set('That OTP is invalid or has expired. Please try again.'),
     });

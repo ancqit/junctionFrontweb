@@ -1,0 +1,237 @@
+{
+  "id": "shell",
+  "name": "shell",
+  "metaData": {
+    "name": "shell",
+    "type": "app",
+    "buildInfo": {
+      "buildVersion": "0.0.0",
+      "buildName": "back-web"
+    },
+    "remoteEntry": {
+      "name": "",
+      "path": "",
+      "type": "module"
+    },
+    "types": {
+      "path": "",
+      "name": "",
+      "zip": "",
+      "api": ""
+    },
+    "globalName": "shell",
+    "pluginVersion": "2.8.2",
+    "publicPath": "auto"
+  },
+  "shared": [
+    {
+      "id": "shell:@angular/common/http",
+      "name": "@angular/common/http",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "443.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/common",
+      "name": "@angular/common",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "316.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/core/primitives/di",
+      "name": "@angular/core/primitives/di",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "common.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/core/primitives/signals",
+      "name": "@angular/core/primitives/signals",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "common.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/core",
+      "name": "@angular/core",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "580.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/forms",
+      "name": "@angular/forms",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "456.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/platform-browser",
+      "name": "@angular/platform-browser",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "436.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:@angular/router",
+      "name": "@angular/router",
+      "version": "22.1.1",
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "72.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:rxjs/operators",
+      "name": "rxjs/operators",
+      "version": "7.8.2",
+      "singleton": true,
+      "requiredVersion": "~7.8.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "219.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    },
+    {
+      "id": "shell:rxjs",
+      "name": "rxjs",
+      "version": "7.8.2",
+      "singleton": true,
+      "requiredVersion": "~7.8.0",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "845.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "fallback": ""
+    }
+  ],
+  "remotes": [
+    {
+      "federationContainerName": "http://localhost:4201/remoteEntry.mjs",
+      "moduleName": "Component",
+      "alias": "back-office",
+      "entry": "*"
+    }
+  ],
+  "exposes": []
+}

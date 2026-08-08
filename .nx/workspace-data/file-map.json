@@ -6,12 +6,36 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": ".editorconfig",
-        "hash": "8037249353422744134"
+        "file": ".vscode/extensions.json",
+        "hash": "11761272470041752234"
+      },
+      {
+        "file": "nx.json",
+        "hash": "305821333088028149"
       },
       {
         "file": ".gitignore",
         "hash": "5024476166486271931"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "1914423076916572232"
+      },
+      {
+        "file": "README.md",
+        "hash": "17944460272570665165"
+      },
+      {
+        "file": ".vscode/tasks.json",
+        "hash": "11080398893561185157"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "7542616330893830164"
+      },
+      {
+        "file": "tools/generators/.gitkeep",
+        "hash": "3244421341483603138"
       },
       {
         "file": ".prettierignore",
@@ -22,20 +46,16 @@
         "hash": "7467919868826279542"
       },
       {
-        "file": ".vscode/extensions.json",
-        "hash": "11761272470041752234"
-      },
-      {
         "file": ".vscode/launch.json",
         "hash": "17406702432687230417"
       },
       {
-        "file": ".vscode/tasks.json",
-        "hash": "11080398893561185157"
+        "file": "tools/tsconfig.tools.json",
+        "hash": "16088922570277978783"
       },
       {
-        "file": "README.md",
-        "hash": "15571634754499562465"
+        "file": "package.json",
+        "hash": "4130987317985353378"
       },
       {
         "file": "libs/.gitkeep",
@@ -46,42 +66,26 @@
         "hash": "2554806148177169453"
       },
       {
-        "file": "nx.json",
-        "hash": "4356127021539525358"
-      },
-      {
-        "file": "package-lock.json",
-        "hash": "1914423076916572232"
-      },
-      {
-        "file": "package.json",
-        "hash": "7066938688015775501"
-      },
-      {
-        "file": "tools/generators/.gitkeep",
-        "hash": "3244421341483603138"
-      },
-      {
-        "file": "tools/tsconfig.tools.json",
-        "hash": "16088922570277978783"
-      },
-      {
-        "file": "tsconfig.base.json",
-        "hash": "7542616330893830164"
+        "file": ".editorconfig",
+        "hash": "8037249353422744134"
       }
     ],
     "projectFileMap": {
       "back-office": [
         {
           "file": "apps/back-office/federation.config.mjs",
-          "hash": "10576299285498793856",
+          "hash": "9357061205242309098",
           "deps": [
             "npm:@angular-architects/native-federation"
           ]
         },
         {
+          "file": "apps/back-office/netlify.toml",
+          "hash": "5921836705533271072"
+        },
+        {
           "file": "apps/back-office/project.json",
-          "hash": "4837077817783668450"
+          "hash": "2139222203970838411"
         },
         {
           "file": "apps/back-office/public/favicon.ico",
@@ -126,7 +130,7 @@
         },
         {
           "file": "apps/back-office/src/index.html",
-          "hash": "17399732237023613399"
+          "hash": "10393349328554896240"
         },
         {
           "file": "apps/back-office/src/main.ts",
@@ -151,14 +155,14 @@
       "shell": [
         {
           "file": "apps/shell/federation.config.mjs",
-          "hash": "14050966439100374301",
+          "hash": "9267108206149622822",
           "deps": [
             "npm:@angular-architects/native-federation"
           ]
         },
         {
           "file": "apps/shell/project.json",
-          "hash": "17322695817057393400"
+          "hash": "8129572297753689565"
         },
         {
           "file": "apps/shell/public/favicon.ico",
@@ -211,14 +215,14 @@
         },
         {
           "file": "apps/shell/src/app/core/api.config.ts",
-          "hash": "8044159047616460776",
+          "hash": "1061353931389077127",
           "deps": [
             "npm:@angular/core"
           ]
         },
         {
           "file": "apps/shell/src/app/core/api.service.ts",
-          "hash": "11434390715458810324",
+          "hash": "9299480117015799515",
           "deps": [
             "npm:@angular/common",
             "npm:@angular/core",
@@ -235,7 +239,7 @@
         },
         {
           "file": "apps/shell/src/app/core/auth.interceptor.ts",
-          "hash": "12072631529167815719",
+          "hash": "7034578787097140323",
           "deps": [
             "npm:@angular/common",
             "npm:@angular/core",
@@ -244,11 +248,11 @@
         },
         {
           "file": "apps/shell/src/app/core/auth.models.ts",
-          "hash": "9786125345625111779"
+          "hash": "17842909076038401212"
         },
         {
           "file": "apps/shell/src/app/core/auth.service.ts",
-          "hash": "1571404660836454097",
+          "hash": "5712751218218466371",
           "deps": [
             "npm:@angular/core",
             "npm:@angular/router",
@@ -257,14 +261,14 @@
         },
         {
           "file": "apps/shell/src/app/core/token.service.ts",
-          "hash": "13234565483927464793",
+          "hash": "6527380754444054002",
           "deps": [
             "npm:@angular/core"
           ]
         },
         {
           "file": "apps/shell/src/app/login/login.html",
-          "hash": "2829585334809104577"
+          "hash": "9823745999791707257"
         },
         {
           "file": "apps/shell/src/app/login/login.scss",
@@ -272,7 +276,7 @@
         },
         {
           "file": "apps/shell/src/app/login/login.ts",
-          "hash": "5820497104538639498",
+          "hash": "9739273005896926137",
           "deps": [
             "npm:@angular/core",
             "npm:@angular/forms",
@@ -289,7 +293,7 @@
         },
         {
           "file": "apps/shell/src/index.html",
-          "hash": "7618062614435508730"
+          "hash": "6680335950370397081"
         },
         {
           "file": "apps/shell/src/main.ts",
