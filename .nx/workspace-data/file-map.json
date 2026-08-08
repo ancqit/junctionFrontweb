@@ -177,6 +177,10 @@
           ]
         },
         {
+          "file": "apps/back-office/netlify.toml",
+          "hash": "183646984986154066"
+        },
+        {
           "file": "apps/back-office/project.json",
           "hash": "4551030596637889399"
         },
