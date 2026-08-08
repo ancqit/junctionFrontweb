@@ -1,6 +1,6 @@
 [build]
   command = "npm run build:back-office"
-  publish = "dist/apps/back-office"
+  publish = "dist/apps/back-office/browser"
 
 [build.environment]
   NODE_VERSION = "24"

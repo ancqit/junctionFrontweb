@@ -1,8 +1,8 @@
 {
   "run": {
-    "command": "nx build back-office",
-    "startTime": "2026-08-08T18:47:38.303Z",
-    "endTime": "2026-08-08T18:47:43.740Z",
+    "command": "nx run-many --target=build --projects=shell,back-office",
+    "startTime": "2026-08-08T19:01:56.464Z",
+    "endTime": "2026-08-08T19:02:05.768Z",
     "inner": false
   },
   "tasks": [
@@ -10,9 +10,20 @@
       "taskId": "back-office:build:production",
       "target": "build",
       "projectName": "back-office",
-      "hash": "18323153706817433803",
-      "startTime": "2026-08-08T18:47:38.317Z",
-      "endTime": "2026-08-08T18:47:43.644Z",
+      "hash": "12878304012895400867",
+      "startTime": "2026-08-08T19:01:56.630Z",
+      "endTime": "2026-08-08T19:02:04.596Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 0
+    },
+    {
+      "taskId": "shell:build:production",
+      "target": "build",
+      "projectName": "shell",
+      "hash": "447547062233307822",
+      "startTime": "2026-08-08T19:01:56.630Z",
+      "endTime": "2026-08-08T19:02:05.646Z",
       "params": "",
       "cacheStatus": "cache-miss",
       "status": 0

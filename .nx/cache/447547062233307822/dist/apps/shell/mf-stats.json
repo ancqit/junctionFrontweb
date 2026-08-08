@@ -1,0 +1,291 @@
+{
+  "id": "shell",
+  "name": "shell",
+  "metaData": {
+    "name": "shell",
+    "type": "app",
+    "buildInfo": {
+      "buildVersion": "0.0.0",
+      "buildName": "back-web"
+    },
+    "remoteEntry": {
+      "name": "",
+      "path": "",
+      "type": "module"
+    },
+    "types": {
+      "path": "",
+      "name": "",
+      "zip": "",
+      "api": ""
+    },
+    "globalName": "shell",
+    "pluginVersion": "2.8.2",
+    "publicPath": "auto"
+  },
+  "shared": [
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/common/http",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/common/http",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "443.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/common",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/common",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "316.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/core/primitives/di",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/core/primitives/di",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "common.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/core/primitives/signals",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/core/primitives/signals",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "common.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/core",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/core",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "580.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/forms",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/forms",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "456.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/platform-browser",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/platform-browser",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "436.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "^22.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/router",
+      "version": "22.1.1",
+      "eager": false,
+      "id": "shell:@angular/router",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "72.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~7.8.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "rxjs/operators",
+      "version": "7.8.2",
+      "eager": false,
+      "id": "shell:rxjs/operators",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "219.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~7.8.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "rxjs",
+      "version": "7.8.2",
+      "eager": false,
+      "id": "shell:rxjs",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "845.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": [],
+      "usedExports": [],
+      "fallback": ""
+    }
+  ],
+  "remotes": [
+    {
+      "alias": "back-office",
+      "consumingFederationContainerName": "shell",
+      "federationContainerName": "http://localhost:4201/remoteEntry.mjs",
+      "moduleName": "Component",
+      "usedIn": [
+        "apps/shell/src/app/app.routes.ts"
+      ],
+      "version": "*"
+    }
+  ],
+  "exposes": []
+}
