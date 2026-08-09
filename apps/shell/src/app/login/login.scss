@@ -47,7 +47,13 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .terms-check input {
   width: 18px; height: 18px; margin-top: 2px; accent-color: #17633e; cursor: pointer;
 }
-.terms-check a, .terms-check strong { color: #26754d; font-weight: 800; }
+.terms-check input:disabled { cursor: not-allowed; opacity: .55; }
+.terms-check a {
+  color: #26754d; font-weight: 800; text-decoration: underline; text-underline-offset: 2px;
+}
+.terms-hint {
+  display: block; margin-top: 6px; color: #8a6f1f; font-size: 12px; font-weight: 600;
+}
 .back { padding: 0; margin-bottom: 24px; color: #26754d; background: none; font-size: 13px; }
 .back.later { margin: 18px 0 0; text-align: left; }
 .otp { text-align: center; letter-spacing: .55em; padding-left: calc(15px + .55em); font-size: 22px; font-weight: 700; }
@@ -99,6 +105,22 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .modal-limit { margin: 8px 0 0; color: #1a6541; font-size: 13px; font-weight: 800; }
 .modal-desc { margin: 8px 0 0; color: #667069; font-size: 13px; line-height: 1.45; }
 .modal-foot { margin: 18px 0 0; color: #808780; font-size: 12px; text-align: center; }
+.terms-modal {
+  position: fixed; z-index: 50; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(640px, calc(100vw - 32px)); max-height: min(88vh, 720px); overflow: auto;
+  padding: 28px 28px 24px; border-radius: 24px; border: 1px solid #dedbd2; background: #faf9f6;
+  box-shadow: 0 30px 90px rgba(10, 30, 20, .28); color: #17251c;
+}
+.terms-modal header {
+  display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 18px;
+}
+.terms-modal header h2 { margin: 6px 0 0; font: 500 32px Georgia, serif; }
+.terms-body { display: grid; gap: 10px; color: #5f6a63; font-size: 14px; line-height: 1.55; }
+.terms-body h3 { margin: 8px 0 0; color: #1a281f; font-size: 14px; font-weight: 800; }
+.terms-body p { margin: 0; }
+.terms-done {
+  width: 100%; margin-top: 20px;
+}
 @media (max-width: 850px) {
   .login-page { grid-template-columns: 1fr; }
   .story { min-height: 260px; padding: 30px; }
@@ -108,5 +130,5 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .overlay { padding: 22px; }
   .card, .card.wide { padding: 30px 24px; }
   .modal-plans { grid-template-columns: 1fr; }
-  .plans-modal { padding: 22px 18px; }
+  .plans-modal, .terms-modal { padding: 22px 18px; }
 }

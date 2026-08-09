@@ -38,6 +38,8 @@ export class Login implements OnInit {
   readonly currentPlan = signal<PlanSummary | null>(null);
   readonly trialDays = FREE_TRIAL_DAYS;
   readonly plansModalOpen = signal(false);
+  readonly termsModalOpen = signal(false);
+  readonly termsViewed = signal(false);
   readonly acceptTerms = signal(false);
 
   readonly details = this.fb.nonNullable.group({
@@ -62,6 +64,10 @@ export class Login implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.termsModalOpen()) {
+      this.closeTermsModal();
+      return;
+    }
     if (this.plansModalOpen()) {
       this.closePlansModal();
     }
@@ -75,16 +81,40 @@ export class Login implements OnInit {
     this.plansModalOpen.set(false);
   }
 
+  openTermsModal(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.termsModalOpen.set(true);
+    this.termsViewed.set(true);
+  }
+
+  closeTermsModal(): void {
+    this.termsModalOpen.set(false);
+  }
+
   onAcceptTermsChange(event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    this.acceptTerms.set(checked);
+    const input = event.target as HTMLInputElement;
+    if (!this.termsViewed()) {
+      input.checked = false;
+      this.acceptTerms.set(false);
+      this.error.set('Open and read the Terms and Conditions before accepting.');
+      return;
+    }
+    this.acceptTerms.set(input.checked);
+    if (input.checked) {
+      this.error.set('');
+    }
   }
 
   canSendOtp(): boolean {
-    return this.acceptTerms() && !this.busy();
+    return this.termsViewed() && this.acceptTerms() && !this.busy();
   }
 
   sendOtp(): void {
+    if (!this.termsViewed()) {
+      this.error.set('Please open and read the Terms and Conditions first.');
+      return;
+    }
     if (!this.acceptTerms()) {
       this.error.set('Please accept the Terms and Conditions to continue.');
       return;
