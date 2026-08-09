@@ -11,6 +11,7 @@
     "build": "nx run-many --target=build --projects=shell,back-office",
     "build:shell": "nx build shell",
     "build:back-office": "nx build back-office",
+    "build:vercel": "npm run build && node tools/prepare-vercel.mjs",
     "watch": "nx build --watch --configuration development",
     "test": "nx test"
   },
