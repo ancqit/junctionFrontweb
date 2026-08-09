@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { PlanAccessService } from './core/plan-access.service';
 
 @Component({
   selector: 'app-back-office',
@@ -7,4 +8,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {}
+export class App implements OnInit {
+  readonly access = inject(PlanAccessService);
+
+  ngOnInit(): void {
+    this.access.refresh().subscribe();
+  }
+}

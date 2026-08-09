@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
-import { PlanSummary } from '../core/auth.models';
+import { isPostGraceViewerPlan, PlanSummary } from '../core/auth.models';
 import {
   FREE_TRIAL_DAYS,
   PLAN_CATALOG,
@@ -14,6 +14,7 @@ import {
   PlansService,
 } from '../core/plans.service';
 import { RecaptchaService } from '../core/recaptcha.service';
+import { SessionService } from '../core/session.service';
 
 @Component({
   selector: 'app-login',
@@ -24,6 +25,7 @@ import { RecaptchaService } from '../core/recaptcha.service';
 export class Login implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionService);
   private readonly plansApi = inject(PlansService);
   private readonly recaptcha = inject(RecaptchaService);
   private readonly router = inject(Router);
@@ -109,11 +111,18 @@ export class Login implements OnInit {
             void this.router.navigateByUrl('/admin');
             return;
           }
-          if (role === 'viewer') {
-            void this.router.navigateByUrl('/viewer');
+
+          // After Premium/trial + grace: you are a viewer (not an owner) → deactivated view.
+          const postGrace = isPostGraceViewerPlan(response.plan);
+          if (role === 'viewer' || postGrace) {
+            if (this.session.user) {
+              this.session.saveFromAuthUser({ ...this.session.user, role: 'viewer' }, 'viewer');
+            }
+            void this.router.navigateByUrl('/back-office/activate');
             return;
           }
-          // Shop owner — continue with plan selection, then back office.
+
+          // Active owner — continue with plan selection, then back office.
           this.currentPlan.set(response.plan ?? null);
           this.step.set('plans');
         },

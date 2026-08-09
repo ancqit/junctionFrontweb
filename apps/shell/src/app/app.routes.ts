@@ -12,13 +12,16 @@ export const routes: Routes = [
     loadComponent: () => import('./admin/admin').then((m) => m.AdminPage),
   },
   {
+    // Viewer = post-grace deactivated account → same Activate view in the app.
     path: 'viewer',
     canActivate: [authGuard, authorGuard('viewer')],
-    loadComponent: () => import('./viewer/viewer').then((m) => m.ViewerPage),
+    redirectTo: 'back-office/activate',
+    pathMatch: 'full',
   },
   {
     path: 'back-office',
-    canActivate: [authGuard, authorGuard(['owner', 'admin'])],
+    // Viewers may enter the deactivated Activate + Plans area; owners/admins get the full app.
+    canActivate: [authGuard, authorGuard(['owner', 'admin', 'viewer'])],
     loadChildren: () => loadRemoteModule('backOffice', './Routes').then((module) => module.APP_ROUTES),
   },
   { path: '', pathMatch: 'full', redirectTo: 'login' },

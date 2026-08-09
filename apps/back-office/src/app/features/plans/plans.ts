@@ -1,7 +1,9 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FREE_TRIAL_DAYS, PlanOption, PlanSummary, PlanType } from '../../core/models';
+import { PlanAccessService } from '../../core/plan-access.service';
 import { PlansApi } from '../../core/plans.api';
 
 @Component({
@@ -12,6 +14,8 @@ import { PlansApi } from '../../core/plans.api';
 })
 export class PlansPage implements OnInit {
   private readonly api = inject(PlansApi);
+  private readonly access = inject(PlanAccessService);
+  private readonly router = inject(Router);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
@@ -55,7 +59,9 @@ export class PlansPage implements OnInit {
       .subscribe({
         next: (state) => {
           this.current.set(state);
-          this.success.set(`${state.name} is now active.`);
+          this.access.markUnlocked(state);
+          this.success.set(`${state.name} is now active. You are an owner again.`);
+          void this.router.navigateByUrl('/back-office');
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not select this plan.')),
       });
