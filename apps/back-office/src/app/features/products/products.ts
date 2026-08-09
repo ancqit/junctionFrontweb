@@ -7,6 +7,8 @@ import { ProductsApi } from '../../core/products.api';
 import { QueriesApi } from '../../core/queries.api';
 import { DEFAULT_STORE_ID } from '../../core/store.config';
 
+const MAX_PRODUCT_IMAGES = 3;
+
 @Component({
   selector: 'app-products',
   imports: [ReactiveFormsModule, CurrencyPipe, TitleCasePipe],
@@ -18,6 +20,7 @@ export class ProductsPage implements OnInit {
   private readonly queriesApi = inject(QueriesApi);
   private readonly fb = inject(FormBuilder);
 
+  readonly maxImages = MAX_PRODUCT_IMAGES;
   readonly products = signal<Product[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -25,13 +28,12 @@ export class ProductsPage implements OnInit {
   readonly showForm = signal(false);
 
   readonly imageResults = signal<ImageSearchResult[]>([]);
-  readonly selectedImageUrl = signal<string | null>(null);
+  readonly selectedImages = signal<ImageSearchResult[]>([]);
   readonly searchingImages = signal(false);
   readonly imageSearchError = signal('');
   readonly imageSearchTotal = signal(0);
 
   readonly form = this.fb.nonNullable.group({
-    sku: ['', [Validators.required, Validators.maxLength(64)]],
     name: ['', [Validators.required, Validators.maxLength(160)]],
     description: [''],
     category: ['', [Validators.required, Validators.maxLength(80)]],
@@ -75,7 +77,6 @@ export class ProductsPage implements OnInit {
   closeForm(): void {
     this.showForm.set(false);
     this.form.reset({
-      sku: '',
       name: '',
       description: '',
       category: '',
@@ -103,7 +104,7 @@ export class ProductsPage implements OnInit {
     this.searchingImages.set(true);
     this.imageSearchError.set('');
     this.queriesApi
-      .searchImages(query)
+      .searchImages(query, 1, 12)
       .pipe(finalize(() => this.searchingImages.set(false)))
       .subscribe({
         next: (response) => {
@@ -128,11 +129,32 @@ export class ProductsPage implements OnInit {
   }
 
   selectImage(image: ImageSearchResult): void {
-    this.selectedImageUrl.set(String(image.cdn_url));
+    const cdn = String(image.cdn_url);
+    const already = this.selectedImages().some((row) => String(row.cdn_url) === cdn);
+    if (already) {
+      this.selectedImages.update((rows) => rows.filter((row) => String(row.cdn_url) !== cdn));
+      this.imageSearchError.set('');
+      return;
+    }
+    if (this.selectedImages().length >= MAX_PRODUCT_IMAGES) {
+      this.imageSearchError.set(`You can add up to ${MAX_PRODUCT_IMAGES} pictures.`);
+      return;
+    }
+    this.selectedImages.update((rows) => [...rows, { ...image, cdn_url: cdn }]);
+    this.imageSearchError.set('');
   }
 
-  clearSelectedImage(): void {
-    this.selectedImageUrl.set(null);
+  isSelected(image: ImageSearchResult): boolean {
+    const cdn = String(image.cdn_url);
+    return this.selectedImages().some((row) => String(row.cdn_url) === cdn);
+  }
+
+  removeSelectedImage(cdnUrl: string): void {
+    this.selectedImages.update((rows) => rows.filter((row) => String(row.cdn_url) !== cdnUrl));
+  }
+
+  clearSelectedImages(): void {
+    this.selectedImages.set([]);
   }
 
   create(): void {
@@ -141,13 +163,15 @@ export class ProductsPage implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
-    const selectedCdn = this.selectedImageUrl();
+    const selected = this.selectedImages();
+    const primaryCdn = selected[0] ? String(selected[0].cdn_url) : null;
     this.saving.set(true);
     this.error.set('');
     this.api
       .create({
         store_id: DEFAULT_STORE_ID,
-        sku: value.sku.trim(),
+        // Backend still requires sku; generated server-side-style so users never enter an ID.
+        sku: this.generateSku(value.name),
         name: value.name.trim(),
         description: value.description.trim() || null,
         category: value.category.trim(),
@@ -161,11 +185,9 @@ export class ProductsPage implements OnInit {
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        image_cdn: selectedCdn,
-        image: selectedCdn
-          ? { source: 'query', cdn: selectedCdn }
-          : null,
-        image_url: selectedCdn,
+        image_cdn: primaryCdn,
+        image: primaryCdn ? { source: 'query', cdn: primaryCdn } : null,
+        image_url: primaryCdn,
         barcode: value.barcode.trim() || null,
         tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
         low_stock_threshold:
@@ -173,30 +195,7 @@ export class ProductsPage implements OnInit {
       })
       .subscribe({
         next: (created) => {
-          if (!selectedCdn) {
-            this.saving.set(false);
-            this.closeForm();
-            this.reload();
-            return;
-          }
-          // Download + store the selected CDN image from /queries onto the product.
-          this.api.useImageFromCdn(created.id, selectedCdn).subscribe({
-            next: () => {
-              this.saving.set(false);
-              this.closeForm();
-              this.reload();
-            },
-            error: (err: unknown) => {
-              this.saving.set(false);
-              this.error.set(
-                this.readError(
-                  err,
-                  'Product saved, but attaching the CDN image failed. You can retry from edit later.',
-                ),
-              );
-              this.reload();
-            },
-          });
+          this.attachSelectedImages(created.id, selected.map((image) => String(image.cdn_url)));
         },
         error: (err: unknown) => {
           this.saving.set(false);
@@ -219,10 +218,49 @@ export class ProductsPage implements OnInit {
     return product.image_url || product.image_cdn || product.image?.cdn || null;
   }
 
+  private attachSelectedImages(productId: string, cdnUrls: string[]): void {
+    if (cdnUrls.length === 0) {
+      this.saving.set(false);
+      this.closeForm();
+      this.reload();
+      return;
+    }
+
+    // junctionBack currently stores one product image; first selected is the main picture.
+    this.api.useImageFromCdn(productId, cdnUrls[0]).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.closeForm();
+        this.reload();
+      },
+      error: (err: unknown) => {
+        this.saving.set(false);
+        this.error.set(
+          this.readError(
+            err,
+            'Product saved, but attaching the CDN image failed. You can retry from edit later.',
+          ),
+        );
+        this.reload();
+      },
+    });
+  }
+
+  private generateSku(name: string): string {
+    const slug = name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 24);
+    const suffix = Date.now().toString(36).toUpperCase();
+    return `PRD-${slug || 'ITEM'}-${suffix}`.slice(0, 64);
+  }
+
   private resetImageSearch(): void {
     this.imageSearchForm.reset({ query: '' });
     this.imageResults.set([]);
-    this.selectedImageUrl.set(null);
+    this.selectedImages.set([]);
     this.imageSearchError.set('');
     this.imageSearchTotal.set(0);
   }

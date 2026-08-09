@@ -40,16 +40,24 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .image-error {
   margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: #f8eaea; color: #7a2a2a; font-size: 13px;
 }
-.selected-image {
-  display: flex; gap: 14px; align-items: center; margin-bottom: 14px; padding: 12px;
-  border: 1px solid #cfe0d4; border-radius: 12px; background: #eef6f1;
+.selected-images {
+  margin-bottom: 14px; padding: 12px; border: 1px solid #cfe0d4; border-radius: 12px; background: #eef6f1;
 }
-.selected-image img {
-  width: 88px; height: 88px; object-fit: cover; border-radius: 10px; background: #ddd;
+.selected-images-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;
 }
-.selected-image strong { display: block; margin-bottom: 4px; color: #1a281f; }
-.selected-image small {
-  display: block; margin-bottom: 10px; color: #667069; font-size: 12px; word-break: break-all; font-weight: 500;
+.selected-images-head strong { color: #1a281f; }
+.selected-images-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+}
+.selected-images-grid article {
+  display: grid; gap: 8px; padding: 8px; border-radius: 10px; background: white; border: 1px solid #d9e7dd;
+}
+.selected-images-grid img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #ddd;
+}
+.selected-images-grid div {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; font-weight: 700;
 }
 .results-meta { margin: 0 0 10px; color: #667069; font-size: 12px; font-weight: 700; }
 .image-grid {
@@ -85,6 +93,7 @@ td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
 @media (max-width: 900px) {
   .grid-form { grid-template-columns: 1fr; }
   header { align-items: start; flex-direction: column; }
-  .image-search-head, .image-search-bar, .selected-image { flex-direction: column; align-items: stretch; }
+  .image-search-head, .image-search-bar { flex-direction: column; align-items: stretch; }
+  .selected-images-grid { grid-template-columns: 1fr; }
 }
 

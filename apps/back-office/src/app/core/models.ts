@@ -100,3 +100,54 @@ export interface ImageSearchResponse {
   total_results: number;
   images: ImageSearchResult[];
 }
+
+export type OrderStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type PaymentMethod = 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
+
+export interface BillingAddress {
+  line1: string;
+  line2?: string | null;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
+
+export interface OrderLineItem {
+  product_id?: string | null;
+  product_name: string;
+  sku?: string | null;
+  quantity: number;
+  unit_price: number;
+  line_total?: number;
+}
+
+export interface BillingDetails {
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  shipping_amount: number;
+  total_amount: number;
+  currency: string;
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  billing_address?: BillingAddress | null;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  store_id: string;
+  customer_name: string;
+  customer_phone?: string | null;
+  customer_email?: string | null;
+  items: OrderLineItem[];
+  billing: BillingDetails;
+  status: OrderStatus;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type OrderCreate = Omit<Order, 'id' | 'order_number' | 'created_at' | 'updated_at'>;

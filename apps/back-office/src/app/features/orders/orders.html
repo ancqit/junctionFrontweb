@@ -1,0 +1,101 @@
+<header>
+  <div>
+    <p class="eyebrow">HISTORY</p>
+    <h1>Orders</h1>
+    <p class="sub">Bills created from the billing counter</p>
+  </div>
+  <a routerLink="/back-office/billing" class="primary">+ New bill</a>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<section class="toolbar" [formGroup]="filters">
+  <label>
+    Customer
+    <input formControlName="customer_name" placeholder="Search by name" />
+  </label>
+  <label>
+    Status
+    <select formControlName="status">
+      <option value="">All</option>
+      <option value="pending">Pending</option>
+      <option value="confirmed">Confirmed</option>
+      <option value="completed">Completed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </label>
+  <button type="button" class="ghost" (click)="reload()">Apply</button>
+</section>
+
+<section class="table-wrap">
+  @if (loading()) {
+    <p class="muted">Loading orders…</p>
+  } @else if (orders().length === 0) {
+    <div class="empty">
+      <strong>No orders yet</strong>
+      <p>Create your first bill from Billing.</p>
+      <a routerLink="/back-office/billing" class="primary">Go to billing</a>
+    </div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.id) {
+          <tr>
+            <td>
+              <strong>{{ order.order_number }}</strong>
+              <button type="button" class="link" (click)="toggle(order.id)">
+                {{ expandedId() === order.id ? 'Hide items' : 'View items' }}
+              </button>
+            </td>
+            <td>
+              <strong>{{ order.customer_name }}</strong>
+              @if (order.customer_phone) {
+                <small>{{ order.customer_phone }}</small>
+              }
+            </td>
+            <td>{{ itemCount(order) }}</td>
+            <td>{{ order.billing.total_amount | currency: order.billing.currency:'symbol-narrow':'1.0-2' }}</td>
+            <td>
+              <span>{{ order.billing.payment_method | titlecase }}</span>
+              <small>{{ order.billing.payment_status | titlecase }}</small>
+            </td>
+            <td><span class="badge" [attr.data-status]="order.status">{{ order.status | titlecase }}</span></td>
+            <td>{{ order.created_at | date:'medium' }}</td>
+            <td><button type="button" class="danger" (click)="remove(order)">Delete</button></td>
+          </tr>
+          @if (expandedId() === order.id) {
+            <tr class="detail">
+              <td colspan="8">
+                <ul>
+                  @for (item of order.items; track $index) {
+                    <li>
+                      <span>{{ item.product_name }} × {{ item.quantity }}</span>
+                      <span>{{ (item.line_total ?? item.quantity * item.unit_price) | currency: order.billing.currency:'symbol-narrow':'1.0-2' }}</span>
+                    </li>
+                  }
+                </ul>
+                @if (order.notes) {
+                  <p class="notes">Notes: {{ order.notes }}</p>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</section>

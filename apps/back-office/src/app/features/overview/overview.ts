@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EmployeesApi } from '../../core/employees.api';
+import { OrdersApi } from '../../core/orders.api';
 import { ProductsApi } from '../../core/products.api';
 
 @Component({
@@ -12,9 +13,11 @@ import { ProductsApi } from '../../core/products.api';
 export class OverviewPage implements OnInit {
   private readonly employeesApi = inject(EmployeesApi);
   private readonly productsApi = inject(ProductsApi);
+  private readonly ordersApi = inject(OrdersApi);
 
   readonly productCount = signal(0);
   readonly employeeCount = signal(0);
+  readonly orderCount = signal(0);
   readonly loading = signal(true);
 
   ngOnInit(): void {
@@ -23,8 +26,12 @@ export class OverviewPage implements OnInit {
       error: () => this.productCount.set(0),
     });
     this.employeesApi.list().subscribe({
-      next: (employees) => {
-        this.employeeCount.set(employees.length);
+      next: (employees) => this.employeeCount.set(employees.length),
+      error: () => this.employeeCount.set(0),
+    });
+    this.ordersApi.list().subscribe({
+      next: (orders) => {
+        this.orderCount.set(orders.length);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

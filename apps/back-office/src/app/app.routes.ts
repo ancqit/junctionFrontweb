@@ -19,6 +19,14 @@ export const APP_ROUTES: Routes = [
         path: 'products',
         loadComponent: () => import('./features/products/products').then((m) => m.ProductsPage),
       },
+      {
+        path: 'billing',
+        loadComponent: () => import('./features/billing/billing').then((m) => m.BillingPage),
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/orders/orders').then((m) => m.OrdersPage),
+      },
     ],
   },
 ];
