@@ -1,0 +1,92 @@
+<header>
+  <div>
+    <p class="eyebrow">CATALOG</p>
+    <h1>Products</h1>
+    <p class="sub">Inventory for Main Road Store</p>
+  </div>
+  <button type="button" class="primary" (click)="openForm()">+ Add product</button>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<section class="toolbar">
+  <button type="button" class="ghost" (click)="reload()">Refresh</button>
+</section>
+
+@if (showForm()) {
+  <section class="panel">
+    <div class="panel-head">
+      <h2>New product</h2>
+      <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="create()" class="grid-form">
+      <label>SKU<input formControlName="sku" placeholder="SKU-1001" /></label>
+      <label>Name<input formControlName="name" placeholder="Organic rice 5kg" /></label>
+      <label>Category<input formControlName="category" placeholder="Grocery" /></label>
+      <label>Price (₹)<input formControlName="price" type="number" min="0" step="0.01" /></label>
+      <label>Cost price<input formControlName="cost_price" type="number" min="0" step="0.01" placeholder="optional" /></label>
+      <label>Stock<input formControlName="stock_quantity" type="number" min="0" step="1" /></label>
+      <label>Unit<input formControlName="unit" placeholder="piece" /></label>
+      <label>Status
+        <select formControlName="status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="discontinued">Discontinued</option>
+        </select>
+      </label>
+      <label>Barcode<input formControlName="barcode" placeholder="optional" /></label>
+      <label>Tax %<input formControlName="tax_rate" type="number" min="0" max="100" step="0.01" placeholder="optional" /></label>
+      <label>Low stock at<input formControlName="low_stock_threshold" type="number" min="0" step="1" placeholder="optional" /></label>
+      <label class="full">Tags<input formControlName="tags" placeholder="organic, staple (comma separated)" /></label>
+      <label class="full">Description<textarea formControlName="description" rows="3"></textarea></label>
+      <div class="actions full">
+        <button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save product' }}</button>
+      </div>
+    </form>
+  </section>
+}
+
+<section class="table-wrap">
+  @if (loading()) {
+    <p class="muted">Loading products…</p>
+  } @else if (products().length === 0) {
+    <div class="empty">
+      <strong>No products yet</strong>
+      <p>Add your first catalog item with price and stock.</p>
+    </div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>SKU</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of products(); track product.id) {
+          <tr>
+            <td>
+              <strong>{{ product.name }}</strong>
+              @if (product.description) {
+                <small>{{ product.description }}</small>
+              }
+            </td>
+            <td>{{ product.sku }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.price | currency: product.currency:'symbol-narrow':'1.0-2' }}</td>
+            <td>{{ product.stock_quantity }} {{ product.unit }}</td>
+            <td><span class="badge" [attr.data-status]="product.status">{{ product.status | titlecase }}</span></td>
+            <td><button type="button" class="danger" (click)="remove(product)">Delete</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

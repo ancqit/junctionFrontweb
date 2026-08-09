@@ -1,13 +1,17 @@
 <div class="office">
   <aside>
     <div class="brand"><span>J</span> Junction</div>
-    <nav><a class="active">Overview</a><a>Orders</a><a>Catalog</a><a>Customers</a><a>Settings</a></nav>
-    <div class="store"><div class="avatar">MR</div><span><strong>Main Road Store</strong><small>Ranchi</small></span></div>
+    <nav>
+      <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview</a>
+      <a routerLink="/back-office/employees" routerLinkActive="active">Employees</a>
+      <a routerLink="/back-office/products" routerLinkActive="active">Products</a>
+    </nav>
+    <div class="store">
+      <div class="avatar">MR</div>
+      <span><strong>Main Road Store</strong><small>Ranchi</small></span>
+    </div>
   </aside>
   <main>
-    <header><div><p>Saturday, 8 August</p><h1>Good morning.</h1></div><button>+ Add product</button></header>
-    <section class="hero"><div><p class="eyebrow">TODAY AT A GLANCE</p><h2>Your store is ready for business.</h2><p>Everything looks healthy. New orders and customer activity will appear here.</p></div><div class="pulse"><span></span> Store online</div></section>
-    <section class="metrics"><article><p>Orders today</p><strong>0</strong><small>Waiting for the first order</small></article><article><p>Revenue</p><strong>₹0</strong><small>Today’s total</small></article><article><p>Products</p><strong>0</strong><small>Add your first product</small></article></section>
-    <section class="next"><div><p class="eyebrow">GET STARTED</p><h2>Build your storefront</h2></div><ol><li><span>1</span><div><strong>Add your products</strong><p>List what you sell with clear pricing.</p></div><button>Start →</button></li><li><span>2</span><div><strong>Complete your store profile</strong><p>Add business hours and contact details.</p></div><button>Open →</button></li></ol></section>
+    <router-outlet />
   </main>
 </div>

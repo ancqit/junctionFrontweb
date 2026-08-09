@@ -1,0 +1,47 @@
+:host { display: block; }
+header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 35px; }
+header p { margin: 0 0 8px; color: #778078; font-size: 13px; }
+h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; }
+.primary, ol a {
+  display: inline-flex; align-items: center; border: 0; border-radius: 10px; padding: 12px 18px;
+  color: white; background: #1a6541; font-weight: 700; text-decoration: none;
+}
+.hero {
+  display: flex; justify-content: space-between; align-items: end; padding: 38px; border-radius: 20px;
+  color: white; background: linear-gradient(135deg, #1b6743, #12462f);
+}
+.eyebrow { color: #d5bd6b; font-size: 11px; font-weight: 800; letter-spacing: .13em; margin: 0; }
+.hero h2 { margin: 10px 0; font: 500 30px Georgia, serif; }
+.hero p:last-child { max-width: 570px; color: #c0d0c6; margin: 0; }
+.pulse { white-space: nowrap; font-size: 13px; }
+.pulse span {
+  display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%;
+  background: #72db9c; box-shadow: 0 0 0 5px rgba(114, 219, 156, .13);
+}
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 22px 0; }
+.metrics article { padding: 25px; border: 1px solid #dedbd1; border-radius: 16px; background: #fff; }
+.metrics p { margin: 0; color: #707971; font-size: 13px; }
+.metrics strong { display: block; margin: 17px 0 9px; font: 500 34px Georgia, serif; }
+.metrics small { color: #909790; }
+.next { margin-top: 42px; }
+.next h2 { margin: 8px 0 18px; font: 500 28px Georgia, serif; }
+.next ol {
+  margin: 0; padding: 0; list-style: none; border: 1px solid #dedbd1; border-radius: 16px; background: white;
+}
+.next li {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
+  padding: 20px 23px; border-bottom: 1px solid #ebe9e2;
+}
+.next li:last-child { border: 0; }
+.next li > span {
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: #eef3ef; color: #1a6541; font-weight: 800;
+}
+.next li p { margin: 5px 0 0; color: #7b837c; font-size: 13px; }
+.next li a { color: #1a6541; background: transparent; }
+@media (max-width: 800px) {
+  .metrics { grid-template-columns: 1fr; }
+  .hero { display: block; }
+  .pulse { margin-top: 25px; }
+  h1 { font-size: 32px; }
+}

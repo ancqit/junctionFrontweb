@@ -1,0 +1,59 @@
+<header>
+  <div>
+    <p>{{ todayLabel() }}</p>
+    <h1>Good morning.</h1>
+  </div>
+  <a routerLink="/back-office/products" class="primary">+ Add product</a>
+</header>
+
+<section class="hero">
+  <div>
+    <p class="eyebrow">TODAY AT A GLANCE</p>
+    <h2>Your store is ready for business.</h2>
+    <p>Manage employees and products from the sidebar. New orders and customer activity will appear here.</p>
+  </div>
+  <div class="pulse"><span></span> Store online</div>
+</section>
+
+<section class="metrics">
+  <article>
+    <p>Orders today</p>
+    <strong>0</strong>
+    <small>Waiting for the first order</small>
+  </article>
+  <article>
+    <p>Employees</p>
+    <strong>{{ loading() ? '…' : employeeCount() }}</strong>
+    <small>People on your team</small>
+  </article>
+  <article>
+    <p>Products</p>
+    <strong>{{ loading() ? '…' : productCount() }}</strong>
+    <small>Items in your catalog</small>
+  </article>
+</section>
+
+<section class="next">
+  <div>
+    <p class="eyebrow">GET STARTED</p>
+    <h2>Build your storefront</h2>
+  </div>
+  <ol>
+    <li>
+      <span>1</span>
+      <div>
+        <strong>Add your products</strong>
+        <p>List what you sell with clear pricing and stock.</p>
+      </div>
+      <a routerLink="/back-office/products">Start →</a>
+    </li>
+    <li>
+      <span>2</span>
+      <div>
+        <strong>Add your team</strong>
+        <p>Create employee records for roles and departments.</p>
+      </div>
+      <a routerLink="/back-office/employees">Open →</a>
+    </li>
+  </ol>
+</section>
