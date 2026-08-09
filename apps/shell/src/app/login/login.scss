@@ -52,4 +52,5 @@ button:disabled { opacity: .55; cursor: wait; }
 .plan-price { grid-area: price; color: #1a6541; font-size: 14px; }
 .plan-limit { grid-area: limit; color: #667069; font-size: 12px; font-weight: 600; }
 .terms { margin: 28px 0 0; text-align: center; color: #8a918b; font-size: 11px; }
+.terms a { color: #26754d; font-weight: 700; text-decoration: none; }
 @media (max-width: 850px) { .login-page { grid-template-columns: 1fr; } .story { min-height: 260px; padding: 30px; } .story-copy { margin: 45px 0; } h1 { font-size: 45px; } .trusted { display: none; } .overlay { padding: 22px; } .card, .card.wide { padding: 30px 24px; } }

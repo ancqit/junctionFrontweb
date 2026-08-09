@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { PlanSummary } from '../core/auth.models';
@@ -17,7 +17,7 @@ import { RecaptchaService } from '../core/recaptcha.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, CurrencyPipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
