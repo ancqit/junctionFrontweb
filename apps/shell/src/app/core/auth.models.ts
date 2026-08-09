@@ -16,15 +16,20 @@ export interface AuthTokens {
   expiresInSeconds: number;
 }
 
+/** Roles from junctionBack (`UserRole` / login TokenResponse). */
+export type UserRole = 'admin' | 'owner' | 'viewer';
+
 export interface AuthUser {
   id: string;
   email: string | null;
   phone_number: string | null;
   display_name: string;
+  role?: UserRole | string | null;
+  user_type?: UserRole | string | null;
 }
 
 export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
-export type PlanStatus = 'active' | 'expired' | 'cancelled';
+export type PlanStatus = 'active' | 'grace_period' | 'expired' | 'cancelled' | 'deactivated';
 
 export interface PlanSummary {
   type: PlanType;
@@ -40,13 +45,65 @@ export interface PlanSummary {
   is_active: boolean;
   trial_used: boolean;
   selected_plan_type?: PlanType | null;
+  in_grace_period?: boolean;
+  grace_ends_at?: string | null;
 }
 
+/** Matches junctionBack TokenResponse (OTP verify / refresh / login). */
 export interface RefreshResponse {
   access_token: string;
   token_type: 'bearer';
   user: AuthUser;
   plan?: PlanSummary;
+  /** Top-level role from junctionBack; also mirrored on `user.role`. */
+  role?: UserRole | string | null;
 }
 
 export type OtpVerification = RefreshResponse;
+
+export function normalizeUserRole(
+  source?: AuthUser | UserRole | string | null,
+  fallbackRole?: UserRole | string | null,
+): UserRole {
+  const raw = String(
+    typeof source === 'string'
+      ? source
+      : (source?.role ?? source?.user_type ?? fallbackRole ?? 'owner'),
+  )
+    .trim()
+    .toLowerCase();
+  if (raw === 'admin') {
+    return 'admin';
+  }
+  if (raw === 'viewer') {
+    return 'viewer';
+  }
+  return 'owner';
+}
+
+export function homePathForRole(role: UserRole): string {
+  if (role === 'admin') {
+    return '/admin';
+  }
+  if (role === 'viewer') {
+    // Post-grace deactivated view inside the app (not an owner).
+    return '/back-office/activate';
+  }
+  return '/back-office';
+}
+
+/** True when Premium/trial ended and grace is over — user should be treated as a viewer. */
+export function isPostGraceViewerPlan(plan?: PlanSummary | null): boolean {
+  if (!plan) {
+    return false;
+  }
+  if (plan.in_grace_period || plan.status === 'grace_period') {
+    return false;
+  }
+  return (
+    plan.status === 'expired' ||
+    plan.status === 'deactivated' ||
+    plan.status === 'cancelled' ||
+    plan.is_active === false
+  );
+}

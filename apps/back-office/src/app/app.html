@@ -3,10 +3,12 @@
     <div class="brand"><span>J</span> Junction</div>
     @if (access.locked()) {
       <nav>
-        <a routerLink="/back-office/activate" routerLinkActive="active">Activate</a>
+        <a routerLink="/back-office/activate" routerLinkActive="active">Deactivated</a>
         <a routerLink="/back-office/plans" routerLinkActive="active">Plans</a>
       </nav>
-      <p class="lock-note">Account disabled after grace period. Activate a plan to unlock the store.</p>
+      <p class="lock-note">
+        Viewer mode — plan and grace period ended. Activate a plan to become an owner again.
+      </p>
     } @else {
       <nav>
         <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview</a>

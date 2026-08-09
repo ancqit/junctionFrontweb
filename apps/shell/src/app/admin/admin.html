@@ -1,0 +1,117 @@
+<div class="admin">
+  <aside>
+    <div class="brand"><span>J</span> Junction Admin</div>
+    <p class="admin-id">
+      <span>{{ adminName }}</span>
+      <small>Login ID · {{ adminId || '—' }}</small>
+    </p>
+    <nav>
+      <a routerLink="/admin" class="active">Shops</a>
+      <a routerLink="/back-office">Full application</a>
+    </nav>
+    <button type="button" class="ghost" (click)="logout()">Sign out</button>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">PLATFORM</p>
+        <h1>Shops</h1>
+        <p class="sub">
+          List of shops with product counts. Use the checkbox to activate or deactivate the shop owner account.
+        </p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="primary" (click)="goApp()">Open application</button>
+        <button type="button" class="ghost" (click)="reload()">Refresh</button>
+      </div>
+    </header>
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    @if (success()) {
+      <p class="success" role="status">{{ success() }}</p>
+    }
+
+    @if (forbidden()) {
+      <section class="empty">
+        <strong>Admin access required</strong>
+        <p>Your login role must be <code>admin</code> (admin registry / <code>ADMIN_PHONE</code> on junctionBack).</p>
+        <button type="button" class="primary" (click)="logout()">Sign out</button>
+      </section>
+    } @else {
+      <section class="toolbar" [formGroup]="search">
+        <label>
+          Search shops
+          <input formControlName="q" placeholder="Shop, owner, or phone" (input)="applyFilter()" (keydown.enter)="$event.preventDefault(); applyFilter()" />
+        </label>
+        <button type="button" class="primary" (click)="applyFilter()">Search</button>
+      </section>
+
+      <section class="table-wrap">
+        @if (loading()) {
+          <p class="muted">Loading shops…</p>
+        } @else if (filtered().length === 0) {
+          <div class="empty">
+            <strong>No shops found</strong>
+            <p>Shops are created via <code>POST /shops</code>. Merge junctionBack PR #10 if this API is missing.</p>
+          </div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>Shop</th>
+                <th>Owner</th>
+                <th>Products</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (shop of filtered(); track shop.id) {
+                <tr [class.disabled-row]="!shop.is_active">
+                  <td>
+                    <strong>{{ shop.name }}</strong>
+                    <small>{{ shop.phone_number }}</small>
+                    <small>Shop ID · {{ shop.id }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ shop.owner_name }}</strong>
+                    <small>{{ shop.owner_role | titlecase }}</small>
+                    <small>Owner ID · {{ shop.owner_user_id }}</small>
+                  </td>
+                  <td>
+                    <span class="count">{{ shop.products_count }}</span>
+                  </td>
+                  <td>
+                    <strong>{{ shop.plan_name }}</strong>
+                  </td>
+                  <td>
+                    <span class="badge" [attr.data-status]="shop.is_active ? 'active' : 'expired'">
+                      {{ shop.account_status | titlecase }}
+                    </span>
+                  </td>
+                  <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>
+                  <td>
+                    <label class="toggle">
+                      <input
+                        type="checkbox"
+                        [checked]="shop.is_active"
+                        [disabled]="savingId() === shop.id"
+                        (change)="onActiveChange(shop, $event)"
+                      />
+                      <span>{{ shop.is_active ? 'On' : 'Off' }}</span>
+                    </label>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
+  </main>
+</div>

@@ -154,7 +154,7 @@ export type OrderCreate = Omit<Order, 'id' | 'order_number' | 'created_at' | 'up
 
 /** Matches junctionBack plan_service.PlanType */
 export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
-export type PlanStatus = 'active' | 'expired' | 'cancelled';
+export type PlanStatus = 'active' | 'grace_period' | 'expired' | 'cancelled' | 'deactivated';
 
 export interface PlanOption {
   type: PlanType;
@@ -180,6 +180,8 @@ export interface PlanSummary {
   is_active: boolean;
   trial_used: boolean;
   selected_plan_type?: PlanType | null;
+  in_grace_period?: boolean;
+  grace_ends_at?: string | null;
 }
 
 export const FREE_TRIAL_DAYS = 15;

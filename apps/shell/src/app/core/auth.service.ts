@@ -2,16 +2,38 @@ import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { OtpChallenge, OtpRequest, OtpVerification, RefreshResponse } from './auth.models';
+import {
+  homePathForRole,
+  OtpChallenge,
+  OtpRequest,
+  OtpVerification,
+  RefreshResponse,
+  UserRole,
+} from './auth.models';
+import { SessionService } from './session.service';
 import { TokenService } from './token.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
   private readonly tokens = inject(TokenService);
+  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private refreshTimer?: ReturnType<typeof setTimeout>;
   readonly authenticated$ = new BehaviorSubject(this.tokens.isAuthenticated);
+
+  get role(): UserRole | null {
+    return this.session.role;
+  }
+
+  /** Login user id from OTP / refresh (admin identity for the console). */
+  get userId(): string | null {
+    return this.session.user?.id ?? null;
+  }
+
+  get displayName(): string | null {
+    return this.session.user?.display_name ?? null;
+  }
 
   requestOtp(payload: OtpRequest): Observable<OtpChallenge> {
     return this.api.post<OtpChallenge>('/auth/otp/request', payload);
@@ -24,13 +46,14 @@ export class AuthService {
         phone_number: phoneNumber,
         session_info: sessionInfo,
       })
-      .pipe(tap((value) => this.acceptAccessToken(value.access_token)));
+      .pipe(tap((value) => this.acceptSession(value)));
   }
 
   refresh(): Observable<RefreshResponse> {
     return this.api.post<RefreshResponse>('/auth/refresh', {}).pipe(
       tap((value) => {
         this.tokens.updateAccessToken(value.access_token);
+        this.persistUser(value);
         this.authenticated$.next(true);
         this.scheduleRefresh();
       }),
@@ -43,17 +66,31 @@ export class AuthService {
     }
   }
 
+  homePath(): string {
+    return homePathForRole(this.session.role ?? 'owner');
+  }
+
   logout(): void {
     clearTimeout(this.refreshTimer);
     this.tokens.clear();
+    this.session.clear();
     this.authenticated$.next(false);
     void this.router.navigateByUrl('/login');
   }
 
-  private acceptAccessToken(accessToken: string): void {
-    this.tokens.saveAccessToken(accessToken);
+  private acceptSession(value: RefreshResponse): void {
+    this.tokens.saveAccessToken(value.access_token);
+    this.persistUser(value);
     this.authenticated$.next(true);
     this.scheduleRefresh();
+  }
+
+  private persistUser(value: RefreshResponse): void {
+    if (!value.user) {
+      return;
+    }
+    // junctionBack returns role on TokenResponse and on user.role
+    this.session.saveFromAuthUser(value.user, value.role ?? value.user.role);
   }
 
   private scheduleRefresh(): void {

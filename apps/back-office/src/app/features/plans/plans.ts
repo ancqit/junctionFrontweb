@@ -2,8 +2,8 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { PlanAccessService } from '../../core/plan-access.service';
 import { FREE_TRIAL_DAYS, PlanOption, PlanSummary, PlanType } from '../../core/models';
+import { PlanAccessService } from '../../core/plan-access.service';
 import { PlansApi } from '../../core/plans.api';
 
 @Component({
@@ -42,10 +42,7 @@ export class PlansPage implements OnInit {
       .me()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (state) => {
-          this.current.set(state);
-          this.access.markUnlocked(state);
-        },
+        next: (state) => this.current.set(state),
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load your plan.')),
       });
   }
@@ -65,8 +62,8 @@ export class PlansPage implements OnInit {
         next: (state) => {
           this.current.set(state);
           this.access.markUnlocked(state);
-          this.success.set(`${state.name} is now active. Your account is unlocked.`);
-          if (this.wasLocked() && state.is_active) {
+          this.success.set(`${state.name} is now active. You are an owner again.`);
+          if (this.wasLocked() || state.is_active) {
             void this.router.navigateByUrl('/back-office');
           }
         },

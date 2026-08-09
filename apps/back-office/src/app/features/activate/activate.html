@@ -1,10 +1,11 @@
 <header>
   <div>
-    <p class="eyebrow">ACCOUNT DISABLED</p>
-    <h1>Your grace period has ended.</h1>
+    <p class="eyebrow">VIEWER · ACCOUNT DEACTIVATED</p>
+    <h1>Your plan and grace period have ended.</h1>
     <p class="sub">
-      Your free-trial grace period from junctionBack has ended. You can still sign in,
-      but store features stay locked until you activate a plan.
+      You are signed in as a <strong>viewer</strong>, not an owner. Premium (or trial) time is over and the
+      grace period has finished. You can still sign in and see what is locked, but store features stay off
+      until you activate a plan again.
     </p>
   </div>
 </header>
@@ -14,15 +15,28 @@
     <p class="muted">Checking your plan…</p>
   } @else {
     <div>
-      <p class="eyebrow">NEXT STEP</p>
-      <h2>Activate your account</h2>
+      <p class="eyebrow">WHAT YOU CAN SEE</p>
+      <h2>Deactivated view</h2>
       <p>
         @if (plan(); as current) {
-          {{ current.name }} is {{ current.status }}. Choose Starter, Growth, or Premium on the Plans page to turn everything back on.
+          {{ current.name }} is <strong>{{ current.status }}</strong>
+          @if (current.in_grace_period) {
+            (grace still running)
+          }.
+          As a viewer you keep visibility of your Junction account status. Overview, products, employees,
+          orders, and billing stay locked until you activate.
         } @else {
-          Choose a plan to reactivate billing, products, orders, and the rest of your back office.
+          As a viewer you can see this deactivated state. Choose a plan to become an owner again and unlock
+          the full back office.
         }
       </p>
+      <ul class="locked-list">
+        <li>Overview</li>
+        <li>Employees</li>
+        <li>Products</li>
+        <li>Orders</li>
+        <li>Billing</li>
+      </ul>
     </div>
     <a routerLink="/back-office/plans" class="primary">Activate account →</a>
   }

@@ -3,7 +3,7 @@ import { catchError, Observable, of } from 'rxjs';
 import { ApiService } from './api.service';
 
 export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
-export type PlanStatus = 'active' | 'expired' | 'cancelled';
+export type PlanStatus = 'active' | 'grace_period' | 'expired' | 'cancelled' | 'deactivated';
 
 export interface PlanOption {
   type: PlanType;

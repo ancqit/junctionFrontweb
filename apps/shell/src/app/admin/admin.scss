@@ -1,0 +1,83 @@
+:host { display: block; min-height: 100vh; color: #1a281f; background: #f3f1eb; }
+.admin { min-height: 100vh; display: grid; grid-template-columns: 240px 1fr; }
+aside {
+  position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: 28px 20px;
+  display: flex; flex-direction: column; gap: 18px; background: #0f2f22; color: white;
+}
+.brand { font-size: 18px; font-weight: 800; }
+.brand span {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; margin-right: 8px;
+  border-radius: 10px; background: #efd276; color: #194b31;
+}
+.admin-id {
+  margin: 0; display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,.08); color: #d7e4dc; font-size: 13px; font-weight: 700;
+}
+.admin-id small { color: #8fa597; font-size: 11px; font-weight: 600; word-break: break-all; }
+nav { display: grid; gap: 8px; margin-top: 18px; }
+nav a {
+  padding: 11px 12px; border-radius: 9px; color: #b9cabf; font-size: 14px; text-decoration: none;
+}
+nav .active { color: white; background: rgba(255,255,255,.11); }
+aside .ghost { margin-top: auto; }
+main { padding: 42px clamp(24px, 4vw, 64px); min-width: 0; }
+header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
+.header-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.eyebrow { margin: 0; color: #b7922f; font-size: 11px; font-weight: 800; letter-spacing: .13em; }
+h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
+.sub { margin: 0; color: #778078; font-size: 14px; }
+.primary, .ghost {
+  border: 0; border-radius: 10px; padding: 11px 14px; font-weight: 700; cursor: pointer;
+}
+.primary { color: white; background: #1a6541; }
+.ghost { color: #1a6541; background: #eef3ef; }
+.primary:disabled, .ghost:disabled { opacity: .55; cursor: not-allowed; }
+.error, .success {
+  margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; font-size: 14px;
+}
+.error { background: #f8eaea; color: #7a2a2a; }
+.success { background: #eef6f1; color: #1a6541; }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 18px;
+}
+.toolbar label { display: grid; gap: 6px; font-size: 12px; color: #667069; font-weight: 700; flex: 1; }
+.toolbar input {
+  border: 1px solid #d8d4c8; border-radius: 10px; padding: 10px 12px; font: inherit; background: white; min-width: 220px;
+}
+.table-wrap { border: 1px solid #dedbd1; border-radius: 16px; background: white; overflow: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #ebe9e2; vertical-align: top; }
+th { font-size: 12px; color: #707971; letter-spacing: .04em; text-transform: uppercase; }
+td strong { display: block; }
+td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
+.disabled-row { background: #fbf6f6; }
+.badge {
+  display: inline-flex; margin-top: 6px; padding: 4px 8px; border-radius: 999px;
+  background: #eef3ef; color: #1a6541; font-size: 12px; font-weight: 700;
+}
+.badge[data-status='expired'], .badge[data-status='cancelled'] { background: #f3eeee; color: #7a3b3b; }
+.badge[data-status='active'] { background: #eef3ef; color: #1a6541; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.count {
+  display: inline-flex; min-width: 2.5rem; justify-content: center; padding: 6px 10px;
+  border-radius: 999px; background: #eef3ef; color: #1a6541; font-weight: 800; font-size: 14px;
+}
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700; color: #36453b;
+}
+.toggle input {
+  width: 18px; height: 18px; accent-color: #1a6541; cursor: pointer;
+}
+.toggle input:disabled { cursor: wait; }
+.muted, .empty { padding: 28px; color: #778078; }
+.empty strong { display: block; margin-bottom: 6px; color: #1a281f; font: 500 20px Georgia, serif; }
+code { font-size: 12px; background: #eef3ef; padding: 1px 5px; border-radius: 4px; }
+.sub code { background: #e8ebe6; }
+.empty .primary { margin-top: 14px; }
+@media (max-width: 900px) {
+  .admin { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; }
+  nav { margin-top: 12px; grid-template-columns: 1fr 1fr; }
+  aside .ghost { margin-top: 8px; }
+  header { flex-direction: column; align-items: start; }
+}

@@ -13,6 +13,7 @@ export class ActivatePage implements OnInit {
 
   readonly plan = this.access.plan;
   readonly loading = this.access.loading;
+  readonly isViewer = this.access.isViewer;
 
   ngOnInit(): void {
     this.access.refresh().subscribe();
