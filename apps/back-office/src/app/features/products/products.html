@@ -22,7 +22,6 @@
       <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
     </div>
     <form [formGroup]="form" (ngSubmit)="create()" class="grid-form">
-      <label>SKU<input formControlName="sku" placeholder="SKU-1001" /></label>
       <label>Name<input formControlName="name" placeholder="Organic rice 5kg" /></label>
       <label>Category<input formControlName="category" placeholder="Grocery" /></label>
       <label>Price (₹)<input formControlName="price" type="number" min="0" step="0.01" /></label>
@@ -41,6 +40,77 @@
       <label>Low stock at<input formControlName="low_stock_threshold" type="number" min="0" step="1" placeholder="optional" /></label>
       <label class="full">Tags<input formControlName="tags" placeholder="organic, staple (comma separated)" /></label>
       <label class="full">Description<textarea formControlName="description" rows="3"></textarea></label>
+
+      <section class="image-search full">
+        <div class="image-search-head">
+          <div>
+            <h3>Search for pictures or products</h3>
+            <p>Enter a product name, then add up to {{ maxImages }} pictures from the CDN results.</p>
+          </div>
+          <button type="button" class="ghost" (click)="useProductNameForSearch()" [disabled]="!form.controls.name.value.trim()">
+            Use product name
+          </button>
+        </div>
+
+        <div class="image-search-bar">
+          <label class="query">
+            Product name
+            <input
+              [formControl]="imageSearchForm.controls.query"
+              placeholder="e.g. organic rice"
+              (keydown.enter)="$event.preventDefault(); searchImages()"
+            />
+          </label>
+          <button type="button" class="primary" (click)="searchImages()" [disabled]="searchingImages()">
+            {{ searchingImages() ? 'Searching…' : 'Search' }}
+          </button>
+        </div>
+
+        @if (imageSearchError()) {
+          <p class="image-error" role="alert">{{ imageSearchError() }}</p>
+        }
+
+        @if (selectedImages().length > 0) {
+          <div class="selected-images">
+            <div class="selected-images-head">
+              <strong>Selected pictures ({{ selectedImages().length }}/{{ maxImages }})</strong>
+              <button type="button" class="ghost" (click)="clearSelectedImages()">Clear all</button>
+            </div>
+            <div class="selected-images-grid">
+              @for (image of selectedImages(); track image.cdn_url; let i = $index) {
+                <article>
+                  <img [src]="image.thumbnail_url || image.cdn_url" [alt]="image.alt" />
+                  <div>
+                    <span>{{ i === 0 ? 'Main' : 'Extra ' + i }}</span>
+                    <button type="button" class="danger" (click)="removeSelectedImage(image.cdn_url)">Remove</button>
+                  </div>
+                </article>
+              }
+            </div>
+          </div>
+        }
+
+        @if (imageResults().length > 0) {
+          <p class="results-meta">
+            {{ imageSearchTotal() }} results · select up to {{ maxImages }}
+            ({{ selectedImages().length }}/{{ maxImages }} chosen)
+          </p>
+          <div class="image-grid">
+            @for (image of imageResults(); track image.id) {
+              <button
+                type="button"
+                class="image-card"
+                [class.selected]="isSelected(image)"
+                (click)="selectImage(image)"
+              >
+                <img [src]="image.thumbnail_url" [alt]="image.alt" loading="lazy" />
+                <span>{{ image.alt }}</span>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
       <div class="actions full">
         <button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save product' }}</button>
       </div>
@@ -61,7 +131,6 @@
       <thead>
         <tr>
           <th>Product</th>
-          <th>SKU</th>
           <th>Category</th>
           <th>Price</th>
           <th>Stock</th>
@@ -73,12 +142,18 @@
         @for (product of products(); track product.id) {
           <tr>
             <td>
-              <strong>{{ product.name }}</strong>
-              @if (product.description) {
-                <small>{{ product.description }}</small>
-              }
+              <div class="product-cell">
+                @if (productImageSrc(product); as imageSrc) {
+                  <img [src]="imageSrc" [alt]="product.name" />
+                }
+                <div>
+                  <strong>{{ product.name }}</strong>
+                  @if (product.description) {
+                    <small>{{ product.description }}</small>
+                  }
+                </div>
+              </div>
             </td>
-            <td>{{ product.sku }}</td>
             <td>{{ product.category }}</td>
             <td>{{ product.price | currency: product.currency:'symbol-narrow':'1.0-2' }}</td>
             <td>{{ product.stock_quantity }} {{ product.unit }}</td>

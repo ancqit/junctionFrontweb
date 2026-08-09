@@ -29,7 +29,7 @@ main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
   .office { grid-template-columns: 1fr; }
   aside { position: static; height: auto; }
   nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; gap: 6px; }
-  nav a { text-align: center; padding: 10px 8px; font-size: 13px; }
+  nav a { text-align: center; padding: 10px 8px; font-size: 12px; }
   .store { display: none; }
   main { padding: 28px 20px; }
 }
