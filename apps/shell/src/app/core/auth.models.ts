@@ -4,13 +4,22 @@ export interface OtpRequest {
   recaptcha_token: string;
 }
 
-export interface OtpChallenge { challengeId: string; session_info: string; expiresInSeconds: number; }
-export interface AuthTokens { accessToken: string; refreshToken: string; expiresInSeconds: number; }
+export interface OtpChallenge {
+  message: string;
+  expires_in_seconds: number;
+  session_info: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresInSeconds: number;
+}
 
 export interface AuthUser {
   id: string;
   email: string | null;
-  phone_number: string;
+  phone_number: string | null;
   display_name: string;
 }
 

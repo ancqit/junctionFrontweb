@@ -5,7 +5,7 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/((?!remotes/).*)",
+      "source": "/((?!remotes/|api/).*)",
       "destination": "/index.html"
     }
   ],
