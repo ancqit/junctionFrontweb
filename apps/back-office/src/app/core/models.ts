@@ -81,8 +81,6 @@ export interface Product {
 export type ProductCreate = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 export type ProductUpdate = Partial<Omit<ProductCreate, 'store_id'>>;
 
-<<<<<<< HEAD
-=======
 export interface ImageSearchResult {
   id: string;
   cdn_url: string;
@@ -103,7 +101,6 @@ export interface ImageSearchResponse {
   images: ImageSearchResult[];
 }
 
->>>>>>> origin/main
 export type OrderStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
