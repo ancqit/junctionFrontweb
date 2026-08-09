@@ -64,6 +64,22 @@ export class AdminPage implements OnInit {
       });
   }
 
+  needsReactivation(user: AdminUser): boolean {
+    return !user.plan.is_active || user.plan.status === 'expired';
+  }
+
+  actionLabel(user: AdminUser, planName: string): string {
+    return this.needsReactivation(user) ? `Reactivate · ${planName}` : `Activate · ${planName}`;
+  }
+
+  assignOrActivate(user: AdminUser, planType: PlanType): void {
+    if (this.needsReactivation(user)) {
+      this.activate(user, planType);
+      return;
+    }
+    this.assignPlan(user, planType);
+  }
+
   assignPlan(user: AdminUser, planType: PlanType): void {
     if (planType === 'free_trial') {
       return;
@@ -77,9 +93,9 @@ export class AdminPage implements OnInit {
       .subscribe({
         next: (updated) => {
           this.users.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-          this.success.set(`${updated.display_name} is now on ${updated.plan.name}.`);
+          this.success.set(`${updated.display_name} activated on ${updated.plan.name}.`);
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not update plan.')),
+        error: (err: unknown) => this.error.set(this.readError(err, 'Could not activate account.')),
       });
   }
 
@@ -96,9 +112,9 @@ export class AdminPage implements OnInit {
       .subscribe({
         next: (updated) => {
           this.users.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-          this.success.set(`${updated.display_name} activated on ${updated.plan.name}.`);
+          this.success.set(`${updated.display_name} reactivated on ${updated.plan.name}.`);
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not activate account.')),
+        error: (err: unknown) => this.error.set(this.readError(err, 'Could not reactivate account.')),
       });
   }
 
@@ -111,8 +127,8 @@ export class AdminPage implements OnInit {
   }
 
   statusLabel(user: AdminUser): string {
-    if (!user.plan.is_active || user.plan.status === 'expired') {
-      return 'Disabled';
+    if (this.needsReactivation(user)) {
+      return 'Inactive';
     }
     if (user.plan.type === 'free_trial') {
       return `Trial · ${user.plan.days_remaining ?? 0}d left`;

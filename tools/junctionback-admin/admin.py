@@ -36,6 +36,7 @@ class AdminUser(BaseModel):
     phone_number: str | None = None
     email: str | None = None
     is_admin: bool = False
+    role: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     plan: PlanSummary
@@ -46,7 +47,8 @@ class AdminSetPlanRequest(BaseModel):
 
 
 def require_admin(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
-    if current_user.get("is_admin") is True:
+    role = str(current_user.get("role") or current_user.get("user_type") or "").strip().lower()
+    if role == "admin" or current_user.get("is_admin") is True:
         return current_user
     phone = current_user.get("phone_number") or ""
     email = (current_user.get("email") or "").lower()
@@ -67,6 +69,7 @@ def serialize_admin_user(document: dict) -> AdminUser:
         phone_number=document.get("phone_number"),
         email=document.get("email"),
         is_admin=bool(document.get("is_admin")),
+        role=(document.get("role") or document.get("user_type")),
         created_at=document.get("created_at"),
         updated_at=document.get("updated_at"),
         plan=build_plan_summary(document),

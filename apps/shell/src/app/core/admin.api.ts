@@ -9,6 +9,8 @@ export interface AdminUser {
   phone_number?: string | null;
   email?: string | null;
   is_admin: boolean;
+  /** When present: admin | owner | viewer */
+  role?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   plan: PlanSummary;

@@ -2,7 +2,7 @@
   <aside>
     <div class="brand"><span>J</span> Junction Admin</div>
     <nav>
-      <a routerLink="/admin" class="active">Users & plans</a>
+      <a routerLink="/admin" class="active">Activate users</a>
       <a routerLink="/back-office">Back office</a>
     </nav>
     <button type="button" class="ghost" (click)="logout()">Sign out</button>
@@ -13,7 +13,7 @@
       <div>
         <p class="eyebrow">PLATFORM</p>
         <h1>Admin</h1>
-        <p class="sub">Manage users, free-trial grace, and plan activation from junctionBack</p>
+        <p class="sub">Activate and reactivate shop accounts. Pick a paid plan for each user.</p>
       </div>
       <button type="button" class="ghost" (click)="reload()">Refresh</button>
     </header>
@@ -28,8 +28,8 @@
     @if (forbidden()) {
       <section class="empty">
         <strong>Admin access required</strong>
-        <p>Your account is not marked as admin. Set <code>is_admin</code> or configure ADMIN_PHONE_NUMBERS / ADMIN_EMAILS on junctionBack.</p>
-        <button type="button" class="primary" (click)="goBackOffice()">Go to back office</button>
+        <p>Your login role must be <code>admin</code>. Shop owners use <code>owner</code> or <code>viewer</code>.</p>
+        <button type="button" class="primary" (click)="logout()">Sign out</button>
       </section>
     } @else {
       <section class="toolbar" [formGroup]="search">
@@ -57,12 +57,12 @@
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined</th>
-                <th>Actions</th>
+                <th>Activate / reactivate</th>
               </tr>
             </thead>
             <tbody>
               @for (user of users(); track user.id) {
-                <tr [class.disabled-row]="!user.plan.is_active || user.plan.status === 'expired'">
+                <tr [class.disabled-row]="needsReactivation(user)">
                   <td>
                     <strong>{{ user.display_name }}</strong>
                     <small>ID · {{ user.id }}</small>
@@ -96,9 +96,9 @@
                           type="button"
                           class="ghost"
                           [disabled]="savingId() === user.id"
-                          (click)="!user.plan.is_active || user.plan.status === 'expired' ? activate(user, plan.type) : assignPlan(user, plan.type)"
+                          (click)="assignOrActivate(user, plan.type)"
                         >
-                          {{ plan.name }}
+                          {{ actionLabel(user, plan.name) }}
                         </button>
                       }
                     </div>

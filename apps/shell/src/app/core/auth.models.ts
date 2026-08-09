@@ -16,11 +16,17 @@ export interface AuthTokens {
   expiresInSeconds: number;
 }
 
+/** Roles returned by the login / refresh API. */
+export type UserRole = 'admin' | 'owner' | 'viewer';
+
 export interface AuthUser {
   id: string;
   email: string | null;
   phone_number: string | null;
   display_name: string;
+  /** Prefer `role`; some backends may send `user_type`. */
+  role?: UserRole | string | null;
+  user_type?: UserRole | string | null;
 }
 
 export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
@@ -50,3 +56,26 @@ export interface RefreshResponse {
 }
 
 export type OtpVerification = RefreshResponse;
+
+export function normalizeUserRole(user?: AuthUser | null): UserRole {
+  const raw = String(user?.role ?? user?.user_type ?? 'owner')
+    .trim()
+    .toLowerCase();
+  if (raw === 'admin') {
+    return 'admin';
+  }
+  if (raw === 'viewer') {
+    return 'viewer';
+  }
+  return 'owner';
+}
+
+export function homePathForRole(role: UserRole): string {
+  if (role === 'admin') {
+    return '/admin';
+  }
+  if (role === 'viewer') {
+    return '/viewer';
+  }
+  return '/back-office';
+}
