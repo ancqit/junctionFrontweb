@@ -53,9 +53,7 @@ export class AuthService {
     return this.api.post<RefreshResponse>('/auth/refresh', {}).pipe(
       tap((value) => {
         this.tokens.updateAccessToken(value.access_token);
-        if (value.user) {
-          this.session.saveFromAuthUser(value.user);
-        }
+        this.persistUser(value);
         this.authenticated$.next(true);
         this.scheduleRefresh();
       }),
@@ -82,11 +80,17 @@ export class AuthService {
 
   private acceptSession(value: RefreshResponse): void {
     this.tokens.saveAccessToken(value.access_token);
-    if (value.user) {
-      this.session.saveFromAuthUser(value.user);
-    }
+    this.persistUser(value);
     this.authenticated$.next(true);
     this.scheduleRefresh();
+  }
+
+  private persistUser(value: RefreshResponse): void {
+    if (!value.user) {
+      return;
+    }
+    // junctionBack returns role on TokenResponse and on user.role
+    this.session.saveFromAuthUser(value.user, value.role ?? value.user.role);
   }
 
   private scheduleRefresh(): void {

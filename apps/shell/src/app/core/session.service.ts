@@ -23,8 +23,8 @@ export class SessionService {
 
   readonly changes$ = this.session$.asObservable();
 
-  saveFromAuthUser(user: AuthUser): UserRole {
-    const role = normalizeUserRole(user);
+  saveFromAuthUser(user: AuthUser, explicitRole?: UserRole | string | null): UserRole {
+    const role = normalizeUserRole(user, explicitRole);
     const next: StoredSession = {
       user: { ...user, role },
       role,

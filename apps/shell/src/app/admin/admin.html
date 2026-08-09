@@ -18,8 +18,7 @@
         <p class="eyebrow">PLATFORM</p>
         <h1>Shops</h1>
         <p class="sub">
-          List every shop with its product count. Use the checkbox to activate or deactivate.
-          Deactivate is checked on the backend for admin or the shop’s owner.
+          List of shops with product counts. Use the checkbox to activate or deactivate the shop owner account.
         </p>
       </div>
       <div class="header-actions">
@@ -38,25 +37,25 @@
     @if (forbidden()) {
       <section class="empty">
         <strong>Admin access required</strong>
-        <p>Your login role must be <code>admin</code>. Shop owners use <code>owner</code> or <code>viewer</code>.</p>
+        <p>Your login role must be <code>admin</code> (admin registry / <code>ADMIN_PHONE</code> on junctionBack).</p>
         <button type="button" class="primary" (click)="logout()">Sign out</button>
       </section>
     } @else {
       <section class="toolbar" [formGroup]="search">
         <label>
           Search shops
-          <input formControlName="q" placeholder="Shop, owner, phone, or email" (keydown.enter)="$event.preventDefault(); reload()" />
+          <input formControlName="q" placeholder="Shop, owner, or phone" (input)="applyFilter()" (keydown.enter)="$event.preventDefault(); applyFilter()" />
         </label>
-        <button type="button" class="primary" (click)="reload()">Search</button>
+        <button type="button" class="primary" (click)="applyFilter()">Search</button>
       </section>
 
       <section class="table-wrap">
         @if (loading()) {
           <p class="muted">Loading shops…</p>
-        } @else if (shops().length === 0) {
+        } @else if (filtered().length === 0) {
           <div class="empty">
             <strong>No shops found</strong>
-            <p>Shops appear here from owner/viewer accounts once the Admin shops API is live on junctionBack.</p>
+            <p>Shops are created via <code>POST /shops</code>. Merge junctionBack PR #10 if this API is missing.</p>
           </div>
         } @else {
           <table>
@@ -65,34 +64,34 @@
                 <th>Shop</th>
                 <th>Owner</th>
                 <th>Products</th>
+                <th>Plan</th>
                 <th>Status</th>
                 <th>Joined</th>
                 <th>Active</th>
               </tr>
             </thead>
             <tbody>
-              @for (shop of shops(); track shop.id) {
+              @for (shop of filtered(); track shop.id) {
                 <tr [class.disabled-row]="!shop.is_active">
                   <td>
                     <strong>{{ shop.name }}</strong>
-                    <small>Store · {{ shop.store_id }}</small>
+                    <small>{{ shop.phone_number }}</small>
+                    <small>Shop ID · {{ shop.id }}</small>
                   </td>
                   <td>
                     <strong>{{ shop.owner_name }}</strong>
-                    @if (shop.phone_number) {
-                      <small>{{ shop.phone_number }}</small>
-                    }
-                    @if (shop.email) {
-                      <small>{{ shop.email }}</small>
-                    }
-                    <small>Owner ID · {{ shop.owner_id }}</small>
+                    <small>{{ shop.owner_role | titlecase }}</small>
+                    <small>Owner ID · {{ shop.owner_user_id }}</small>
                   </td>
                   <td>
                     <span class="count">{{ shop.products_count }}</span>
                   </td>
                   <td>
+                    <strong>{{ shop.plan_name }}</strong>
+                  </td>
+                  <td>
                     <span class="badge" [attr.data-status]="shop.is_active ? 'active' : 'expired'">
-                      {{ shop.is_active ? 'Active' : 'Inactive' }}
+                      {{ shop.account_status | titlecase }}
                     </span>
                   </td>
                   <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>

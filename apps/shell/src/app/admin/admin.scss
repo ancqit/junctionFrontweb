@@ -71,7 +71,8 @@ td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
 .toggle input:disabled { cursor: wait; }
 .muted, .empty { padding: 28px; color: #778078; }
 .empty strong { display: block; margin-bottom: 6px; color: #1a281f; font: 500 20px Georgia, serif; }
-.empty code { font-size: 12px; }
+code { font-size: 12px; background: #eef3ef; padding: 1px 5px; border-radius: 4px; }
+.sub code { background: #e8ebe6; }
 .empty .primary { margin-top: 14px; }
 @media (max-width: 900px) {
   .admin { grid-template-columns: 1fr; }

@@ -1,38 +1,39 @@
-Apply to ancqit/junctionBack:
+Aligned with ancqit/junctionBack PR #10 (shops + role keeper + admin).
 
-1. Copy admin.py -> app/admin.py
-2. In app/main.py:
-   from .admin import router as admin_router
-   app.include_router(admin_router)
-3. Login / refresh UserSummary must include role (or user_type):
-     "admin"  -> shell /admin (shops + full app access via login ID)
-     "owner"  -> shell /back-office (shop workspace)
-     "viewer" -> shell /viewer (shop-owner explanatory page)
-4. Optional env (in addition to role=admin):
-   ADMIN_PHONE_NUMBERS=+9198xxxxxxxx,+9199xxxxxxxx
-   ADMIN_EMAILS=you@example.com
-   Or set is_admin: true / role: "admin" on a user document in MongoDB.
+Do not invent /admin/shops — use the live contract below.
+
+Auth (OTP verify / refresh / login):
+  TokenResponse = { access_token, token_type, user, plan, role }
+  user.role and top-level role: admin | owner | viewer
 
 Shops:
-  Non-admin users (owner/viewer) are listed as shops.
-  Product count = products.count_documents({ store_id })
-  store_id defaults to the user id when missing.
-  shop_active / is_active flags drive the activate checkbox.
+  GET    /shops
+  GET    /shops/by-name/{shop_name}
+  GET    /shops/{shop_id}
+  POST   /shops                     { "name" }
+  PUT    /shops/{shop_id}           { "name" }
+  DELETE /shops/{shop_id}
 
-Deactivate protocol:
-  - Admin may activate or deactivate any shop.
-  - Deactivate is also allowed when the caller's login ID matches shop.owner_id
-    (the shop owner deactivating their own shop).
-  - Activate requires admin.
+  Shop = { id, name, phone_number, owner_user_id, created_at, updated_at }
+  Access: admin sees all; owner/viewer see shops they own.
+  Shop mutations check admin OR caller login ID == owner_user_id.
 
-Endpoints:
-  GET  /admin/shops?q=
-  GET  /admin/shops/{shop_id}
-  POST /admin/shops/{shop_id}/status      body: { "is_active": true|false }
-  POST /admin/shops/{shop_id}/activate
-  POST /admin/shops/{shop_id}/deactivate
+Admin:
+  GET  /admin/users
+  POST /admin/users/{user_id}/activate      (no body)
+  POST /admin/users/{user_id}/deactivate    (no body — admin only)
+  PATCH /admin/users/{user_id}/role         { "role": "owner"|"viewer"|"admin" }
+  GET/PUT /admin/role-keeper
+  GET/POST /admin/admins[/refresh]
 
-  GET  /admin/users?q=
-  GET  /admin/users/{user_id}
-  POST /admin/users/{user_id}/plan      body: { "plan_type": "starter"|"growth"|"premium" }
-  POST /admin/users/{user_id}/activate  body: { "plan_type": "starter"|"growth"|"premium" }
+  AdminUserRecord includes account_status, plan_*, role.
+  Checkbox on the shell admin page toggles the shop owner's account via activate/deactivate.
+
+Products (for counts):
+  GET /products?store_id={shop.id}
+  Shell aggregates GET /products and counts by store_id === shop.id.
+
+Shell admin page wires:
+  GET /shops + GET /admin/users + GET /products
+  → table with product count
+  → checkbox → POST /admin/users/{owner_user_id}/activate|deactivate
