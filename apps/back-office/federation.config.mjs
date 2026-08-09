@@ -4,6 +4,7 @@ export default withNativeFederation({
   name: 'backOffice',
   exposes: {
     './Component': './apps/back-office/src/app/app.ts',
+    './Routes': './apps/back-office/src/app/app.routes.ts',
   },
   shared: {
     '@angular/core': { singleton: true, strictVersion: true, requiredVersion: 'auto' },

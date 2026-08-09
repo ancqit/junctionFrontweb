@@ -8,7 +8,7 @@ export const routes: Routes = [
   {
     path: 'back-office',
     canActivate: [authGuard],
-    loadComponent: () => loadRemoteModule('backOffice', './Component').then((module) => module.App),
+    loadChildren: () => loadRemoteModule('backOffice', './Routes').then((module) => module.APP_ROUTES),
   },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
