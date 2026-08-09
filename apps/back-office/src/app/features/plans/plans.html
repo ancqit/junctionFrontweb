@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">SUBSCRIPTION</p>
     <h1>Plans</h1>
-    <p class="sub">Choose a plan to join the list. Your application is forwarded for activation.</p>
+    <p class="sub">Choose a plan to join the waitlist. We forward your shop name, city, and locality with the application.</p>
   </div>
   <button type="button" class="ghost" (click)="reload()">Refresh</button>
 </header>
@@ -18,16 +18,16 @@
   <p class="muted">Loading plans…</p>
 } @else if (application(); as app) {
   <section class="forwarded" role="status">
-    <p class="eyebrow">APPLICATION FORWARDED</p>
-    <h2>You’re on the list for {{ app.plan_name }}.</h2>
+    <p class="eyebrow">WAITLIST · APPLICATION FORWARDED</p>
+    <h2>You’re on the list for {{ requestedPlanName(app) }}.</h2>
     <p>
-      {{ app.message || ('You have been added to the list for the ' + app.plan_name + ' plan.') }}
-      Your application has been forwarded. We’ll activate access once it is reviewed.
+      {{ app.switch_message }}
+      Your application has been forwarded with shop details for review. We’ll activate access once it is approved.
     </p>
     <dl>
       <div>
         <dt>Plan</dt>
-        <dd>{{ app.plan_name }}</dd>
+        <dd>{{ requestedPlanName(app) }}</dd>
       </div>
       <div>
         <dt>Status</dt>
@@ -37,9 +37,35 @@
         <dt>Submitted</dt>
         <dd>{{ app.created_at | date:'medium' }}</dd>
       </div>
+      <div>
+        <dt>Shop</dt>
+        <dd>{{ app.shop_name }}</dd>
+      </div>
+      <div>
+        <dt>City</dt>
+        <dd>{{ app.location.city }}</dd>
+      </div>
+      <div>
+        <dt>Locality</dt>
+        <dd>{{ app.location.locality }}</dd>
+      </div>
     </dl>
   </section>
 } @else {
+  @if (!shopReady()) {
+    <section class="shop-needed" role="status">
+      <div>
+        <p class="eyebrow">SHOP REQUIRED</p>
+        <h2>Set shop name, city, and locality first.</h2>
+        <p>
+          Joining a plan waitlist sends your shop name, city, and locality with the request.
+          Save them on Overview, then come back here.
+        </p>
+      </div>
+      <a routerLink="/back-office" class="primary">Open Overview</a>
+    </section>
+  }
+
   @if (current(); as plan) {
     <section class="status" [attr.data-status]="plan.status" [attr.data-type]="plan.type">
       <div>
@@ -61,6 +87,15 @@
         </p>
       </div>
     </section>
+  }
+
+  @if (shopReady()) {
+    @if (shop(); as shop) {
+      <p class="shop-chip">
+        Waitlist will include <strong>{{ shop.name }}</strong>
+        · {{ shop.locality }}, {{ shop.city }}
+      </p>
+    }
   }
 
   <section class="plan-grid">
@@ -87,7 +122,7 @@
             {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
           </button>
         } @else {
-          <p class="note">Joining the list forwards your application for review.</p>
+          <p class="note">Joins the waitlist and forwards shop name, city, and locality for review.</p>
           <button
             type="button"
             class="primary"
@@ -96,8 +131,10 @@
           >
             @if (isCurrent(plan.type)) {
               Current plan
+            } @else if (!shopReady()) {
+              Set shop details first
             } @else {
-              Choose {{ plan.name }}
+              Join {{ plan.name }} waitlist
             }
           </button>
         }

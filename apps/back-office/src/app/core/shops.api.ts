@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { catchError, Observable, of } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
 
 export interface Shop {
@@ -7,16 +7,26 @@ export interface Shop {
   name: string;
   phone_number: string;
   owner_user_id: string;
-  city?: string | null;
-  locality?: string | null;
+  city: string;
+  locality: string;
   created_at: string;
   updated_at: string;
 }
 
+/** Matches junctionBack ShopCreate — name, city, and locality are required. */
 export interface ShopWrite {
   name: string;
-  city?: string | null;
-  locality?: string | null;
+  city: string;
+  locality: string;
+}
+
+interface CityListResponse {
+  cities: string[];
+}
+
+interface LocalityListResponse {
+  city: string;
+  localities: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,7 +41,7 @@ export class ShopsApi {
     return this.api.post<Shop>('/shops', payload);
   }
 
-  update(shopId: string, payload: ShopWrite): Observable<Shop> {
+  update(shopId: string, payload: Partial<ShopWrite>): Observable<Shop> {
     return this.api.put<Shop>(`/shops/${shopId}`, payload);
   }
 }
@@ -41,7 +51,8 @@ export class LocationsApi {
   private readonly api = inject(BackOfficeApiService);
 
   cities(): Observable<string[]> {
-    return this.api.get<string[]>('/locations/cities').pipe(
+    return this.api.get<CityListResponse | string[]>('/locations/cities').pipe(
+      map((res) => (Array.isArray(res) ? res : (res?.cities ?? []))),
       catchError(() => of([])),
     );
   }
@@ -51,8 +62,11 @@ export class LocationsApi {
     if (!trimmed) {
       return of([]);
     }
-    return this.api.get<string[]>('/locations/localities', { city: trimmed }).pipe(
-      catchError(() => of([])),
-    );
+    return this.api
+      .get<LocalityListResponse | string[]>('/locations/localities', { city: trimmed })
+      .pipe(
+        map((res) => (Array.isArray(res) ? res : (res?.localities ?? []))),
+        catchError(() => of([])),
+      );
   }
 }

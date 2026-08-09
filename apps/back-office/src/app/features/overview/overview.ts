@@ -44,8 +44,8 @@ export class OverviewPage implements OnInit {
 
   readonly shopForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
-    city: [''],
-    locality: [''],
+    city: ['', [Validators.required, Validators.minLength(2)]],
+    locality: ['', [Validators.required, Validators.minLength(2)]],
   });
 
   readonly greetingName = computed(() => this.profile()?.display_name?.trim() || 'there');
@@ -94,8 +94,8 @@ export class OverviewPage implements OnInit {
     }
     const payload = {
       name: this.shopForm.controls.name.value.trim(),
-      city: this.shopForm.controls.city.value.trim() || null,
-      locality: this.shopForm.controls.locality.value.trim() || null,
+      city: this.shopForm.controls.city.value.trim(),
+      locality: this.shopForm.controls.locality.value.trim(),
     };
     this.shopSaving.set(true);
     this.shopError.set('');

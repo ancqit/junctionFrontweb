@@ -1,31 +1,21 @@
-Apply to ancqit/junctionBack (this bot cannot push that repo).
+Aligned with junctionBack main (PR #11). Frontend uses these live endpoints:
 
-1. database.py — add collections:
-     plan_applications = database["plan_applications"]
-     cities = database["cities"]
-     localities = database["localities"]
-
-2. Copy plan_applications.py and locations.py into app/
-
-3. main.py:
-     from .plan_applications import router as plan_applications_router
-     from .locations import router as locations_router
-     app.include_router(plan_applications_router)
-     app.include_router(locations_router)
-
-4. Extend shops with optional city + locality (see shops_city_locality.txt)
-
-Endpoints used by junctionFrontweb:
-
-  POST /plans/applications          { "plan_type": "starter"|"growth"|"premium" }
+  POST /plans/apply   { "plan_type": "starter"|"growth"|"premium", "shop_id": "..." }
   GET  /plans/applications/me
+  GET  /plans/apply/preview?plan_type=premium
 
-  GET  /locations/cities
-  GET  /locations/localities?city=Ranchi
+  Aliases: POST /waitlist, GET /waitlist/me, GET /waitlist/preview
 
-  GET/POST /shops
-  PUT /shops/{id}                   { "name", "city?", "locality?" }
+  GET  /locations/cities              → { "cities": string[] }
+  GET  /locations/localities?city=…   → { "city", "localities": string[] }
 
-Plan select UX:
-  Choosing a plan adds the user to the application list and returns status "forwarded".
-  The Plans page then shows the forwarded application view (not immediate unlock).
+  POST /shops                         { "name", "city", "locality" }  (all required)
+  PUT  /shops/{id}
+
+Plan click UX:
+  1. Shop must already have name + city + locality (Overview).
+  2. POST /plans/apply with plan_type + shop_id.
+  3. Backend snapshots shop_name and location { city, locality } onto the waitlist entry.
+  4. Plans page shows pending waitlist / application-forwarded view.
+
+The Python stubs in this folder are obsolete drafts — prefer junctionBack app/plan_applications.py.
