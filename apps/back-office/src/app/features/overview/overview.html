@@ -37,6 +37,62 @@
   </section>
 }
 
+<section class="shop-card" [formGroup]="shopForm">
+  <div>
+    <p class="eyebrow">SHOP PROFILE</p>
+    <h2>Shop name, city & locality</h2>
+    <p class="shop-sub">
+      City and locality use dropdowns when junctionBack returns values. Otherwise you can type your own and save.
+    </p>
+  </div>
+
+  @if (shopError()) {
+    <p class="error" role="alert">{{ shopError() }}</p>
+  }
+  @if (shopSuccess()) {
+    <p class="success" role="status">{{ shopSuccess() }}</p>
+  }
+
+  <div class="shop-fields">
+    <label>
+      Shop name
+      <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
+    </label>
+
+    <label>
+      City
+      @if (useCityDropdown()) {
+        <select formControlName="city" (change)="onCityChange()">
+          <option value="">Select city</option>
+          @for (city of cities(); track city) {
+            <option [value]="city">{{ city }}</option>
+          }
+        </select>
+      } @else {
+        <input formControlName="city" placeholder="Enter city" (change)="onCityChange()" />
+      }
+    </label>
+
+    <label>
+      Locality
+      @if (useLocalityDropdown()) {
+        <select formControlName="locality">
+          <option value="">Select locality</option>
+          @for (locality of localities(); track locality) {
+            <option [value]="locality">{{ locality }}</option>
+          }
+        </select>
+      } @else {
+        <input formControlName="locality" placeholder="Enter locality" />
+      }
+    </label>
+  </div>
+
+  <button type="button" class="primary" (click)="saveShop()" [disabled]="shopSaving()">
+    {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
+  </button>
+</section>
+
 <section class="hero">
   <div>
     <p class="eyebrow">TODAY AT A GLANCE</p>

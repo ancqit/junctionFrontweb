@@ -1,0 +1,16 @@
+Shop model fields to add in app/shops.py (alongside name):
+
+  city: str | None = None
+  locality: str | None = None
+
+ShopCreate / ShopUpdate:
+
+  name: str
+  city: str | None = None
+  locality: str | None = None
+
+On create/update, persist city + locality on the shop document.
+
+serialize_shop should include:
+  city=document.get("city"),
+  locality=document.get("locality"),

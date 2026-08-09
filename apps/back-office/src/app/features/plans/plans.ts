@@ -1,33 +1,28 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FREE_TRIAL_DAYS, PlanOption, PlanSummary, PlanType } from '../../core/models';
-import { PlanAccessService } from '../../core/plan-access.service';
-import { PlansApi } from '../../core/plans.api';
+import { PlanApplication, PlansApi } from '../../core/plans.api';
 
 @Component({
   selector: 'app-plans',
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, TitleCasePipe],
   templateUrl: './plans.html',
   styleUrl: './plans.scss',
 })
 export class PlansPage implements OnInit {
   private readonly api = inject(PlansApi);
-  private readonly access = inject(PlanAccessService);
-  private readonly router = inject(Router);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
+  readonly application = signal<PlanApplication | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
   readonly success = signal('');
   readonly trialDays = FREE_TRIAL_DAYS;
-  readonly wasLocked = signal(false);
 
   ngOnInit(): void {
-    this.wasLocked.set(this.access.locked());
     this.reload();
   }
 
@@ -37,6 +32,9 @@ export class PlansPage implements OnInit {
     this.api.list().subscribe({
       next: (plans) => this.plans.set(plans),
       error: () => this.plans.set([]),
+    });
+    this.api.myApplication().subscribe({
+      next: (app) => this.application.set(app),
     });
     this.api
       .me()
@@ -56,22 +54,41 @@ export class PlansPage implements OnInit {
     this.error.set('');
     this.success.set('');
     this.api
-      .select(planType)
+      .apply(planType)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: (state) => {
-          this.current.set(state);
-          this.access.markUnlocked(state);
-          this.success.set(`${state.name} is now active. You are an owner again.`);
-          if (this.wasLocked() || state.is_active) {
-            void this.router.navigateByUrl('/back-office');
-          }
+        next: (app) => {
+          this.application.set(app);
+          this.success.set(
+            `You are added to the list for the ${app.plan_name} plan. Your application has been forwarded.`,
+          );
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not select this plan.')),
+        error: (err: unknown) => {
+          // Fallback if applications API is not deployed yet: select still records intent.
+          this.api.select(planType).subscribe({
+            next: (state) => {
+              const app: PlanApplication = {
+                id: 'local',
+                plan_type: planType,
+                plan_name: state.name,
+                status: 'forwarded',
+                message: `You are added to the list for the ${state.name} plan.`,
+                created_at: new Date().toISOString(),
+              };
+              this.application.set(app);
+              this.current.set(state);
+              this.success.set(
+                `You are added to the list for the ${state.name} plan. Your application has been forwarded.`,
+              );
+            },
+            error: (selectErr: unknown) =>
+              this.error.set(this.readError(selectErr, this.readError(err, 'Could not join the plan list.'))),
+          });
+        },
       });
   }
 
-  productLimitLabel(plan: PlanOption): string {
+  productLimitLabel(plan: PlanOption | PlanSummary): string {
     if (plan.profile_only || plan.max_products === 0) {
       return 'Profile only · yearly';
     }
@@ -79,7 +96,8 @@ export class PlansPage implements OnInit {
       return 'More than 150 products · yearly';
     }
     if (plan.type === 'free_trial') {
-      return `Up to ${plan.max_products} products for ${plan.duration_days ?? this.trialDays} days`;
+      const days = 'duration_days' in plan ? (plan.duration_days ?? this.trialDays) : this.trialDays;
+      return `Up to ${plan.max_products} products for ${days} days`;
     }
     return `Up to ${plan.max_products} products · yearly`;
   }
@@ -91,6 +109,9 @@ export class PlansPage implements OnInit {
 
   canSelect(plan: PlanOption): boolean {
     if (plan.type === 'free_trial') {
+      return false;
+    }
+    if (this.application()?.status === 'forwarded' || this.application()?.status === 'pending') {
       return false;
     }
     return !this.isCurrent(plan.type);

@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">SUBSCRIPTION</p>
     <h1>Plans</h1>
-    <p class="sub">Starter, Growth, Premium, and a {{ trialDays }}-day free trial from junctionBack</p>
+    <p class="sub">Choose a plan to join the list. Your application is forwarded for activation.</p>
   </div>
   <button type="button" class="ghost" (click)="reload()">Refresh</button>
 </header>
@@ -16,6 +16,29 @@
 
 @if (loading()) {
   <p class="muted">Loading plans…</p>
+} @else if (application(); as app) {
+  <section class="forwarded" role="status">
+    <p class="eyebrow">APPLICATION FORWARDED</p>
+    <h2>You’re on the list for {{ app.plan_name }}.</h2>
+    <p>
+      {{ app.message || ('You have been added to the list for the ' + app.plan_name + ' plan.') }}
+      Your application has been forwarded. We’ll activate access once it is reviewed.
+    </p>
+    <dl>
+      <div>
+        <dt>Plan</dt>
+        <dd>{{ app.plan_name }}</dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd>{{ app.status | titlecase }}</dd>
+      </div>
+      <div>
+        <dt>Submitted</dt>
+        <dd>{{ app.created_at | date:'medium' }}</dd>
+      </div>
+    </dl>
+  </section>
 } @else {
   @if (current(); as plan) {
     <section class="status" [attr.data-status]="plan.status" [attr.data-type]="plan.type">
@@ -29,8 +52,7 @@
               · ends {{ plan.ends_at | date:'mediumDate' }}
             }
           } @else if (plan.is_active) {
-            Active
-            · {{ productLimitLabel(plan) }}
+            Active · {{ productLimitLabel(plan) }}
           } @else if (plan.status === 'expired') {
             Trial ended — choose Starter, Growth, or Premium to continue
           } @else {
@@ -65,7 +87,7 @@
             {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
           </button>
         } @else {
-          <p class="note">Yearly plan · overview shows days remaining of 365.</p>
+          <p class="note">Joining the list forwards your application for review.</p>
           <button
             type="button"
             class="primary"
