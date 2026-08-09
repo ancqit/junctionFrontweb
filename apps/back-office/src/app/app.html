@@ -21,13 +21,113 @@
     }
     <div class="aside-footer">
       <button type="button" class="logout" (click)="logout()">Log out</button>
-      <div class="store">
-        <div class="avatar">MR</div>
-        <span><strong>Main Road Store</strong><small>Ranchi</small></span>
-      </div>
+      <button type="button" class="store" (click)="openProfileModal()" aria-haspopup="dialog">
+        <div class="avatar">
+          @if (profile()?.avatar_url) {
+            <img [src]="profile()!.avatar_url!" [alt]="storeTitle()" />
+          } @else {
+            {{ avatarInitials() }}
+          }
+        </div>
+        <span>
+          <strong>{{ storeTitle() }}</strong>
+          <small>{{ storePlace() }}</small>
+          <small class="pct">Profile {{ completeness().percent }}%</small>
+        </span>
+      </button>
     </div>
   </aside>
   <main>
     <router-outlet />
   </main>
 </div>
+
+@if (profileModalOpen()) {
+  <div class="modal-backdrop" (click)="closeProfileModal()" role="presentation"></div>
+  <div
+    class="profile-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="profile-modal-title"
+  >
+    <header>
+      <div>
+        <p class="eyebrow">YOUR PROFILE</p>
+        <h2 id="profile-modal-title">Complete your Junction profile</h2>
+        <p class="sub">
+          Reach 100% using junctionBack profile, DigiLocker, and shop APIs.
+        </p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeProfileModal()" aria-label="Close">×</button>
+    </header>
+
+    <div class="progress" [attr.aria-valuenow]="completeness().percent" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar">
+        <span [style.width.%]="completeness().percent"></span>
+      </div>
+      <strong>{{ completeness().percent }}%</strong>
+      <small>{{ completeness().doneCount }} of {{ completeness().total }} checks</small>
+    </div>
+
+    <ul class="checks">
+      @for (item of completeness().items; track item.id) {
+        <li [class.done]="item.done">
+          <span class="mark" aria-hidden="true">{{ item.done ? '✓' : '○' }}</span>
+          <div>
+            <strong>{{ item.label }}</strong>
+            <p>{{ item.detail }}</p>
+            <code>{{ item.api }}</code>
+          </div>
+          @if (item.id === 'digilocker' && !item.done) {
+            <button
+              type="button"
+              class="ghost"
+              (click)="connectDigiLocker()"
+              [disabled]="connectingDigiLocker()"
+            >
+              {{ connectingDigiLocker() ? 'Connecting…' : 'Verify DigiLocker' }}
+            </button>
+          }
+          @if (item.id === 'shop' && !item.done) {
+            <a routerLink="/back-office" class="ghost" (click)="closeProfileModal()">Open Overview</a>
+          }
+        </li>
+      }
+    </ul>
+
+    <section class="edit" [formGroup]="profileForm">
+      <p class="eyebrow">UPDATE PROFILE</p>
+      <h3>Name, bio & avatar</h3>
+      <p class="sub">Saved with <code>PATCH /profile</code>.</p>
+
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+      @if (success()) {
+        <p class="success" role="status">{{ success() }}</p>
+      }
+
+      <label>
+        Display name
+        <input formControlName="display_name" autocomplete="name" />
+      </label>
+      <label>
+        Bio
+        <textarea formControlName="bio" rows="3" placeholder="A short line about you or your shop"></textarea>
+      </label>
+      <label>
+        Avatar URL
+        <input formControlName="avatar_url" placeholder="https://…" />
+      </label>
+
+      <div class="actions">
+        <button type="button" class="primary" (click)="saveProfile()" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save profile' }}
+        </button>
+        @if (profile()?.phone_number) {
+          <span class="phone">Phone · {{ profile()?.phone_number }}</span>
+        }
+      </div>
+    </section>
+  </div>
+}

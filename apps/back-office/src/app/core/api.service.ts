@@ -25,6 +25,10 @@ export class BackOfficeApiService {
     return this.http.put<T>(this.url(path), body, { headers: this.authHeaders() });
   }
 
+  patch<T>(path: string, body: unknown): Observable<T> {
+    return this.http.patch<T>(this.url(path), body, { headers: this.authHeaders() });
+  }
+
   delete(path: string): Observable<void> {
     return this.http.delete<void>(this.url(path), { headers: this.authHeaders() });
   }
