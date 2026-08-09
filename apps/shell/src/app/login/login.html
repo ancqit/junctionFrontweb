@@ -10,8 +10,13 @@
   </section>
 
   <section class="overlay" aria-labelledby="login-title">
-    <div class="card">
-      <div class="steps" aria-label="Login progress"><span class="active"></span><span [class.active]="step() === 'otp'"></span></div>
+    <div class="card" [class.wide]="step() === 'plans'">
+      <div class="steps" aria-label="Login progress">
+        <span class="active"></span>
+        <span [class.active]="step() === 'otp' || step() === 'plans'"></span>
+        <span [class.active]="step() === 'plans'"></span>
+      </div>
+
       @if (step() === 'details') {
         <p class="kicker">Welcome to Junction</p>
         <h2 id="login-title">Let’s get you set up</h2>
@@ -24,7 +29,7 @@
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
           <button type="submit" [disabled]="busy()">{{ busy() ? 'Sending…' : 'Send OTP' }}</button>
         </form>
-      } @else {
+      } @else if (step() === 'otp') {
         <button class="back" type="button" (click)="editNumber()">← Edit details</button>
         <p class="kicker">One quick check</p>
         <h2 id="login-title">Enter your OTP</h2>
@@ -34,6 +39,48 @@
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
           <button type="submit" [disabled]="busy()">{{ busy() ? 'Verifying…' : 'Verify & continue' }}</button>
         </form>
+      } @else {
+        <p class="kicker">Choose your plan</p>
+        <h2 id="login-title">Plans & free trial</h2>
+        <p class="subcopy">
+          @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
+            Your {{ trialDays }}-day free trial is already running
+            @if (currentPlan()?.days_remaining != null) {
+              ({{ currentPlan()?.days_remaining }} days left)
+            }.
+            Continue, or pick Starter / Growth / Premium.
+          } @else {
+            Pick Starter, Growth, or Premium. New accounts start on a {{ trialDays }}-day free trial automatically.
+          }
+        </p>
+
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+        @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
+          <button type="button" class="trial" (click)="continueWithTrial()" [disabled]="busy()">
+            <span>Free trial</span>
+            <strong>Continue with Premium trial</strong>
+            <small>{{ currentPlan()?.days_remaining ?? trialDays }} days remaining · closes automatically</small>
+          </button>
+        }
+
+        <div class="plan-options">
+          @for (plan of selectablePlans(); track plan.type) {
+            <button type="button" class="plan-option" (click)="choosePlan(plan.type)" [disabled]="busy()">
+              <span class="plan-name">{{ plan.name }}</span>
+              <span class="plan-price">
+                @if (plan.price_inr === 0) {
+                  Free
+                } @else {
+                  {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}/mo
+                }
+              </span>
+              <span class="plan-limit">{{ productLimitLabel(plan) }}</span>
+            </button>
+          }
+        </div>
+
+        <button class="back later" type="button" (click)="skipToApp()" [disabled]="busy()">Manage later on Plans page →</button>
       }
       <p class="terms">By continuing, you agree to Junction’s Terms and Privacy Policy.</p>
     </div>

@@ -1,0 +1,85 @@
+<header>
+  <div>
+    <p class="eyebrow">SUBSCRIPTION</p>
+    <h1>Plans</h1>
+    <p class="sub">Starter, Growth, Premium, and a {{ trialDays }}-day free trial from junctionBack</p>
+  </div>
+  <button type="button" class="ghost" (click)="reload()">Refresh</button>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+@if (success()) {
+  <p class="success" role="status">{{ success() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Loading plans…</p>
+} @else {
+  @if (current(); as plan) {
+    <section class="status" [attr.data-status]="plan.status" [attr.data-type]="plan.type">
+      <div>
+        <p class="eyebrow">YOUR PLAN</p>
+        <h2>{{ plan.name }}</h2>
+        <p>
+          @if (plan.type === 'free_trial' && plan.is_active) {
+            Free trial active · {{ plan.days_remaining ?? 0 }} day{{ (plan.days_remaining ?? 0) === 1 ? '' : 's' }} left
+            @if (plan.ends_at) {
+              · ends {{ plan.ends_at | date:'mediumDate' }}
+            }
+          } @else if (plan.is_active) {
+            Active
+            · {{ productLimitLabel(plan) }}
+          } @else if (plan.status === 'expired') {
+            Trial ended — choose Starter, Growth, or Premium to continue
+          } @else {
+            {{ plan.description }}
+          }
+        </p>
+      </div>
+    </section>
+  }
+
+  <section class="plan-grid">
+    @for (plan of plans(); track plan.type) {
+      <article
+        [class.featured]="plan.type === 'premium' || plan.type === 'free_trial'"
+        [class.current]="isCurrent(plan.type)"
+        [class.trial]="plan.type === 'free_trial'"
+      >
+        <p class="eyebrow">{{ plan.type === 'free_trial' ? 'TRIAL' : plan.type.toUpperCase() }}</p>
+        <h3>{{ plan.name }}</h3>
+        <p class="price">
+          @if (plan.price_inr === 0) {
+            Free
+          } @else {
+            {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/mo</small>
+          }
+        </p>
+        <p class="limit">{{ productLimitLabel(plan) }}</p>
+        <p class="desc">{{ plan.description }}</p>
+        @if (plan.type === 'free_trial') {
+          <p class="note">Starts automatically on signup. Backend closes it after {{ plan.duration_days ?? trialDays }} days.</p>
+          <button type="button" class="primary" disabled>
+            {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
+          </button>
+        } @else {
+          <p class="note">Yearly plan · overview shows days remaining of 365.</p>
+          <button
+            type="button"
+            class="primary"
+            (click)="selectPlan(plan.type)"
+            [disabled]="saving() || !canSelect(plan)"
+          >
+            @if (isCurrent(plan.type)) {
+              Current plan
+            } @else {
+              Choose {{ plan.name }}
+            }
+          </button>
+        }
+      </article>
+    }
+  </section>
+}

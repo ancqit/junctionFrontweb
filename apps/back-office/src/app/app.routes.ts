@@ -27,6 +27,10 @@ export const APP_ROUTES: Routes = [
         path: 'orders',
         loadComponent: () => import('./features/orders/orders').then((m) => m.OrdersPage),
       },
+      {
+        path: 'plans',
+        loadComponent: () => import('./features/plans/plans').then((m) => m.PlansPage),
+      },
     ],
   },
 ];
