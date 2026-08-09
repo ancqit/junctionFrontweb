@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { catchError, Observable, of } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { ApiService } from './api.service';
 
 export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
@@ -29,6 +29,13 @@ export interface PlanSummary {
   is_active: boolean;
   trial_used: boolean;
   selected_plan_type?: PlanType | null;
+  in_grace_period?: boolean;
+  grace_ends_at?: string | null;
+}
+
+/** Matches junctionBack PlansListResponse. */
+interface PlansListResponse {
+  plans: PlanOption[];
 }
 
 export const FREE_TRIAL_DAYS = 15;
@@ -77,8 +84,12 @@ export const PLAN_CATALOG: PlanOption[] = [
 export class PlansService {
   private readonly api = inject(ApiService);
 
+  /** Public `GET /plans` → `{ plans: PlanOption[] }`. */
   list(): Observable<PlanOption[]> {
-    return this.api.get<PlanOption[]>('/plans').pipe(catchError(() => of(PLAN_CATALOG)));
+    return this.api.get<PlansListResponse | PlanOption[]>('/plans').pipe(
+      map((res) => (Array.isArray(res) ? res : (res?.plans ?? PLAN_CATALOG))),
+      catchError(() => of(PLAN_CATALOG)),
+    );
   }
 
   me(): Observable<PlanSummary> {

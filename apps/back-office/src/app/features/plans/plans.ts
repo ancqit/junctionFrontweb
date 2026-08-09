@@ -89,6 +89,17 @@ export class PlansPage implements OnInit {
           this.success.set(
             `You’re on the waitlist for ${name}. Application forwarded with ${app.shop_name} · ${app.location.locality}, ${app.location.city}.`,
           );
+          // Refresh catalog + current plan from API after selection/application.
+          this.api.list().subscribe({
+            next: (plans) => this.plans.set(plans),
+          });
+          this.api.me().subscribe({
+            next: (state) => this.current.set(state),
+            error: () => undefined,
+          });
+          this.api.myApplication().subscribe({
+            next: (latest) => this.application.set(latest ?? app),
+          });
         },
         error: (err: unknown) =>
           this.error.set(this.readError(err, 'Could not join the plan waitlist.')),
@@ -96,7 +107,7 @@ export class PlansPage implements OnInit {
   }
 
   requestedPlanName(app: PlanApplication): string {
-    return planDisplayName(app.requested_plan_type);
+    return planDisplayName(app.requested_plan_type, this.plans());
   }
 
   productLimitLabel(plan: PlanOption | PlanSummary): string {

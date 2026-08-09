@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CurrencyPipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
@@ -20,6 +20,7 @@ import {
 } from '../core/plans.service';
 import { RecaptchaService } from '../core/recaptcha.service';
 import { SessionService } from '../core/session.service';
+import { TermsAndConditions, TermsService } from '../core/terms.service';
 
 @Component({
   selector: 'app-login',
@@ -32,6 +33,7 @@ export class Login implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly session = inject(SessionService);
   private readonly plansApi = inject(PlansService);
+  private readonly termsApi = inject(TermsService);
   private readonly recaptcha = inject(RecaptchaService);
   private readonly router = inject(Router);
 
@@ -40,8 +42,13 @@ export class Login implements OnInit {
   readonly error = signal('');
   readonly sessionInfo = signal('');
   readonly plans = signal<PlanOption[]>(PLAN_CATALOG);
+  readonly terms = signal<TermsAndConditions | null>(null);
   readonly currentPlan = signal<PlanSummary | null>(null);
   readonly trialDays = FREE_TRIAL_DAYS;
+  readonly plansModalOpen = signal(false);
+  readonly termsModalOpen = signal(false);
+  readonly termsViewed = signal(false);
+  readonly acceptTerms = signal(false);
 
   readonly details = this.fb.nonNullable.group({
     display_name: ['', [Validators.required, Validators.minLength(2)]],
@@ -57,13 +64,69 @@ export class Login implements OnInit {
       void this.router.navigateByUrl(this.auth.homePath());
       return;
     }
-    this.plansApi.list().subscribe({
-      next: (plans) => this.plans.set(plans),
-      error: () => this.plans.set(PLAN_CATALOG),
-    });
+    this.loadPlans();
+    this.loadTerms();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.termsModalOpen()) {
+      this.closeTermsModal();
+      return;
+    }
+    if (this.plansModalOpen()) {
+      this.closePlansModal();
+    }
+  }
+
+  openPlansModal(): void {
+    this.loadPlans();
+    this.plansModalOpen.set(true);
+  }
+
+  closePlansModal(): void {
+    this.plansModalOpen.set(false);
+  }
+
+  openTermsModal(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.loadTerms();
+    this.termsModalOpen.set(true);
+    this.termsViewed.set(true);
+  }
+
+  closeTermsModal(): void {
+    this.termsModalOpen.set(false);
+  }
+
+  onAcceptTermsChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!this.termsViewed()) {
+      input.checked = false;
+      this.acceptTerms.set(false);
+      this.error.set('Open and read the Terms and Conditions before accepting.');
+      return;
+    }
+    this.acceptTerms.set(input.checked);
+    if (input.checked) {
+      this.error.set('');
+    }
+  }
+
+  canSendOtp(): boolean {
+    return this.termsViewed() && this.acceptTerms() && !this.busy();
   }
 
   sendOtp(): void {
+    if (!this.termsViewed()) {
+      this.error.set('Please open and read the Terms and Conditions first.');
+      return;
+    }
+    if (!this.acceptTerms()) {
+      this.error.set('Please accept the Terms and Conditions to continue.');
+      return;
+    }
     if (this.details.invalid) {
       this.details.markAllAsTouched();
       return;
@@ -111,14 +174,12 @@ export class Login implements OnInit {
       .subscribe({
         next: (response) => {
           this.error.set('');
-          // Prefer TokenResponse.role so admins skip plans and go straight to /admin.
           const role = normalizeUserRole(response.user, response.role ?? response.user?.role);
           if (role === 'admin') {
             void this.router.navigateByUrl(homePathForRole('admin'));
             return;
           }
 
-          // After Premium/trial + grace: you are a viewer (not an owner) → deactivated view.
           const postGrace = isPostGraceViewerPlan(response.plan);
           if (role === 'viewer' || postGrace) {
             if (this.session.user) {
@@ -128,8 +189,8 @@ export class Login implements OnInit {
             return;
           }
 
-          // Active owner — continue with plan selection, then back office.
           this.currentPlan.set(response.plan ?? null);
+          this.loadPlans();
           this.step.set('plans');
         },
         error: (error: unknown) =>
@@ -148,7 +209,10 @@ export class Login implements OnInit {
       .select(planType)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: () => void this.router.navigateByUrl('/back-office'),
+        next: (plan) => {
+          this.currentPlan.set(plan);
+          void this.router.navigateByUrl('/back-office');
+        },
         error: (error: unknown) =>
           this.error.set(this.readError(error, 'Could not save your plan. Please try again.')),
       });
@@ -183,6 +247,31 @@ export class Login implements OnInit {
 
   selectablePlans(): PlanOption[] {
     return this.plans().filter((plan) => plan.type !== 'free_trial');
+  }
+
+  modalPlans(): PlanOption[] {
+    return this.plans();
+  }
+
+  termsParagraphs(): string[] {
+    const content = this.terms()?.content?.trim() ?? '';
+    if (!content) {
+      return [];
+    }
+    return content.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  }
+
+  private loadPlans(): void {
+    this.plansApi.list().subscribe({
+      next: (plans) => this.plans.set(plans.length ? plans : PLAN_CATALOG),
+      error: () => this.plans.set(PLAN_CATALOG),
+    });
+  }
+
+  private loadTerms(): void {
+    this.termsApi.get().subscribe({
+      next: (terms) => this.terms.set(terms),
+    });
   }
 
   private readError(error: unknown, fallback: string): string {
