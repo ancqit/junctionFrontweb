@@ -118,6 +118,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .terms-body { display: grid; gap: 10px; color: #5f6a63; font-size: 14px; line-height: 1.55; }
 .terms-body h3 { margin: 8px 0 0; color: #1a281f; font-size: 14px; font-weight: 800; }
 .terms-body p { margin: 0; }
+.terms-body .muted { color: #8a918b; }
 .terms-done {
   width: 100%; margin-top: 20px;
 }

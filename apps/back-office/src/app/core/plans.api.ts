@@ -43,12 +43,21 @@ export interface PlanApplyPreview {
   message: string;
 }
 
+/** Matches junctionBack PlansListResponse. */
+interface PlansListResponse {
+  plans: PlanOption[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlansApi {
   private readonly api = inject(BackOfficeApiService);
 
+  /** Public `GET /plans` → `{ plans: PlanOption[] }`. */
   list(): Observable<PlanOption[]> {
-    return this.api.get<PlanOption[]>('/plans').pipe(catchError(() => of(PLAN_CATALOG)));
+    return this.api.get<PlansListResponse | PlanOption[]>('/plans').pipe(
+      map((res) => (Array.isArray(res) ? res : (res?.plans ?? PLAN_CATALOG))),
+      catchError(() => of(PLAN_CATALOG)),
+    );
   }
 
   me(): Observable<PlanSummary> {
@@ -84,6 +93,6 @@ export class PlansApi {
   }
 }
 
-export function planDisplayName(planType: PlanType): string {
-  return PLAN_CATALOG.find((p) => p.type === planType)?.name ?? planType;
+export function planDisplayName(planType: PlanType, catalog: PlanOption[] = PLAN_CATALOG): string {
+  return catalog.find((p) => p.type === planType)?.name ?? planType;
 }

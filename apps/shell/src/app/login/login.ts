@@ -5,7 +5,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
-import { isPostGraceViewerPlan, PlanSummary } from '../core/auth.models';
+import {
+  homePathForRole,
+  isPostGraceViewerPlan,
+  normalizeUserRole,
+  PlanSummary,
+} from '../core/auth.models';
 import {
   FREE_TRIAL_DAYS,
   PLAN_CATALOG,
@@ -15,6 +20,7 @@ import {
 } from '../core/plans.service';
 import { RecaptchaService } from '../core/recaptcha.service';
 import { SessionService } from '../core/session.service';
+import { TermsAndConditions, TermsService } from '../core/terms.service';
 
 @Component({
   selector: 'app-login',
@@ -27,6 +33,7 @@ export class Login implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly session = inject(SessionService);
   private readonly plansApi = inject(PlansService);
+  private readonly termsApi = inject(TermsService);
   private readonly recaptcha = inject(RecaptchaService);
   private readonly router = inject(Router);
 
@@ -35,6 +42,7 @@ export class Login implements OnInit {
   readonly error = signal('');
   readonly sessionInfo = signal('');
   readonly plans = signal<PlanOption[]>(PLAN_CATALOG);
+  readonly terms = signal<TermsAndConditions | null>(null);
   readonly currentPlan = signal<PlanSummary | null>(null);
   readonly trialDays = FREE_TRIAL_DAYS;
   readonly plansModalOpen = signal(false);
@@ -56,10 +64,8 @@ export class Login implements OnInit {
       void this.router.navigateByUrl(this.auth.homePath());
       return;
     }
-    this.plansApi.list().subscribe({
-      next: (plans) => this.plans.set(plans),
-      error: () => this.plans.set(PLAN_CATALOG),
-    });
+    this.loadPlans();
+    this.loadTerms();
   }
 
   @HostListener('document:keydown.escape')
@@ -74,6 +80,7 @@ export class Login implements OnInit {
   }
 
   openPlansModal(): void {
+    this.loadPlans();
     this.plansModalOpen.set(true);
   }
 
@@ -84,6 +91,7 @@ export class Login implements OnInit {
   openTermsModal(event?: Event): void {
     event?.preventDefault();
     event?.stopPropagation();
+    this.loadTerms();
     this.termsModalOpen.set(true);
     this.termsViewed.set(true);
   }
@@ -166,24 +174,23 @@ export class Login implements OnInit {
       .subscribe({
         next: (response) => {
           this.error.set('');
-          const role = this.auth.role;
+          const role = normalizeUserRole(response.user, response.role ?? response.user?.role);
           if (role === 'admin') {
-            void this.router.navigateByUrl('/admin');
+            void this.router.navigateByUrl(homePathForRole('admin'));
             return;
           }
 
-          // After Premium/trial + grace: you are a viewer (not an owner) → deactivated view.
           const postGrace = isPostGraceViewerPlan(response.plan);
           if (role === 'viewer' || postGrace) {
             if (this.session.user) {
               this.session.saveFromAuthUser({ ...this.session.user, role: 'viewer' }, 'viewer');
             }
-            void this.router.navigateByUrl('/back-office/activate');
+            void this.router.navigateByUrl(homePathForRole('viewer'));
             return;
           }
 
-          // Active owner — continue with plan selection, then back office.
           this.currentPlan.set(response.plan ?? null);
+          this.loadPlans();
           this.step.set('plans');
         },
         error: (error: unknown) =>
@@ -202,7 +209,10 @@ export class Login implements OnInit {
       .select(planType)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: () => void this.router.navigateByUrl('/back-office'),
+        next: (plan) => {
+          this.currentPlan.set(plan);
+          void this.router.navigateByUrl('/back-office');
+        },
         error: (error: unknown) =>
           this.error.set(this.readError(error, 'Could not save your plan. Please try again.')),
       });
@@ -241,6 +251,27 @@ export class Login implements OnInit {
 
   modalPlans(): PlanOption[] {
     return this.plans();
+  }
+
+  termsParagraphs(): string[] {
+    const content = this.terms()?.content?.trim() ?? '';
+    if (!content) {
+      return [];
+    }
+    return content.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  }
+
+  private loadPlans(): void {
+    this.plansApi.list().subscribe({
+      next: (plans) => this.plans.set(plans.length ? plans : PLAN_CATALOG),
+      error: () => this.plans.set(PLAN_CATALOG),
+    });
+  }
+
+  private loadTerms(): void {
+    this.termsApi.get().subscribe({
+      next: (terms) => this.terms.set(terms),
+    });
   }
 
   private readError(error: unknown, fallback: string): string {

@@ -157,26 +157,20 @@
   >
     <header>
       <div>
-        <p class="kicker">LEGAL</p>
-        <h2 id="terms-modal-title">Terms and Conditions</h2>
+        <p class="kicker">LEGAL · v{{ terms()?.version || '—' }}</p>
+        <h2 id="terms-modal-title">{{ terms()?.title || 'Terms and Conditions' }}</h2>
       </div>
       <button type="button" class="modal-close" (click)="closeTermsModal()" aria-label="Close terms">×</button>
     </header>
 
     <div class="terms-body">
-      <p>Welcome to Junction. By creating an account and using our services, you agree to these Terms and Conditions.</p>
-      <h3>1. Account</h3>
-      <p>You must provide accurate shop and contact details. You are responsible for activity under your account and for keeping your phone number secure for OTP access.</p>
-      <h3>2. Plans and trial</h3>
-      <p>New accounts may receive a limited free trial. Paid plans (Starter, Growth, Premium) are billed yearly. Joining a paid plan may place you on a waitlist until activation is approved.</p>
-      <h3>3. Acceptable use</h3>
-      <p>Use Junction only for lawful business operations. Do not misuse the platform, attempt unauthorized access, or upload harmful content.</p>
-      <h3>4. Data</h3>
-      <p>We process your shop, product, order, and account data to provide the service. See our Privacy Policy practices for how we handle personal information.</p>
-      <h3>5. Availability</h3>
-      <p>We aim for reliable service but do not guarantee uninterrupted uptime. Features may change as Junction evolves.</p>
-      <h3>6. Contact</h3>
-      <p>Questions about these terms can be raised with Junction support after you sign in.</p>
+      @if (!terms()) {
+        <p class="muted">Loading terms…</p>
+      } @else {
+        @for (paragraph of termsParagraphs(); track $index) {
+          <p>{{ paragraph }}</p>
+        }
+      }
     </div>
 
     <button type="button" class="terms-done" (click)="closeTermsModal()">I have read these terms</button>
