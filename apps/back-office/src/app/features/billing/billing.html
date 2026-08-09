@@ -1,0 +1,129 @@
+<header>
+  <div>
+    <p class="eyebrow">CHECKOUT</p>
+    <h1>Billing</h1>
+    <p class="sub">Search products, set quantities, and create a bill</p>
+  </div>
+  <button type="button" class="ghost" (click)="clearBill()" [disabled]="lines().length === 0">Clear bill</button>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<div class="layout">
+  <section class="panel search-panel">
+    <div class="panel-head">
+      <h2>Find a product</h2>
+      <button type="button" class="ghost" (click)="reloadCatalog()">Refresh</button>
+    </div>
+
+    <label class="search">
+      Search
+      <input
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)"
+        placeholder="Name, SKU, category, or barcode"
+        autocomplete="off"
+      />
+    </label>
+
+    <label class="qty">
+      Quantity to add
+      <input type="number" min="1" step="1" [formControl]="addForm.controls.quantity" />
+    </label>
+
+    @if (loading()) {
+      <p class="muted">Loading catalog…</p>
+    } @else if (filteredProducts().length === 0) {
+      <div class="empty">
+        <strong>No matching products</strong>
+        <p>Try another search, or add products in the catalog first.</p>
+      </div>
+    } @else {
+      <ul class="results">
+        @for (product of filteredProducts(); track product.id) {
+          <li>
+            <div>
+              <strong>{{ product.name }}</strong>
+              <small>{{ product.sku }} · {{ product.category }} · {{ product.stock_quantity }} {{ product.unit }} in stock</small>
+            </div>
+            <div class="result-meta">
+              <span>{{ product.price | currency: product.currency:'symbol-narrow':'1.0-2' }}</span>
+              <button type="button" class="primary" (click)="selectProduct(product)">Add</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="panel bill-panel">
+    <div class="panel-head">
+      <h2>Current bill</h2>
+      <span class="count">{{ lines().length }} item{{ lines().length === 1 ? '' : 's' }}</span>
+    </div>
+
+    @if (lines().length === 0) {
+      <div class="empty">
+        <strong>Bill is empty</strong>
+        <p>Search and add products to build the order.</p>
+      </div>
+    } @else {
+      <div class="lines">
+        @for (line of lines(); track line.product.id) {
+          <article>
+            <div>
+              <strong>{{ line.product.name }}</strong>
+              <small>{{ line.product.sku }} · {{ line.unit_price | currency:'INR':'symbol-narrow':'1.0-2' }} each</small>
+            </div>
+            <label>
+              Qty
+              <input
+                type="number"
+                min="1"
+                step="1"
+                [value]="line.quantity"
+                (change)="updateQuantity(line.product.id, $any($event.target).value)"
+              />
+            </label>
+            <div class="line-total">{{ lineTotal(line) | currency:'INR':'symbol-narrow':'1.0-2' }}</div>
+            <button type="button" class="danger" (click)="removeLine(line.product.id)">Remove</button>
+          </article>
+        }
+      </div>
+    }
+
+    <form class="customer" [formGroup]="customerForm" (ngSubmit)="createOrder()">
+      <h3>Customer & payment</h3>
+      <div class="grid">
+        <label>Customer name<input formControlName="customer_name" placeholder="Walk-in customer" /></label>
+        <label>Phone<input formControlName="customer_phone" placeholder="+919876543210" /></label>
+        <label>Email<input formControlName="customer_email" type="email" placeholder="optional" /></label>
+        <label>Payment
+          <select formControlName="payment_method">
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="card">Card</option>
+            <option value="bank_transfer">Bank transfer</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label class="full">Notes<textarea formControlName="notes" rows="2" placeholder="optional"></textarea></label>
+      </div>
+
+      <div class="totals">
+        <div><span>Subtotal</span><strong>{{ subtotal() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
+        <div><span>Tax</span><strong>{{ taxAmount() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
+        <div class="grand"><span>Total</span><strong>{{ totalAmount() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary" [disabled]="saving() || lines().length === 0">
+          {{ saving() ? 'Creating…' : 'Create order' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

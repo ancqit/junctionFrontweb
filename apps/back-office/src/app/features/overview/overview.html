@@ -3,23 +3,23 @@
     <p>{{ todayLabel() }}</p>
     <h1>Good morning.</h1>
   </div>
-  <a routerLink="/back-office/products" class="primary">+ Add product</a>
+  <a routerLink="/back-office/billing" class="primary">+ New bill</a>
 </header>
 
 <section class="hero">
   <div>
     <p class="eyebrow">TODAY AT A GLANCE</p>
     <h2>Your store is ready for business.</h2>
-    <p>Manage employees and products from the sidebar. New orders and customer activity will appear here.</p>
+    <p>Manage catalog, staff, billing, and orders from the sidebar.</p>
   </div>
   <div class="pulse"><span></span> Store online</div>
 </section>
 
 <section class="metrics">
   <article>
-    <p>Orders today</p>
-    <strong>0</strong>
-    <small>Waiting for the first order</small>
+    <p>Orders</p>
+    <strong>{{ loading() ? '…' : orderCount() }}</strong>
+    <small>Bills created so far</small>
   </article>
   <article>
     <p>Employees</p>
@@ -36,24 +36,24 @@
 <section class="next">
   <div>
     <p class="eyebrow">GET STARTED</p>
-    <h2>Build your storefront</h2>
+    <h2>Run the counter</h2>
   </div>
   <ol>
     <li>
       <span>1</span>
       <div>
-        <strong>Add your products</strong>
-        <p>List what you sell with clear pricing and stock.</p>
+        <strong>Create a bill</strong>
+        <p>Search products, set quantities, and save the order.</p>
       </div>
-      <a routerLink="/back-office/products">Start →</a>
+      <a routerLink="/back-office/billing">Start →</a>
     </li>
     <li>
       <span>2</span>
       <div>
-        <strong>Add your team</strong>
-        <p>Create employee records for roles and departments.</p>
+        <strong>Review orders</strong>
+        <p>See every bill you have created so far.</p>
       </div>
-      <a routerLink="/back-office/employees">Open →</a>
+      <a routerLink="/back-office/orders">Open →</a>
     </li>
   </ol>
 </section>
