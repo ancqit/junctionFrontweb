@@ -1,146 +1,157 @@
 <header>
   <div>
     <p>{{ todayLabel() }}</p>
-    <h1>Hello, {{ greetingName() }}.</h1>
+    @if (shopReady()) {
+      @if (shop(); as shop) {
+        <h1>Hey, {{ shop.name }} at this Junction.</h1>
+        <p class="place">{{ shop.locality }} · {{ shop.city }}</p>
+      }
+    } @else {
+      <h1>Hello, {{ greetingName() }}.</h1>
+      <p class="place">Add your shop to unlock Overview.</p>
+    }
     @if (userId()) {
       <p class="user-id">User ID · {{ userId() }}</p>
     }
   </div>
-  <a routerLink="/back-office/billing" class="primary">+ New bill</a>
+  @if (shopReady()) {
+    <a routerLink="/back-office/billing" class="primary">+ New bill</a>
+  }
 </header>
 
-@if (countdown(); as plan) {
-  <section class="plan-counter" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
+@if (!shopLoaded()) {
+  <p class="muted">Loading shop…</p>
+} @else if (!shopReady()) {
+  <section class="shop-card" [formGroup]="shopForm">
     <div>
-      <p class="eyebrow">{{ plan.isTrial ? 'FREE TRIAL COUNTER' : 'YEARLY PLAN COUNTER' }}</p>
-      <h2>{{ plan.message }}</h2>
-      <p>
-        {{ plan.planName }}
-        @if (plan.isTrial) {
-          · 15-day free trial
-        } @else {
-          · yearly {{ plan.planName }} plan
-        }
-        @if (plan.endsAt) {
-          · ends {{ plan.endsAt | date:'mediumDate' }}
-        }
+      <p class="eyebrow">SHOP PROFILE</p>
+      <h2>Shop name, city & locality</h2>
+      <p class="shop-sub">
+        Enter these once. Orders, metrics, and the counter stay hidden until your shop is saved.
       </p>
     </div>
-    <div class="counter-box">
-      <strong>{{ plan.daysRemaining ?? '—' }}</strong>
-      <span>days remaining</span>
-      <small>of {{ plan.totalDays }}</small>
-    </div>
-    @if (plan.isExpired || plan.isTrial) {
-      <a routerLink="/back-office/plans" class="ghost">View plans →</a>
+
+    @if (shopError()) {
+      <p class="error" role="alert">{{ shopError() }}</p>
     }
+
+    <div class="shop-fields">
+      <label>
+        Shop name
+        <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
+      </label>
+
+      <label>
+        City
+        @if (useCityDropdown()) {
+          <select formControlName="city" (change)="onCityChange()">
+            <option value="">Select city</option>
+            @for (city of cities(); track city) {
+              <option [value]="city">{{ city }}</option>
+            }
+          </select>
+        } @else {
+          <input formControlName="city" placeholder="Enter city" (change)="onCityChange()" />
+        }
+      </label>
+
+      <label>
+        Locality
+        @if (useLocalityDropdown()) {
+          <select formControlName="locality">
+            <option value="">Select locality</option>
+            @for (locality of localities(); track locality) {
+              <option [value]="locality">{{ locality }}</option>
+            }
+          </select>
+        } @else {
+          <input formControlName="locality" placeholder="Enter locality" />
+        }
+      </label>
+    </div>
+
+    <button type="button" class="primary" (click)="saveShop()" [disabled]="shopSaving()">
+      {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
+    </button>
+  </section>
+} @else {
+  @if (countdown(); as plan) {
+    <section class="plan-counter" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
+      <div>
+        <p class="eyebrow">{{ plan.isTrial ? 'FREE TRIAL COUNTER' : 'YEARLY PLAN COUNTER' }}</p>
+        <h2>{{ plan.message }}</h2>
+        <p>
+          {{ plan.planName }}
+          @if (plan.isTrial) {
+            · 15-day free trial
+          } @else {
+            · yearly {{ plan.planName }} plan
+          }
+          @if (plan.endsAt) {
+            · ends {{ plan.endsAt | date:'mediumDate' }}
+          }
+        </p>
+      </div>
+      <div class="counter-box">
+        <strong>{{ plan.daysRemaining ?? '—' }}</strong>
+        <span>days remaining</span>
+        <small>of {{ plan.totalDays }}</small>
+      </div>
+      @if (plan.isExpired || plan.isTrial) {
+        <a routerLink="/back-office/plans" class="ghost">View plans →</a>
+      }
+    </section>
+  }
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">TODAY AT A GLANCE</p>
+      <h2>Your store is ready for business.</h2>
+      <p>Manage catalog, staff, billing, and orders from the sidebar.</p>
+    </div>
+    <div class="pulse"><span></span> Store online</div>
+  </section>
+
+  <section class="metrics">
+    <article>
+      <p>Orders</p>
+      <strong>{{ loading() ? '…' : orderCount() }}</strong>
+      <small>Bills created so far</small>
+    </article>
+    <article>
+      <p>Employees</p>
+      <strong>{{ loading() ? '…' : employeeCount() }}</strong>
+      <small>People on your team</small>
+    </article>
+    <article>
+      <p>Products</p>
+      <strong>{{ loading() ? '…' : productCount() }}</strong>
+      <small>Items in your catalog</small>
+    </article>
+  </section>
+
+  <section class="next">
+    <div>
+      <p class="eyebrow">GET STARTED</p>
+      <h2>Run the counter</h2>
+    </div>
+    <ol>
+      <li>
+        <span>1</span>
+        <div>
+          <strong>Create a bill</strong>
+          <p>Search products, set quantities, and save the order.</p>
+        </div>
+        <a routerLink="/back-office/billing">Start →</a>
+      </li>
+      <li>
+        <span>2</span>
+        <div>
+          <strong>Review orders</strong>
+          <p>See every bill you have created so far.</p>
+        </div>
+        <a routerLink="/back-office/orders">Open →</a>
+      </li>
+    </ol>
   </section>
 }
-
-<section class="shop-card" [formGroup]="shopForm">
-  <div>
-    <p class="eyebrow">SHOP PROFILE</p>
-    <h2>Shop name, city & locality</h2>
-    <p class="shop-sub">
-      Required for plan waitlist. City and locality use dropdowns when available; otherwise type your own — new values are added to the lists.
-    </p>
-  </div>
-
-  @if (shopError()) {
-    <p class="error" role="alert">{{ shopError() }}</p>
-  }
-  @if (shopSuccess()) {
-    <p class="success" role="status">{{ shopSuccess() }}</p>
-  }
-
-  <div class="shop-fields">
-    <label>
-      Shop name
-      <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
-    </label>
-
-    <label>
-      City
-      @if (useCityDropdown()) {
-        <select formControlName="city" (change)="onCityChange()">
-          <option value="">Select city</option>
-          @for (city of cities(); track city) {
-            <option [value]="city">{{ city }}</option>
-          }
-        </select>
-      } @else {
-        <input formControlName="city" placeholder="Enter city" (change)="onCityChange()" />
-      }
-    </label>
-
-    <label>
-      Locality
-      @if (useLocalityDropdown()) {
-        <select formControlName="locality">
-          <option value="">Select locality</option>
-          @for (locality of localities(); track locality) {
-            <option [value]="locality">{{ locality }}</option>
-          }
-        </select>
-      } @else {
-        <input formControlName="locality" placeholder="Enter locality" />
-      }
-    </label>
-  </div>
-
-  <button type="button" class="primary" (click)="saveShop()" [disabled]="shopSaving()">
-    {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
-  </button>
-</section>
-
-<section class="hero">
-  <div>
-    <p class="eyebrow">TODAY AT A GLANCE</p>
-    <h2>Your store is ready for business.</h2>
-    <p>Manage catalog, staff, billing, and orders from the sidebar.</p>
-  </div>
-  <div class="pulse"><span></span> Store online</div>
-</section>
-
-<section class="metrics">
-  <article>
-    <p>Orders</p>
-    <strong>{{ loading() ? '…' : orderCount() }}</strong>
-    <small>Bills created so far</small>
-  </article>
-  <article>
-    <p>Employees</p>
-    <strong>{{ loading() ? '…' : employeeCount() }}</strong>
-    <small>People on your team</small>
-  </article>
-  <article>
-    <p>Products</p>
-    <strong>{{ loading() ? '…' : productCount() }}</strong>
-    <small>Items in your catalog</small>
-  </article>
-</section>
-
-<section class="next">
-  <div>
-    <p class="eyebrow">GET STARTED</p>
-    <h2>Run the counter</h2>
-  </div>
-  <ol>
-    <li>
-      <span>1</span>
-      <div>
-        <strong>Create a bill</strong>
-        <p>Search products, set quantities, and save the order.</p>
-      </div>
-      <a routerLink="/back-office/billing">Start →</a>
-    </li>
-    <li>
-      <span>2</span>
-      <div>
-        <strong>Review orders</strong>
-        <p>See every bill you have created so far.</p>
-      </div>
-      <a routerLink="/back-office/orders">Open →</a>
-    </li>
-  </ol>
-</section>
