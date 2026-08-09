@@ -8,28 +8,11 @@ What happens when someone signs in to Junction (shell + junctionBack).
 2. Shell sends `POST /auth/otp/request` (with reCAPTCHA).
 3. User enters the OTP.
 4. Shell sends `POST /auth/otp/verify`.
-5. Backend returns a **TokenResponse**:
-
-```json
-{
-  "access_token": "…",
-  "token_type": "bearer",
-  "user": {
-    "id": "<login id>",
-    "display_name": "…",
-    "phone_number": "+91…",
-    "email": null,
-    "role": "admin | owner | viewer"
-  },
-  "plan": { "…": "plan summary" },
-  "role": "admin | owner | viewer"
-}
-```
-
+5. Backend returns a **TokenResponse** with `user`, `plan`, and `role` (`admin` | `owner` | `viewer`).
 6. Shell stores the access token and session (`user` + `role`).
-7. Routing uses **role** (top-level `role` or `user.role`).
+7. Routing uses **role** and plan status.
 
-If `account_status` is `deactivated`, login is rejected by the backend.
+If `account_status` is `deactivated` by an admin, login is rejected by the backend.
 
 ---
 
@@ -37,14 +20,11 @@ If `account_status` is `deactivated`, login is rejected by the backend.
 
 | Role | Who | After OTP | Can open |
 |------|-----|-----------|----------|
-| **admin** | Platform admin (admin registry / `ADMIN_PHONE` / `ADMIN_EMAIL`) | `/admin` | Admin console **and** full app (`/back-office`) |
-| **owner** | Shop owner | Plan step → `/back-office` | Full shop back office |
-| **viewer** | Shop-owner style login (non-admin) | `/viewer` | Explanatory viewer page only |
+| **admin** | Platform admin | `/admin` | Admin console **and** full app |
+| **owner** | Active shop owner (trial / paid / still in grace) | Plan step → `/back-office` | Full shop back office |
+| **viewer** | Post–plan + grace deactivated account (**not** an owner) | `/back-office/activate` | Deactivated view + Plans only |
 
-Guards:
-
-- `authGuard` — must be logged in
-- `authorGuard('admin' | 'owner' | 'viewer' | …)` — must match role
+Guards: `authGuard`, `authorGuard(...)`, and back-office `planActiveGuard`.
 
 ---
 
@@ -52,30 +32,28 @@ Guards:
 
 ### Admin
 
-1. Login ID is kept in session and shown in the admin sidebar.
-2. Lands on **`/admin`** (shops console).
-3. Also allowed into **`/back-office`** (full application).
-4. Admin page loads:
-   - `GET /shops` — all shops
-   - `GET /admin/users` — owner account / plan status
-   - `GET /products` — product counts by `store_id === shop.id`
-5. **Checkbox** on a shop:
-   - On → `POST /admin/users/{owner_user_id}/activate`
-   - Off → `POST /admin/users/{owner_user_id}/deactivate`
-6. Deactivated owners cannot log in until an admin activates them again.
+1. Login ID shown in the admin sidebar.
+2. Lands on **`/admin`** (shops + product counts).
+3. Checkbox activates / deactivates shop **owners** via `/admin/users/{id}/activate|deactivate`.
+4. Can also open the full back office.
 
 ### Owner
 
-1. After OTP, sees the **plans** step (free trial / Starter / Growth / Premium).
-2. Continues into **`/back-office`** (products, employees, orders, billing, plans, etc.).
-3. Can manage **their** shops via `GET/POST /shops` (owner login ID must match `owner_user_id`).
-4. Product limits follow their plan (`require_active_plan` on the backend).
+1. After OTP, sees the **plans** step when appropriate.
+2. Full **`/back-office`** (overview, products, employees, orders, billing, plans).
+3. While **grace period** is still running after Premium/trial ends, they remain an **owner** (not a viewer yet).
 
-### Viewer
+### Viewer (deactivated view)
 
-1. After OTP, goes to **`/viewer`**.
-2. Sees a short page explaining they are a shop-owner style user, **not** platform admin.
-3. Does **not** get the admin console or the full back-office routes (guarded).
+After **Premium (or trial) ends** and the **grace period ends**, the account is a **viewer** — you are **not** an owner anymore.
+
+1. Login still works.
+2. You land on **`/back-office/activate`** — the **deactivated view** in the app.
+3. That page explains the locked state and lists what is off (overview, employees, products, orders, billing).
+4. Nav is limited to **Deactivated** + **Plans**.
+5. Choosing Starter / Growth / Premium on Plans unlocks the app and restores **owner** access.
+
+Shell `/viewer` redirects to the same Activate page.
 
 ---
 
@@ -84,22 +62,14 @@ Guards:
 ```text
 OTP verify
    → save token + user.id + role
-   → schedule /auth/refresh
-   → navigate by role
+   → if viewer OR plan post-grace → /back-office/activate
+   → if admin → /admin
+   → if owner → plans step → /back-office
 ```
-
-- Refresh keeps the session alive and re-syncs `user` / `role`.
-- Logout clears token + session and returns to `/login`.
 
 ---
 
 ## 5. Backend dependency
 
-Shops + admin activate/deactivate + role on login come from **junctionBack** (PR #10: shops API + MongoDB role keeper).
-
-Until that is deployed:
-
-- Role routing in the shell is ready
-- `/shops` and `/admin/users/*` may 404 on production
-
+Roles, grace, and shops/admin APIs come from **junctionBack** (shops + role keeper PR).
 See `tools/junctionback-admin/README.txt` for the API contract the shell expects.

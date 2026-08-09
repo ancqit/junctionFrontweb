@@ -6,9 +6,13 @@ export const adminGuard: CanActivateFn = authorGuard('admin');
 
 /**
  * Full shop application (back office).
- * Admins are included so an admin login ID can use the entire app as well as /admin.
+ * Admins included for platform access.
+ * Viewers included so post-grace deactivated accounts can open Activate + Plans.
  */
-export const ownerGuard: CanActivateFn = authorGuard(['owner', 'admin']);
+export const ownerGuard: CanActivateFn = authorGuard(['owner', 'admin', 'viewer']);
 
-/** Shop-owner viewer — explanatory landing (not admin tools). */
+/**
+ * Viewer = deactivated after Premium/trial + grace end (not an owner).
+ * Home is `/back-office/activate`.
+ */
 export const viewerGuard: CanActivateFn = authorGuard('viewer');

@@ -86,7 +86,24 @@ export function homePathForRole(role: UserRole): string {
     return '/admin';
   }
   if (role === 'viewer') {
-    return '/viewer';
+    // Post-grace deactivated view inside the app (not an owner).
+    return '/back-office/activate';
   }
   return '/back-office';
+}
+
+/** True when Premium/trial ended and grace is over — user should be treated as a viewer. */
+export function isPostGraceViewerPlan(plan?: PlanSummary | null): boolean {
+  if (!plan) {
+    return false;
+  }
+  if (plan.in_grace_period || plan.status === 'grace_period') {
+    return false;
+  }
+  return (
+    plan.status === 'expired' ||
+    plan.status === 'deactivated' ||
+    plan.status === 'cancelled' ||
+    plan.is_active === false
+  );
 }
