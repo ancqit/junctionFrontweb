@@ -1,7 +1,47 @@
 import { inject, Injectable } from '@angular/core';
-import { catchError, Observable, of } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
 import { PLAN_CATALOG, PlanOption, PlanSummary, PlanType } from './models';
+
+/** Matches junctionBack plan_applications.ApplicationStatus */
+export type PlanApplicationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PlanApplicationLocation {
+  city: string;
+  locality: string;
+}
+
+export interface PlanApplicantIdentity {
+  display_name: string;
+  phone_number?: string | null;
+  email?: string | null;
+}
+
+/** Matches junctionBack plan_applications.PlanApplication (waitlist entry). */
+export interface PlanApplication {
+  id: string;
+  user_id: string;
+  shop_id: string;
+  shop_name: string;
+  identity: PlanApplicantIdentity;
+  location: PlanApplicationLocation;
+  requested_plan_type: PlanType;
+  current_plan_type: PlanType;
+  is_plan_switch: boolean;
+  switch_message: string;
+  status: PlanApplicationStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanApplyPreview {
+  requested_plan_type: PlanType;
+  requested_plan_name: string;
+  current_plan_type: PlanType;
+  current_plan_name: string;
+  is_plan_switch: boolean;
+  message: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PlansApi {
@@ -18,4 +58,32 @@ export class PlansApi {
   select(planType: PlanType): Observable<PlanSummary> {
     return this.api.post<PlanSummary>('/plans/select', { plan_type: planType });
   }
+
+  /**
+   * Join the waitlist for a plan. Backend snapshots shop_name, city, and locality
+   * from the shop record (shop must already have city + locality).
+   */
+  apply(planType: PlanType, shopId: string): Observable<PlanApplication> {
+    return this.api.post<PlanApplication>('/plans/apply', {
+      plan_type: planType,
+      shop_id: shopId,
+    });
+  }
+
+  preview(planType: PlanType): Observable<PlanApplyPreview> {
+    return this.api.get<PlanApplyPreview>('/plans/apply/preview', { plan_type: planType });
+  }
+
+  myApplication(): Observable<PlanApplication | null> {
+    return this.api.get<PlanApplication | null>('/plans/applications/me').pipe(
+      catchError(() =>
+        this.api.get<PlanApplication | null>('/waitlist/me').pipe(catchError(() => of(null))),
+      ),
+      map((app) => app ?? null),
+    );
+  }
+}
+
+export function planDisplayName(planType: PlanType): string {
+  return PLAN_CATALOG.find((p) => p.type === planType)?.name ?? planType;
 }
