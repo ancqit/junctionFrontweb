@@ -1,14 +1,22 @@
-<div class="office">
+<div class="office" [class.locked]="access.locked()">
   <aside>
     <div class="brand"><span>J</span> Junction</div>
-    <nav>
-      <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview</a>
-      <a routerLink="/back-office/employees" routerLinkActive="active">Employees</a>
-      <a routerLink="/back-office/products" routerLinkActive="active">Products</a>
-      <a routerLink="/back-office/billing" routerLinkActive="active">Billing</a>
-      <a routerLink="/back-office/orders" routerLinkActive="active">Orders</a>
-      <a routerLink="/back-office/plans" routerLinkActive="active">Plans</a>
-    </nav>
+    @if (access.locked()) {
+      <nav>
+        <a routerLink="/back-office/activate" routerLinkActive="active">Activate</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active">Plans</a>
+      </nav>
+      <p class="lock-note">Account disabled after grace period. Activate a plan to unlock the store.</p>
+    } @else {
+      <nav>
+        <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview</a>
+        <a routerLink="/back-office/employees" routerLinkActive="active">Employees</a>
+        <a routerLink="/back-office/products" routerLinkActive="active">Products</a>
+        <a routerLink="/back-office/billing" routerLinkActive="active">Billing</a>
+        <a routerLink="/back-office/orders" routerLinkActive="active">Orders</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active">Plans</a>
+      </nav>
+    }
     <div class="store">
       <div class="avatar">MR</div>
       <span><strong>Main Road Store</strong><small>Ranchi</small></span>

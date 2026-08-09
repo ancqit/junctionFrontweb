@@ -24,12 +24,16 @@ nav .active { color: white; background: rgba(255, 255, 255, .11); }
 }
 .store span { display: grid; gap: 4px; font-size: 12px; }
 .store small { color: #9db3a5; }
+.lock-note {
+  margin: 18px 0 0; color: #d7c48a; font-size: 12px; line-height: 1.45;
+}
 main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
 @media (max-width: 800px) {
   .office { grid-template-columns: 1fr; }
   aside { position: static; height: auto; }
   nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; gap: 6px; }
   nav a { text-align: center; padding: 10px 8px; font-size: 12px; }
+  .lock-note { margin-top: 12px; }
   .store { display: none; }
   main { padding: 28px 20px; }
 }

@@ -1,6 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { PlanAccessService } from '../../core/plan-access.service';
 import { FREE_TRIAL_DAYS, PlanOption, PlanSummary, PlanType } from '../../core/models';
 import { PlansApi } from '../../core/plans.api';
 
@@ -12,6 +14,8 @@ import { PlansApi } from '../../core/plans.api';
 })
 export class PlansPage implements OnInit {
   private readonly api = inject(PlansApi);
+  private readonly access = inject(PlanAccessService);
+  private readonly router = inject(Router);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
@@ -20,8 +24,10 @@ export class PlansPage implements OnInit {
   readonly error = signal('');
   readonly success = signal('');
   readonly trialDays = FREE_TRIAL_DAYS;
+  readonly wasLocked = signal(false);
 
   ngOnInit(): void {
+    this.wasLocked.set(this.access.locked());
     this.reload();
   }
 
@@ -36,7 +42,10 @@ export class PlansPage implements OnInit {
       .me()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (state) => this.current.set(state),
+        next: (state) => {
+          this.current.set(state);
+          this.access.markUnlocked(state);
+        },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load your plan.')),
       });
   }
@@ -55,7 +64,11 @@ export class PlansPage implements OnInit {
       .subscribe({
         next: (state) => {
           this.current.set(state);
-          this.success.set(`${state.name} is now active.`);
+          this.access.markUnlocked(state);
+          this.success.set(`${state.name} is now active. Your account is unlocked.`);
+          if (this.wasLocked() && state.is_active) {
+            void this.router.navigateByUrl('/back-office');
+          }
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not select this plan.')),
       });

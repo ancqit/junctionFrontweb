@@ -101,6 +101,11 @@ export class Login implements OnInit {
         next: (response) => {
           this.error.set('');
           this.currentPlan.set(response.plan ?? null);
+          const plan = response.plan;
+          if (plan && (plan.status === 'expired' || !plan.is_active)) {
+            void this.router.navigateByUrl('/back-office/activate');
+            return;
+          }
           this.step.set('plans');
         },
         error: (error: unknown) =>

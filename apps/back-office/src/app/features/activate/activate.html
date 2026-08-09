@@ -1,0 +1,29 @@
+<header>
+  <div>
+    <p class="eyebrow">ACCOUNT DISABLED</p>
+    <h1>Your grace period has ended.</h1>
+    <p class="sub">
+      Your free-trial grace period from junctionBack has ended. You can still sign in,
+      but store features stay locked until you activate a plan.
+    </p>
+  </div>
+</header>
+
+<section class="gate">
+  @if (loading()) {
+    <p class="muted">Checking your plan…</p>
+  } @else {
+    <div>
+      <p class="eyebrow">NEXT STEP</p>
+      <h2>Activate your account</h2>
+      <p>
+        @if (plan(); as current) {
+          {{ current.name }} is {{ current.status }}. Choose Starter, Growth, or Premium on the Plans page to turn everything back on.
+        } @else {
+          Choose a plan to reactivate billing, products, orders, and the rest of your back office.
+        }
+      </p>
+    </div>
+    <a routerLink="/back-office/plans" class="primary">Activate account →</a>
+  }
+</section>
