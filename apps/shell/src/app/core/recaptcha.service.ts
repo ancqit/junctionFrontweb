@@ -59,53 +59,36 @@ export class RecaptchaService {
   }
 
   private async resolveSiteKey(): Promise<string> {
-    // 1) Backend (Render already has GCP_IDENTITY_PLATFORM_API_KEY).
+    // 1) Prefer the public web API key (same as Render GCP_IDENTITY_PLATFORM_API_KEY).
+    const apiKey = IDENTITY_PLATFORM_WEB_API_KEY.trim();
+    if (apiKey) {
+      const params = await firstValueFrom(
+        this.http.get<IdentityToolkitRecaptchaParams>(
+          `https://identitytoolkit.googleapis.com/v1/recaptchaParams?key=${encodeURIComponent(apiKey)}`,
+        ),
+      );
+      if (params.recaptchaSiteKey) {
+        return params.recaptchaSiteKey;
+      }
+    }
+
+    // 2) Same-origin API (Vercel serverless or proxied junctionBack).
     try {
-      const fromBackend = await firstValueFrom(
+      const fromApi = await firstValueFrom(
         this.http.get<RecaptchaParamsResponse>(
           `${this.config.baseUrl.replace(/\/$/, '')}/auth/recaptcha-params`,
         ),
       );
-      if (fromBackend.recaptcha_site_key) {
-        return fromBackend.recaptcha_site_key;
+      if (fromApi.recaptcha_site_key) {
+        return fromApi.recaptcha_site_key;
       }
     } catch {
       // continue
     }
 
-    // 2) Same-origin Vercel function (needs GCP_IDENTITY_PLATFORM_API_KEY env).
-    const host = typeof window !== 'undefined' ? window.location.hostname : '';
-    const onVercel = host.endsWith('vercel.app') || host === 'junction-frontweb.vercel.app';
-    if (onVercel) {
-      try {
-        const fromVercel = await firstValueFrom(
-          this.http.get<RecaptchaParamsResponse>('/api/auth/recaptcha-params'),
-        );
-        if (fromVercel.recaptcha_site_key) {
-          return fromVercel.recaptcha_site_key;
-        }
-      } catch {
-        // continue
-      }
-    }
-
-    // 3) Browser → Identity Toolkit using public web API key from config.
-    const apiKey = IDENTITY_PLATFORM_WEB_API_KEY.trim();
-    if (!apiKey) {
-      throw new Error(
-        'reCAPTCHA is not configured. Fastest fix: set GCP_IDENTITY_PLATFORM_API_KEY in Vercel (same value as Render) and redeploy. Or set IDENTITY_PLATFORM_WEB_API_KEY in identity-platform.config.ts.',
-      );
-    }
-
-    const params = await firstValueFrom(
-      this.http.get<IdentityToolkitRecaptchaParams>(
-        `https://identitytoolkit.googleapis.com/v1/recaptchaParams?key=${encodeURIComponent(apiKey)}`,
-      ),
+    throw new Error(
+      'reCAPTCHA is not configured. Set IDENTITY_PLATFORM_WEB_API_KEY in identity-platform.config.ts.',
     );
-    if (!params.recaptchaSiteKey) {
-      throw new Error('GCP did not return a reCAPTCHA site key');
-    }
-    return params.recaptchaSiteKey;
   }
 
   private loadScript(): Promise<void> {
