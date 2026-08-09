@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { LogoutService } from './core/logout.service';
 import { PlanAccessService } from './core/plan-access.service';
 
 @Component({
@@ -10,8 +11,13 @@ import { PlanAccessService } from './core/plan-access.service';
 })
 export class App implements OnInit {
   readonly access = inject(PlanAccessService);
+  private readonly logoutService = inject(LogoutService);
 
   ngOnInit(): void {
     this.access.refresh().subscribe();
+  }
+
+  logout(): void {
+    this.logoutService.logout();
   }
 }

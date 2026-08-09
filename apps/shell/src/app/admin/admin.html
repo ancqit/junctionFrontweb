@@ -9,7 +9,7 @@
       <a routerLink="/admin" class="active">Shops</a>
       <a routerLink="/back-office">Full application</a>
     </nav>
-    <button type="button" class="ghost" (click)="logout()">Sign out</button>
+    <button type="button" class="ghost" (click)="logout()">Log out</button>
   </aside>
 
   <main>
@@ -38,7 +38,7 @@
       <section class="empty">
         <strong>Admin access required</strong>
         <p>Your login role must be <code>admin</code> (admin registry / <code>ADMIN_PHONE</code> on junctionBack).</p>
-        <button type="button" class="primary" (click)="logout()">Sign out</button>
+        <button type="button" class="primary" (click)="logout()">Log out</button>
       </section>
     } @else {
       <section class="toolbar" [formGroup]="search">
