@@ -1,33 +1,21 @@
-junctionBack profile DigiLocker fields
-======================================
+junctionBack profile DigiLocker fields — LIVE on main
+=====================================================
 
-This cloud agent cannot push to ancqit/junctionBack (GitHub 403).
-Apply this change on junctionBack, then redeploy Render.
+As of junctionBack commit `fd5f466`, `GET /profile` already returns:
 
-What to do
-----------
-1. Copy `profile.py` from this folder over `app/profile.py` on junctionBack
-   (or cherry-pick the local commit on `/tmp/junctionBack` branch
-   `cursor/profile-digilocker-fields-8fc2` if you have that clone).
+  digilocker_verified: bool
+  digilocker_name: str | null
 
-2. Redeploy junctionBack so `GET /profile` returns:
+No further backend patch is required for the front-office profile modal.
+`profile.py` in this folder is kept as a reference copy only.
 
-     digilocker_verified: bool
-     digilocker_name: str | null
-
-Fields added
-------------
-- `digilocker_verified` — true after `GET /auth/digilocker/callback` succeeds
-- `digilocker_name` — name returned by DigiLocker userinfo
-
-Existing DigiLocker APIs (already on main)
-------------------------------------------
-  GET /auth/digilocker/connect   → { authorization_url }
-  GET /auth/digilocker/callback  → sets digilocker_* on the user document
-
-Profile APIs
-------------
+APIs used for 100% profile alignment
+------------------------------------
   GET  /profile
-  PATCH /profile  { display_name?, bio?, avatar_url? }
+  PATCH /profile                 { display_name?, bio?, avatar_url? }
+  GET  /auth/digilocker/connect  → { authorization_url }
+  GET  /auth/digilocker/callback → sets digilocker_* on the user
+  GET/POST/PUT /shops            { name, city, locality }
 
-Front-office 100% checklist uses name + phone + bio + avatar + DigiLocker + shop.
+Frontend checklist (equal weight):
+  display_name · phone · bio · avatar · digilocker · shop(name/city/locality)

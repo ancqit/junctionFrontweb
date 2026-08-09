@@ -233,7 +233,7 @@ export interface UserProfile {
   display_name: string;
   bio?: string | null;
   avatar_url?: string | null;
-  /** Present when junctionBack extends GET /profile with DigiLocker fields. */
+  /** From junctionBack GET /profile (main). */
   digilocker_verified?: boolean | null;
   digilocker_name?: string | null;
   created_at: string;
