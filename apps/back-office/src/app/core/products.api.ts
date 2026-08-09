@@ -23,4 +23,13 @@ export class ProductsApi {
   remove(id: string): Observable<void> {
     return this.api.delete(`/products/${id}`);
   }
+
+  /** Persist a CDN image from /queries onto an existing product. */
+  useImageFromCdn(productId: string, cdn: string): Observable<Product> {
+    return this.api.post<Product>(`/products/${productId}/image/use`, { cdn });
+  }
+
+  setImageCdn(productId: string, cdn: string): Observable<Product> {
+    return this.api.post<Product>(`/products/${productId}/image/cdn`, { cdn });
+  }
 }

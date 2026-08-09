@@ -2,9 +2,12 @@ import { CurrencyPipe, TitleCasePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { Product, ProductStatus } from '../../core/models';
+import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
 import { ProductsApi } from '../../core/products.api';
+import { QueriesApi } from '../../core/queries.api';
 import { DEFAULT_STORE_ID } from '../../core/store.config';
+
+const MAX_PRODUCT_IMAGES = 3;
 
 @Component({
   selector: 'app-products',
@@ -14,16 +17,23 @@ import { DEFAULT_STORE_ID } from '../../core/store.config';
 })
 export class ProductsPage implements OnInit {
   private readonly api = inject(ProductsApi);
+  private readonly queriesApi = inject(QueriesApi);
   private readonly fb = inject(FormBuilder);
 
+  readonly maxImages = MAX_PRODUCT_IMAGES;
   readonly products = signal<Product[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
   readonly showForm = signal(false);
 
+  readonly imageResults = signal<ImageSearchResult[]>([]);
+  readonly selectedImages = signal<ImageSearchResult[]>([]);
+  readonly searchingImages = signal(false);
+  readonly imageSearchError = signal('');
+  readonly imageSearchTotal = signal(0);
+
   readonly form = this.fb.nonNullable.group({
-    sku: ['', [Validators.required, Validators.maxLength(64)]],
     name: ['', [Validators.required, Validators.maxLength(160)]],
     description: [''],
     category: ['', [Validators.required, Validators.maxLength(80)]],
@@ -36,6 +46,10 @@ export class ProductsPage implements OnInit {
     barcode: [''],
     tax_rate: [''],
     low_stock_threshold: [''],
+  });
+
+  readonly imageSearchForm = this.fb.nonNullable.group({
+    query: ['', [Validators.required, Validators.maxLength(200)]],
   });
 
   ngOnInit(): void {
@@ -57,12 +71,12 @@ export class ProductsPage implements OnInit {
   openForm(): void {
     this.showForm.set(true);
     this.error.set('');
+    this.resetImageSearch();
   }
 
   closeForm(): void {
     this.showForm.set(false);
     this.form.reset({
-      sku: '',
       name: '',
       description: '',
       category: '',
@@ -76,6 +90,71 @@ export class ProductsPage implements OnInit {
       tax_rate: '',
       low_stock_threshold: '',
     });
+    this.resetImageSearch();
+  }
+
+  searchImages(): void {
+    const query = this.imageSearchForm.controls.query.value.trim();
+    if (!query) {
+      this.imageSearchForm.controls.query.markAsTouched();
+      this.imageSearchError.set('Enter a product name to search for pictures.');
+      return;
+    }
+
+    this.searchingImages.set(true);
+    this.imageSearchError.set('');
+    this.queriesApi
+      .searchImages(query, 1, 12)
+      .pipe(finalize(() => this.searchingImages.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.imageResults.set(response.images);
+          this.imageSearchTotal.set(response.total_results);
+          if (response.images.length === 0) {
+            this.imageSearchError.set('No pictures found for that search.');
+          }
+        },
+        error: (err: unknown) =>
+          this.imageSearchError.set(this.readError(err, 'Could not search pictures.')),
+      });
+  }
+
+  useProductNameForSearch(): void {
+    const name = this.form.controls.name.value.trim();
+    if (!name) {
+      return;
+    }
+    this.imageSearchForm.controls.query.setValue(name);
+    this.searchImages();
+  }
+
+  selectImage(image: ImageSearchResult): void {
+    const cdn = String(image.cdn_url);
+    const already = this.selectedImages().some((row) => String(row.cdn_url) === cdn);
+    if (already) {
+      this.selectedImages.update((rows) => rows.filter((row) => String(row.cdn_url) !== cdn));
+      this.imageSearchError.set('');
+      return;
+    }
+    if (this.selectedImages().length >= MAX_PRODUCT_IMAGES) {
+      this.imageSearchError.set(`You can add up to ${MAX_PRODUCT_IMAGES} pictures.`);
+      return;
+    }
+    this.selectedImages.update((rows) => [...rows, { ...image, cdn_url: cdn }]);
+    this.imageSearchError.set('');
+  }
+
+  isSelected(image: ImageSearchResult): boolean {
+    const cdn = String(image.cdn_url);
+    return this.selectedImages().some((row) => String(row.cdn_url) === cdn);
+  }
+
+  removeSelectedImage(cdnUrl: string): void {
+    this.selectedImages.update((rows) => rows.filter((row) => String(row.cdn_url) !== cdnUrl));
+  }
+
+  clearSelectedImages(): void {
+    this.selectedImages.set([]);
   }
 
   create(): void {
@@ -84,12 +163,15 @@ export class ProductsPage implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
+    const selected = this.selectedImages();
+    const primaryCdn = selected[0] ? String(selected[0].cdn_url) : null;
     this.saving.set(true);
     this.error.set('');
     this.api
       .create({
         store_id: DEFAULT_STORE_ID,
-        sku: value.sku.trim(),
+        // Backend still requires sku; generated server-side-style so users never enter an ID.
+        sku: this.generateSku(value.name),
         name: value.name.trim(),
         description: value.description.trim() || null,
         category: value.category.trim(),
@@ -103,19 +185,22 @@ export class ProductsPage implements OnInit {
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        image_url: null,
+        image_cdn: primaryCdn,
+        image: primaryCdn ? { source: 'query', cdn: primaryCdn } : null,
+        image_url: primaryCdn,
         barcode: value.barcode.trim() || null,
         tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
         low_stock_threshold:
           value.low_stock_threshold === '' ? null : Number(value.low_stock_threshold),
       })
-      .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: () => {
-          this.closeForm();
-          this.reload();
+        next: (created) => {
+          this.attachSelectedImages(created.id, selected.map((image) => String(image.cdn_url)));
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not create product.')),
+        error: (err: unknown) => {
+          this.saving.set(false);
+          this.error.set(this.readError(err, 'Could not create product.'));
+        },
       });
   }
 
@@ -127,6 +212,57 @@ export class ProductsPage implements OnInit {
       next: () => this.reload(),
       error: (err: unknown) => this.error.set(this.readError(err, 'Could not delete product.')),
     });
+  }
+
+  productImageSrc(product: Product): string | null {
+    return product.image_url || product.image_cdn || product.image?.cdn || null;
+  }
+
+  private attachSelectedImages(productId: string, cdnUrls: string[]): void {
+    if (cdnUrls.length === 0) {
+      this.saving.set(false);
+      this.closeForm();
+      this.reload();
+      return;
+    }
+
+    // junctionBack currently stores one product image; first selected is the main picture.
+    this.api.useImageFromCdn(productId, cdnUrls[0]).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.closeForm();
+        this.reload();
+      },
+      error: (err: unknown) => {
+        this.saving.set(false);
+        this.error.set(
+          this.readError(
+            err,
+            'Product saved, but attaching the CDN image failed. You can retry from edit later.',
+          ),
+        );
+        this.reload();
+      },
+    });
+  }
+
+  private generateSku(name: string): string {
+    const slug = name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 24);
+    const suffix = Date.now().toString(36).toUpperCase();
+    return `PRD-${slug || 'ITEM'}-${suffix}`.slice(0, 64);
+  }
+
+  private resetImageSearch(): void {
+    this.imageSearchForm.reset({ query: '' });
+    this.imageResults.set([]);
+    this.selectedImages.set([]);
+    this.imageSearchError.set('');
+    this.imageSearchTotal.set(0);
   }
 
   private readError(error: unknown, fallback: string): string {

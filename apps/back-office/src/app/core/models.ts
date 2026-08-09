@@ -44,6 +44,15 @@ export type EmployeeCreate = Omit<Employee, 'id' | 'created_at' | 'updated_at'>;
 export type EmployeeUpdate = Partial<Omit<EmployeeCreate, 'store_id'>>;
 
 export type ProductStatus = 'active' | 'inactive' | 'discontinued';
+export type ProductImageSource = 'cdn' | 'query' | 'upload';
+
+export interface ProductImage {
+  source: ProductImageSource;
+  cdn?: string | null;
+  stored_image_id?: string | null;
+  content_type?: string | null;
+  filename?: string | null;
+}
 
 export interface Product {
   id: string;
@@ -59,6 +68,8 @@ export interface Product {
   unit: string;
   status: ProductStatus;
   tags: string[];
+  image_cdn?: string | null;
+  image?: ProductImage | null;
   image_url?: string | null;
   barcode?: string | null;
   tax_rate?: number | null;
@@ -70,6 +81,29 @@ export interface Product {
 export type ProductCreate = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 export type ProductUpdate = Partial<Omit<ProductCreate, 'store_id'>>;
 
+<<<<<<< HEAD
+=======
+export interface ImageSearchResult {
+  id: string;
+  cdn_url: string;
+  thumbnail_url: string;
+  alt: string;
+  width: number;
+  height: number;
+  source: string;
+  photographer?: string | null;
+  photographer_url?: string | null;
+}
+
+export interface ImageSearchResponse {
+  query: string;
+  page: number;
+  per_page: number;
+  total_results: number;
+  images: ImageSearchResult[];
+}
+
+>>>>>>> origin/main
 export type OrderStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
