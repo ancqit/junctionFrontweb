@@ -11,6 +11,7 @@ h1 { margin: 12px 0 24px; font-family: Georgia, serif; font-size: clamp(48px, 5.
 .trusted { position: relative; z-index: 1; font-size: 13px; color: rgba(255,255,255,.62); }
 .overlay { display: grid; place-items: center; padding: 42px; background: radial-gradient(circle at 50% 30%, #fff 0, #f5f3ee 65%); }
 .card { width: min(100%, 480px); box-sizing: border-box; padding: 42px; border: 1px solid #dedbd2; border-radius: 28px; background: rgba(255,255,255,.88); box-shadow: 0 28px 80px rgba(20,42,29,.1); }
+.card.wide { width: min(100%, 640px); }
 .steps { display: flex; gap: 8px; margin-bottom: 34px; }
 .steps span { width: 34px; height: 4px; border-radius: 99px; background: #dedbd2; }
 .steps .active { background: #206c45; }
@@ -28,10 +29,27 @@ input:disabled { color: #59645c; background: #f1f1ed; }
 .location { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .locked { margin: -7px 0 2px; color: #778078; font-size: 12px; }
 small, .error { color: #b44136; font-size: 12px; margin-top: -12px; }
-.error { padding: 10px 12px; margin: 0; border-radius: 9px; background: #fff0ed; }
+.error { padding: 10px 12px; margin: 0 0 16px; border-radius: 9px; background: #fff0ed; }
 button { border: 0; border-radius: 12px; padding: 15px 20px; color: white; background: #17633e; font: inherit; font-weight: 800; cursor: pointer; }
 button:disabled { opacity: .55; cursor: wait; }
 .back { padding: 0; margin-bottom: 24px; color: #26754d; background: none; font-size: 13px; }
+.back.later { margin: 18px 0 0; text-align: left; }
 .otp { text-align: center; letter-spacing: .55em; padding-left: calc(15px + .55em); font-size: 22px; font-weight: 700; }
+.trial {
+  width: 100%; display: grid; gap: 4px; text-align: left; margin-bottom: 16px;
+  padding: 18px; border: 1px solid #d5bd6b; border-radius: 16px; background: #fbf8ef; color: #1a281f;
+}
+.trial span { color: #8a6f1f; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.trial strong { font-size: 18px; }
+.trial small { color: #667069; font-size: 12px; font-weight: 600; }
+.plan-options { display: grid; gap: 10px; }
+.plan-option {
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name price" "limit limit";
+  gap: 4px 12px; text-align: left; padding: 16px; border: 1px solid #d8dbd6; border-radius: 14px;
+  background: white; color: #17251c;
+}
+.plan-name { grid-area: name; font-size: 16px; }
+.plan-price { grid-area: price; color: #1a6541; font-size: 14px; }
+.plan-limit { grid-area: limit; color: #667069; font-size: 12px; font-weight: 600; }
 .terms { margin: 28px 0 0; text-align: center; color: #8a918b; font-size: 11px; }
-@media (max-width: 850px) { .login-page { grid-template-columns: 1fr; } .story { min-height: 260px; padding: 30px; } .story-copy { margin: 45px 0; } h1 { font-size: 45px; } .trusted { display: none; } .overlay { padding: 22px; } .card { padding: 30px 24px; } }
+@media (max-width: 850px) { .login-page { grid-template-columns: 1fr; } .story { min-height: 260px; padding: 30px; } .story-copy { margin: 45px 0; } h1 { font-size: 45px; } .trusted { display: none; } .overlay { padding: 22px; } .card, .card.wide { padding: 30px 24px; } }
