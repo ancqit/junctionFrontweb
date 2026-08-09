@@ -1,6 +1,9 @@
 <main class="login-page">
   <section class="story">
-    <a class="brand" href="/" aria-label="Junction home"><span>J</span> Junction</a>
+    <div class="story-top">
+      <a class="brand" href="/" aria-label="Junction home"><span>J</span> Junction</a>
+      <button type="button" class="plans-link" (click)="openPlansModal()">Plans</button>
+    </div>
     <div class="story-copy">
       <p class="eyebrow">Your neighbourhood, connected</p>
       <h1>Run your business from one calm place.</h1>
@@ -26,8 +29,27 @@
           @if (details.controls.display_name.touched && details.controls.display_name.invalid) { <small>Please enter your name.</small> }
           <label>Mobile number<div class="phone"><span>+91</span><input formControlName="phone_number" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="98765 43210" /></div></label>
           @if (details.controls.phone_number.touched && details.controls.phone_number.invalid) { <small>Enter a valid 10-digit Indian mobile number.</small> }
+
+          <label class="terms-check">
+            <input
+              type="checkbox"
+              [checked]="acceptTerms()"
+              [disabled]="!termsViewed()"
+              (change)="onAcceptTermsChange($event)"
+            />
+            <span>
+              I have read the
+              <a href="#terms" (click)="openTermsModal($event)">Terms and Conditions</a>.
+              @if (!termsViewed()) {
+                <small class="terms-hint">Open the link to unlock this checkbox.</small>
+              }
+            </span>
+          </label>
+
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-          <button type="submit" [disabled]="busy()">{{ busy() ? 'Sending…' : 'Send OTP' }}</button>
+          <button type="submit" [disabled]="!canSendOtp()">
+            {{ busy() ? 'Sending…' : 'Send OTP' }}
+          </button>
         </form>
       } @else if (step() === 'otp') {
         <button class="back" type="button" (click)="editNumber()">← Edit details</button>
@@ -82,7 +104,75 @@
 
         <button class="back later" type="button" (click)="skipToApp()" [disabled]="busy()">Manage later on Plans page →</button>
       }
-      <p class="terms">By continuing, you agree to Junction’s Terms and Privacy Policy.</p>
     </div>
   </section>
 </main>
+
+@if (plansModalOpen()) {
+  <div class="modal-backdrop" (click)="closePlansModal()" role="presentation"></div>
+  <div
+    class="plans-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="plans-modal-title"
+  >
+    <header>
+      <div>
+        <p class="kicker">PRICING</p>
+        <h2 id="plans-modal-title">Plans</h2>
+        <p>Simple yearly pricing for neighbourhood shops. New accounts get a {{ trialDays }}-day free trial.</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closePlansModal()" aria-label="Close plans">×</button>
+    </header>
+
+    <div class="modal-plans">
+      @for (plan of modalPlans(); track plan.type) {
+        <article [class.featured]="plan.type === 'premium' || plan.type === 'free_trial'">
+          <p class="plan-eyebrow">{{ plan.type === 'free_trial' ? 'TRIAL' : plan.type.toUpperCase() }}</p>
+          <h3>{{ plan.name }}</h3>
+          <p class="modal-price">
+            @if (plan.price_inr === 0) {
+              Free
+            } @else {
+              {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/mo</small>
+            }
+          </p>
+          <p class="modal-limit">{{ productLimitLabel(plan) }}</p>
+          <p class="modal-desc">{{ plan.description }}</p>
+        </article>
+      }
+    </div>
+
+    <p class="modal-foot">Log in to join a plan waitlist or continue your free trial.</p>
+  </div>
+}
+
+@if (termsModalOpen()) {
+  <div class="modal-backdrop" (click)="closeTermsModal()" role="presentation"></div>
+  <div
+    class="terms-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="terms-modal-title"
+  >
+    <header>
+      <div>
+        <p class="kicker">LEGAL · v{{ terms()?.version || '—' }}</p>
+        <h2 id="terms-modal-title">{{ terms()?.title || 'Terms and Conditions' }}</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="closeTermsModal()" aria-label="Close terms">×</button>
+    </header>
+
+    <div class="terms-body">
+      @if (!terms()) {
+        <p class="muted">Loading terms…</p>
+      } @else {
+        @for (paragraph of termsParagraphs(); track $index) {
+          <p>{{ paragraph }}</p>
+        }
+      }
+    </div>
+
+    <button type="button" class="terms-done" (click)="closeTermsModal()">I have read these terms</button>
+  </div>
+}
