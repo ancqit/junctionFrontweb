@@ -36,11 +36,11 @@ export class OverviewPage implements OnInit {
   readonly countdown = signal<PlanCountdown | null>(null);
 
   readonly shop = signal<Shop | null>(null);
+  readonly shopLoaded = signal(false);
   readonly cities = signal<string[]>([]);
   readonly localities = signal<string[]>([]);
   readonly shopSaving = signal(false);
   readonly shopError = signal('');
-  readonly shopSuccess = signal('');
 
   readonly shopForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -53,31 +53,17 @@ export class OverviewPage implements OnInit {
   readonly useCityDropdown = computed(() => this.cities().length > 0);
   readonly useLocalityDropdown = computed(() => this.localities().length > 0);
 
+  /** Shop name + city + locality must be saved before the rest of Overview is shown. */
+  readonly shopReady = computed(() => {
+    const shop = this.shop();
+    return !!shop?.id && !!shop.name?.trim() && !!shop.city?.trim() && !!shop.locality?.trim();
+  });
+
   ngOnInit(): void {
     this.profileApi.me().subscribe({
       next: (profile) => this.profile.set(profile),
       error: () => this.profile.set(null),
     });
-    this.plansApi.me().subscribe({
-      next: (plan) => this.countdown.set(buildPlanCountdown(plan)),
-      error: () => this.countdown.set(null),
-    });
-    this.productsApi.list().subscribe({
-      next: (products) => this.productCount.set(products.length),
-      error: () => this.productCount.set(0),
-    });
-    this.employeesApi.list().subscribe({
-      next: (employees) => this.employeeCount.set(employees.length),
-      error: () => this.employeeCount.set(0),
-    });
-    this.ordersApi
-      .list()
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (orders) => this.orderCount.set(orders.length),
-        error: () => undefined,
-      });
-
     this.loadShopForm();
   }
 
@@ -99,7 +85,6 @@ export class OverviewPage implements OnInit {
     };
     this.shopSaving.set(true);
     this.shopError.set('');
-    this.shopSuccess.set('');
 
     const existing = this.shop();
     const request$ = existing
@@ -109,7 +94,7 @@ export class OverviewPage implements OnInit {
     request$.pipe(finalize(() => this.shopSaving.set(false))).subscribe({
       next: (shop) => {
         this.shop.set(shop);
-        this.shopSuccess.set('Shop details saved.');
+        this.loadDashboard();
       },
       error: (err: unknown) => {
         const detail = (err as { error?: { detail?: string } })?.error?.detail;
@@ -136,6 +121,7 @@ export class OverviewPage implements OnInit {
       next: (shops) => {
         const shop = shops[0] ?? null;
         this.shop.set(shop);
+        this.shopLoaded.set(true);
         if (shop) {
           this.shopForm.patchValue({
             name: shop.name ?? '',
@@ -146,8 +132,41 @@ export class OverviewPage implements OnInit {
             this.loadLocalities(shop.city, shop.locality ?? '');
           }
         }
+        if (this.shopReady()) {
+          this.loadDashboard();
+        } else {
+          this.loading.set(false);
+        }
+      },
+      error: () => {
+        this.shop.set(null);
+        this.shopLoaded.set(true);
+        this.loading.set(false);
       },
     });
+  }
+
+  private loadDashboard(): void {
+    this.loading.set(true);
+    this.plansApi.me().subscribe({
+      next: (plan) => this.countdown.set(buildPlanCountdown(plan)),
+      error: () => this.countdown.set(null),
+    });
+    this.productsApi.list().subscribe({
+      next: (products) => this.productCount.set(products.length),
+      error: () => this.productCount.set(0),
+    });
+    this.employeesApi.list().subscribe({
+      next: (employees) => this.employeeCount.set(employees.length),
+      error: () => this.employeeCount.set(0),
+    });
+    this.ordersApi
+      .list()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (orders) => this.orderCount.set(orders.length),
+        error: () => undefined,
+      });
   }
 
   private loadLocalities(city: string, keepLocality = ''): void {
