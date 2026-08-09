@@ -1,16 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CurrencyPipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
-import {
-  homePathForRole,
-  isPostGraceViewerPlan,
-  normalizeUserRole,
-  PlanSummary,
-} from '../core/auth.models';
+import { isPostGraceViewerPlan, PlanSummary } from '../core/auth.models';
 import {
   FREE_TRIAL_DAYS,
   PLAN_CATALOG,
@@ -42,6 +37,8 @@ export class Login implements OnInit {
   readonly plans = signal<PlanOption[]>(PLAN_CATALOG);
   readonly currentPlan = signal<PlanSummary | null>(null);
   readonly trialDays = FREE_TRIAL_DAYS;
+  readonly plansModalOpen = signal(false);
+  readonly acceptTerms = signal(false);
 
   readonly details = this.fb.nonNullable.group({
     display_name: ['', [Validators.required, Validators.minLength(2)]],
@@ -63,7 +60,35 @@ export class Login implements OnInit {
     });
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.plansModalOpen()) {
+      this.closePlansModal();
+    }
+  }
+
+  openPlansModal(): void {
+    this.plansModalOpen.set(true);
+  }
+
+  closePlansModal(): void {
+    this.plansModalOpen.set(false);
+  }
+
+  onAcceptTermsChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.acceptTerms.set(checked);
+  }
+
+  canSendOtp(): boolean {
+    return this.acceptTerms() && !this.busy();
+  }
+
   sendOtp(): void {
+    if (!this.acceptTerms()) {
+      this.error.set('Please accept the Terms and Conditions to continue.');
+      return;
+    }
     if (this.details.invalid) {
       this.details.markAllAsTouched();
       return;
@@ -111,10 +136,9 @@ export class Login implements OnInit {
       .subscribe({
         next: (response) => {
           this.error.set('');
-          // Prefer TokenResponse.role so admins skip plans and go straight to /admin.
-          const role = normalizeUserRole(response.user, response.role ?? response.user?.role);
+          const role = this.auth.role;
           if (role === 'admin') {
-            void this.router.navigateByUrl(homePathForRole('admin'));
+            void this.router.navigateByUrl('/admin');
             return;
           }
 
@@ -124,7 +148,7 @@ export class Login implements OnInit {
             if (this.session.user) {
               this.session.saveFromAuthUser({ ...this.session.user, role: 'viewer' }, 'viewer');
             }
-            void this.router.navigateByUrl(homePathForRole('viewer'));
+            void this.router.navigateByUrl('/back-office/activate');
             return;
           }
 
@@ -183,6 +207,10 @@ export class Login implements OnInit {
 
   selectablePlans(): PlanOption[] {
     return this.plans().filter((plan) => plan.type !== 'free_trial');
+  }
+
+  modalPlans(): PlanOption[] {
+    return this.plans();
   }
 
   private readError(error: unknown, fallback: string): string {
