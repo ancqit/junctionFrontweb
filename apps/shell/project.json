@@ -39,7 +39,14 @@
         "polyfills": ["es-module-shims"]
       },
       "configurations": {
-        "production": { "outputHashing": "all" },
+        "production": {
+          "outputHashing": "all",
+          "optimization": {
+            "scripts": true,
+            "styles": true,
+            "fonts": false
+          }
+        },
         "development": { "optimization": false, "extractLicenses": false, "sourceMap": false }
       },
       "defaultConfiguration": "production"
