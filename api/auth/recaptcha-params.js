@@ -1,6 +1,9 @@
 /**
  * Same-origin helper for minting Identity Platform reCAPTCHA site keys.
- * Set GCP_IDENTITY_PLATFORM_API_KEY in the Vercel project (same value as Render).
+ *
+ * Set ONE of:
+ * - Vercel env: GCP_IDENTITY_PLATFORM_API_KEY (same value as Render)
+ * - Or rely on junctionBack GET /auth/recaptcha-params / identity-platform.config.ts
  */
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,7 +29,8 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.end(
       JSON.stringify({
-        detail: 'GCP_IDENTITY_PLATFORM_API_KEY is not configured on Vercel',
+        detail:
+          'GCP_IDENTITY_PLATFORM_API_KEY is not configured on Vercel. Add it in Vercel → Project Settings → Environment Variables (same value as Render), then redeploy.',
       }),
     );
     return;
