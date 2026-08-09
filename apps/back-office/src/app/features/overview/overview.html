@@ -1,10 +1,41 @@
 <header>
   <div>
     <p>{{ todayLabel() }}</p>
-    <h1>Good morning.</h1>
+    <h1>Hello, {{ greetingName() }}.</h1>
+    @if (userId()) {
+      <p class="user-id">User ID · {{ userId() }}</p>
+    }
   </div>
   <a routerLink="/back-office/billing" class="primary">+ New bill</a>
 </header>
+
+@if (countdown(); as plan) {
+  <section class="plan-counter" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
+    <div>
+      <p class="eyebrow">{{ plan.isTrial ? 'FREE TRIAL COUNTER' : 'YEARLY PLAN COUNTER' }}</p>
+      <h2>{{ plan.message }}</h2>
+      <p>
+        {{ plan.planName }}
+        @if (plan.isTrial) {
+          · 15-day free trial
+        } @else {
+          · yearly {{ plan.planName }} plan
+        }
+        @if (plan.endsAt) {
+          · ends {{ plan.endsAt | date:'mediumDate' }}
+        }
+      </p>
+    </div>
+    <div class="counter-box">
+      <strong>{{ plan.daysRemaining ?? '—' }}</strong>
+      <span>days remaining</span>
+      <small>of {{ plan.totalDays }}</small>
+    </div>
+    @if (plan.isExpired || plan.isTrial) {
+      <a routerLink="/back-office/plans" class="ghost">View plans →</a>
+    }
+  </section>
+}
 
 <section class="hero">
   <div>

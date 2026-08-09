@@ -65,6 +65,7 @@
             {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
           </button>
         } @else {
+          <p class="note">Yearly plan · overview shows days remaining of 365.</p>
           <button
             type="button"
             class="primary"

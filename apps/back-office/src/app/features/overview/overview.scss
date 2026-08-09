@@ -1,11 +1,32 @@
 :host { display: block; }
-header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 35px; }
+header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 24px; }
 header p { margin: 0 0 8px; color: #778078; font-size: 13px; }
+.user-id { margin-top: 6px !important; font-size: 12px !important; color: #909790 !important; letter-spacing: .02em; }
 h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; }
 .primary, ol a {
   display: inline-flex; align-items: center; border: 0; border-radius: 10px; padding: 12px 18px;
   color: white; background: #1a6541; font-weight: 700; text-decoration: none;
 }
+.ghost {
+  display: inline-flex; align-items: center; border: 0; border-radius: 10px; padding: 11px 16px;
+  color: #1a6541; background: #eef3ef; font-weight: 700; text-decoration: none; white-space: nowrap;
+}
+.plan-counter {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 18px; align-items: center;
+  margin-bottom: 22px; padding: 22px 24px; border-radius: 16px; border: 1px solid #dedbd1; background: white;
+}
+.plan-counter[data-type='free_trial'] { border-color: #d5bd6b; background: #fbf8ef; }
+.plan-counter[data-expired='true'] { border-color: #e2c4c4; background: #fbf4f4; }
+.plan-counter .eyebrow { margin: 0 0 8px; }
+.plan-counter h2 { margin: 0 0 8px; font: 500 24px Georgia, serif; color: #1a281f; }
+.plan-counter > div > p:last-of-type { margin: 0; color: #667069; font-size: 13px; }
+.counter-box {
+  display: grid; justify-items: center; min-width: 110px; padding: 14px 18px;
+  border-radius: 14px; background: #103d29; color: white;
+}
+.counter-box strong { font: 500 36px Georgia, serif; line-height: 1; }
+.counter-box span { margin-top: 6px; font-size: 12px; font-weight: 700; }
+.counter-box small { color: #9db3a5; font-size: 11px; }
 .hero {
   display: flex; justify-content: space-between; align-items: end; padding: 38px; border-radius: 20px;
   color: white; background: linear-gradient(135deg, #1b6743, #12462f);
@@ -39,9 +60,11 @@ h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; 
 }
 .next li p { margin: 5px 0 0; color: #7b837c; font-size: 13px; }
 .next li a { color: #1a6541; background: transparent; }
-@media (max-width: 800px) {
+@media (max-width: 900px) {
+  .plan-counter { grid-template-columns: 1fr; }
   .metrics { grid-template-columns: 1fr; }
   .hero { display: block; }
   .pulse { margin-top: 25px; }
   h1 { font-size: 32px; }
+  header { align-items: start; flex-direction: column; gap: 16px; }
 }

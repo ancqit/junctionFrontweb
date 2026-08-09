@@ -63,15 +63,15 @@ export class PlansPage implements OnInit {
 
   productLimitLabel(plan: PlanOption): string {
     if (plan.profile_only || plan.max_products === 0) {
-      return 'Profile only';
+      return 'Profile only · yearly';
     }
     if (plan.max_products === null) {
-      return 'More than 150 products';
+      return 'More than 150 products · yearly';
     }
     if (plan.type === 'free_trial') {
       return `Up to ${plan.max_products} products for ${plan.duration_days ?? this.trialDays} days`;
     }
-    return `Up to ${plan.max_products} products`;
+    return `Up to ${plan.max_products} products · yearly`;
   }
 
   isCurrent(planType: PlanType): boolean {

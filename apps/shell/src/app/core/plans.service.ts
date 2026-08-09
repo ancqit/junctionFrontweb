@@ -32,6 +32,7 @@ export interface PlanSummary {
 }
 
 export const FREE_TRIAL_DAYS = 15;
+export const PAID_PLAN_DAYS = 365;
 
 export const PLAN_CATALOG: PlanOption[] = [
   {
@@ -49,8 +50,8 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 0,
     max_products: 0,
     profile_only: true,
-    description: 'Profile only',
-    duration_days: null,
+    description: 'Profile only · billed yearly',
+    duration_days: PAID_PLAN_DAYS,
   },
   {
     type: 'growth',
@@ -58,8 +59,8 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 399,
     max_products: 100,
     profile_only: false,
-    description: 'Add up to 100 products',
-    duration_days: null,
+    description: 'Add up to 100 products · billed yearly',
+    duration_days: PAID_PLAN_DAYS,
   },
   {
     type: 'premium',
@@ -67,8 +68,8 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 599,
     max_products: null,
     profile_only: false,
-    description: 'Add more than 150 products',
-    duration_days: null,
+    description: 'Add more than 150 products · billed yearly',
+    duration_days: PAID_PLAN_DAYS,
   },
 ];
 
