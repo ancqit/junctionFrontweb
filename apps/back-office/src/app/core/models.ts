@@ -233,6 +233,15 @@ export interface UserProfile {
   display_name: string;
   bio?: string | null;
   avatar_url?: string | null;
+  /** From junctionBack GET /profile (main). */
+  digilocker_verified?: boolean | null;
+  digilocker_name?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProfileUpdate {
+  display_name?: string;
+  bio?: string | null;
+  avatar_url?: string | null;
 }
