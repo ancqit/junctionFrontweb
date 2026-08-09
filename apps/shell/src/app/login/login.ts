@@ -46,6 +46,10 @@ export class Login implements OnInit {
   });
 
   ngOnInit(): void {
+    if (this.auth.authenticated$.value && this.auth.role) {
+      void this.router.navigateByUrl(this.auth.homePath());
+      return;
+    }
     this.plansApi.list().subscribe({
       next: (plans) => this.plans.set(plans),
       error: () => this.plans.set(PLAN_CATALOG),
@@ -100,6 +104,16 @@ export class Login implements OnInit {
       .subscribe({
         next: (response) => {
           this.error.set('');
+          const role = this.auth.role;
+          if (role === 'admin') {
+            void this.router.navigateByUrl('/admin');
+            return;
+          }
+          if (role === 'viewer') {
+            void this.router.navigateByUrl('/viewer');
+            return;
+          }
+          // Shop owner — continue with plan selection, then back office.
           this.currentPlan.set(response.plan ?? null);
           this.step.set('plans');
         },

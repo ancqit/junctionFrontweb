@@ -2,16 +2,29 @@ import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { OtpChallenge, OtpRequest, OtpVerification, RefreshResponse } from './auth.models';
+import {
+  homePathForRole,
+  OtpChallenge,
+  OtpRequest,
+  OtpVerification,
+  RefreshResponse,
+  UserRole,
+} from './auth.models';
+import { SessionService } from './session.service';
 import { TokenService } from './token.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
   private readonly tokens = inject(TokenService);
+  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private refreshTimer?: ReturnType<typeof setTimeout>;
   readonly authenticated$ = new BehaviorSubject(this.tokens.isAuthenticated);
+
+  get role(): UserRole | null {
+    return this.session.role;
+  }
 
   requestOtp(payload: OtpRequest): Observable<OtpChallenge> {
     return this.api.post<OtpChallenge>('/auth/otp/request', payload);
@@ -24,13 +37,16 @@ export class AuthService {
         phone_number: phoneNumber,
         session_info: sessionInfo,
       })
-      .pipe(tap((value) => this.acceptAccessToken(value.access_token)));
+      .pipe(tap((value) => this.acceptSession(value)));
   }
 
   refresh(): Observable<RefreshResponse> {
     return this.api.post<RefreshResponse>('/auth/refresh', {}).pipe(
       tap((value) => {
         this.tokens.updateAccessToken(value.access_token);
+        if (value.user) {
+          this.session.saveFromAuthUser(value.user);
+        }
         this.authenticated$.next(true);
         this.scheduleRefresh();
       }),
@@ -43,15 +59,23 @@ export class AuthService {
     }
   }
 
+  homePath(): string {
+    return homePathForRole(this.session.role ?? 'owner');
+  }
+
   logout(): void {
     clearTimeout(this.refreshTimer);
     this.tokens.clear();
+    this.session.clear();
     this.authenticated$.next(false);
     void this.router.navigateByUrl('/login');
   }
 
-  private acceptAccessToken(accessToken: string): void {
-    this.tokens.saveAccessToken(accessToken);
+  private acceptSession(value: RefreshResponse): void {
+    this.tokens.saveAccessToken(value.access_token);
+    if (value.user) {
+      this.session.saveFromAuthUser(value.user);
+    }
     this.authenticated$.next(true);
     this.scheduleRefresh();
   }

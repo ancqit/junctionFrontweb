@@ -1,0 +1,114 @@
+<div class="admin">
+  <aside>
+    <div class="brand"><span>J</span> Junction Admin</div>
+    <nav>
+      <a routerLink="/admin" class="active">Activate users</a>
+      <a routerLink="/back-office">Back office</a>
+    </nav>
+    <button type="button" class="ghost" (click)="logout()">Sign out</button>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">PLATFORM</p>
+        <h1>Admin</h1>
+        <p class="sub">Activate and reactivate shop accounts. Pick a paid plan for each user.</p>
+      </div>
+      <button type="button" class="ghost" (click)="reload()">Refresh</button>
+    </header>
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    @if (success()) {
+      <p class="success" role="status">{{ success() }}</p>
+    }
+
+    @if (forbidden()) {
+      <section class="empty">
+        <strong>Admin access required</strong>
+        <p>Your login role must be <code>admin</code>. Shop owners use <code>owner</code> or <code>viewer</code>.</p>
+        <button type="button" class="primary" (click)="logout()">Sign out</button>
+      </section>
+    } @else {
+      <section class="toolbar" [formGroup]="search">
+        <label>
+          Search users
+          <input formControlName="q" placeholder="Name, phone, or email" (keydown.enter)="$event.preventDefault(); reload()" />
+        </label>
+        <button type="button" class="primary" (click)="reload()">Search</button>
+      </section>
+
+      <section class="table-wrap">
+        @if (loading()) {
+          <p class="muted">Loading users…</p>
+        } @else if (users().length === 0) {
+          <div class="empty">
+            <strong>No users found</strong>
+            <p>Users appear here after OTP login once the Admin API is live on junctionBack.</p>
+          </div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Contact</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Activate / reactivate</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.id) {
+                <tr [class.disabled-row]="needsReactivation(user)">
+                  <td>
+                    <strong>{{ user.display_name }}</strong>
+                    <small>ID · {{ user.id }}</small>
+                    @if (user.is_admin) {
+                      <span class="badge">Admin</span>
+                    }
+                  </td>
+                  <td>
+                    @if (user.phone_number) {
+                      <div>{{ user.phone_number }}</div>
+                    }
+                    @if (user.email) {
+                      <small>{{ user.email }}</small>
+                    }
+                    @if (!user.phone_number && !user.email) {
+                      <small>—</small>
+                    }
+                  </td>
+                  <td>
+                    <strong>{{ user.plan.name }}</strong>
+                    <small>{{ user.plan.description }}</small>
+                  </td>
+                  <td>
+                    <span class="badge" [attr.data-status]="user.plan.status">{{ statusLabel(user) | titlecase }}</span>
+                  </td>
+                  <td>{{ user.created_at ? (user.created_at | date:'mediumDate') : '—' }}</td>
+                  <td>
+                    <div class="actions">
+                      @for (plan of paidPlans; track plan.type) {
+                        <button
+                          type="button"
+                          class="ghost"
+                          [disabled]="savingId() === user.id"
+                          (click)="assignOrActivate(user, plan.type)"
+                        >
+                          {{ actionLabel(user, plan.name) }}
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
+  </main>
+</div>
