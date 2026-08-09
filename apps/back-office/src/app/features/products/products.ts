@@ -2,8 +2,9 @@ import { CurrencyPipe, TitleCasePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { Product, ProductStatus } from '../../core/models';
+import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
 import { ProductsApi } from '../../core/products.api';
+import { QueriesApi } from '../../core/queries.api';
 import { DEFAULT_STORE_ID } from '../../core/store.config';
 
 @Component({
@@ -14,6 +15,7 @@ import { DEFAULT_STORE_ID } from '../../core/store.config';
 })
 export class ProductsPage implements OnInit {
   private readonly api = inject(ProductsApi);
+  private readonly queriesApi = inject(QueriesApi);
   private readonly fb = inject(FormBuilder);
 
   readonly products = signal<Product[]>([]);
@@ -21,6 +23,12 @@ export class ProductsPage implements OnInit {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly showForm = signal(false);
+
+  readonly imageResults = signal<ImageSearchResult[]>([]);
+  readonly selectedImageUrl = signal<string | null>(null);
+  readonly searchingImages = signal(false);
+  readonly imageSearchError = signal('');
+  readonly imageSearchTotal = signal(0);
 
   readonly form = this.fb.nonNullable.group({
     sku: ['', [Validators.required, Validators.maxLength(64)]],
@@ -36,6 +44,10 @@ export class ProductsPage implements OnInit {
     barcode: [''],
     tax_rate: [''],
     low_stock_threshold: [''],
+  });
+
+  readonly imageSearchForm = this.fb.nonNullable.group({
+    query: ['', [Validators.required, Validators.maxLength(200)]],
   });
 
   ngOnInit(): void {
@@ -57,6 +69,7 @@ export class ProductsPage implements OnInit {
   openForm(): void {
     this.showForm.set(true);
     this.error.set('');
+    this.resetImageSearch();
   }
 
   closeForm(): void {
@@ -76,6 +89,50 @@ export class ProductsPage implements OnInit {
       tax_rate: '',
       low_stock_threshold: '',
     });
+    this.resetImageSearch();
+  }
+
+  searchImages(): void {
+    const query = this.imageSearchForm.controls.query.value.trim();
+    if (!query) {
+      this.imageSearchForm.controls.query.markAsTouched();
+      this.imageSearchError.set('Enter a product name to search for pictures.');
+      return;
+    }
+
+    this.searchingImages.set(true);
+    this.imageSearchError.set('');
+    this.queriesApi
+      .searchImages(query)
+      .pipe(finalize(() => this.searchingImages.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.imageResults.set(response.images);
+          this.imageSearchTotal.set(response.total_results);
+          if (response.images.length === 0) {
+            this.imageSearchError.set('No pictures found for that search.');
+          }
+        },
+        error: (err: unknown) =>
+          this.imageSearchError.set(this.readError(err, 'Could not search pictures.')),
+      });
+  }
+
+  useProductNameForSearch(): void {
+    const name = this.form.controls.name.value.trim();
+    if (!name) {
+      return;
+    }
+    this.imageSearchForm.controls.query.setValue(name);
+    this.searchImages();
+  }
+
+  selectImage(image: ImageSearchResult): void {
+    this.selectedImageUrl.set(String(image.cdn_url));
+  }
+
+  clearSelectedImage(): void {
+    this.selectedImageUrl.set(null);
   }
 
   create(): void {
@@ -103,7 +160,7 @@ export class ProductsPage implements OnInit {
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        image_url: null,
+        image_url: this.selectedImageUrl(),
         barcode: value.barcode.trim() || null,
         tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
         low_stock_threshold:
@@ -127,6 +184,14 @@ export class ProductsPage implements OnInit {
       next: () => this.reload(),
       error: (err: unknown) => this.error.set(this.readError(err, 'Could not delete product.')),
     });
+  }
+
+  private resetImageSearch(): void {
+    this.imageSearchForm.reset({ query: '' });
+    this.imageResults.set([]);
+    this.selectedImageUrl.set(null);
+    this.imageSearchError.set('');
+    this.imageSearchTotal.set(0);
   }
 
   private readError(error: unknown, fallback: string): string {

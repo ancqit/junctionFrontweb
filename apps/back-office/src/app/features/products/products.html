@@ -41,6 +41,65 @@
       <label>Low stock at<input formControlName="low_stock_threshold" type="number" min="0" step="1" placeholder="optional" /></label>
       <label class="full">Tags<input formControlName="tags" placeholder="organic, staple (comma separated)" /></label>
       <label class="full">Description<textarea formControlName="description" rows="3"></textarea></label>
+
+      <section class="image-search full">
+        <div class="image-search-head">
+          <div>
+            <h3>Search for pictures or products</h3>
+            <p>Enter a product name, search the CDN, then pick an image for this product.</p>
+          </div>
+          <button type="button" class="ghost" (click)="useProductNameForSearch()" [disabled]="!form.controls.name.value.trim()">
+            Use product name
+          </button>
+        </div>
+
+        <div class="image-search-bar">
+          <label class="query">
+            Product name
+            <input
+              [formControl]="imageSearchForm.controls.query"
+              placeholder="e.g. organic rice"
+              (keydown.enter)="$event.preventDefault(); searchImages()"
+            />
+          </label>
+          <button type="button" class="primary" (click)="searchImages()" [disabled]="searchingImages()">
+            {{ searchingImages() ? 'Searching…' : 'Search' }}
+          </button>
+        </div>
+
+        @if (imageSearchError()) {
+          <p class="image-error" role="alert">{{ imageSearchError() }}</p>
+        }
+
+        @if (selectedImageUrl(); as selectedUrl) {
+          <div class="selected-image">
+            <img [src]="selectedUrl" alt="Selected product image" />
+            <div>
+              <strong>Selected CDN image</strong>
+              <small>{{ selectedUrl }}</small>
+              <button type="button" class="ghost" (click)="clearSelectedImage()">Clear selection</button>
+            </div>
+          </div>
+        }
+
+        @if (imageResults().length > 0) {
+          <p class="results-meta">{{ imageSearchTotal() }} results · choose one to attach</p>
+          <div class="image-grid">
+            @for (image of imageResults(); track image.id) {
+              <button
+                type="button"
+                class="image-card"
+                [class.selected]="selectedImageUrl() === image.cdn_url"
+                (click)="selectImage(image)"
+              >
+                <img [src]="image.thumbnail_url" [alt]="image.alt" loading="lazy" />
+                <span>{{ image.alt }}</span>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
       <div class="actions full">
         <button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save product' }}</button>
       </div>
@@ -73,10 +132,17 @@
         @for (product of products(); track product.id) {
           <tr>
             <td>
-              <strong>{{ product.name }}</strong>
-              @if (product.description) {
-                <small>{{ product.description }}</small>
-              }
+              <div class="product-cell">
+                @if (product.image_url) {
+                  <img [src]="product.image_url" [alt]="product.name" />
+                }
+                <div>
+                  <strong>{{ product.name }}</strong>
+                  @if (product.description) {
+                    <small>{{ product.description }}</small>
+                  }
+                </div>
+              </div>
             </td>
             <td>{{ product.sku }}</td>
             <td>{{ product.category }}</td>

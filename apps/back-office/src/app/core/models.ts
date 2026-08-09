@@ -69,3 +69,23 @@ export interface Product {
 
 export type ProductCreate = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 export type ProductUpdate = Partial<Omit<ProductCreate, 'store_id'>>;
+
+export interface ImageSearchResult {
+  id: string;
+  cdn_url: string;
+  thumbnail_url: string;
+  alt: string;
+  width: number;
+  height: number;
+  source: string;
+  photographer?: string | null;
+  photographer_url?: string | null;
+}
+
+export interface ImageSearchResponse {
+  query: string;
+  page: number;
+  per_page: number;
+  total_results: number;
+  images: ImageSearchResult[];
+}
