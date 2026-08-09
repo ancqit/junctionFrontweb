@@ -63,15 +63,23 @@ export type OtpVerification = RefreshResponse;
 
 export function normalizeUserRole(
   source?: AuthUser | UserRole | string | null,
-  fallbackRole?: UserRole | string | null,
+  /**
+   * Prefer this when set (TokenResponse.role from junctionBack).
+   * Explicit top-level role wins over a stale `user.role`.
+   */
+  explicitRole?: UserRole | string | null,
 ): UserRole {
-  const raw = String(
+  const fromExplicit =
+    explicitRole != null && String(explicitRole).trim() !== ''
+      ? String(explicitRole).trim().toLowerCase()
+      : '';
+  const fromSource =
     typeof source === 'string'
-      ? source
-      : (source?.role ?? source?.user_type ?? fallbackRole ?? 'owner'),
-  )
-    .trim()
-    .toLowerCase();
+      ? source.trim().toLowerCase()
+      : String(source?.role ?? source?.user_type ?? '')
+          .trim()
+          .toLowerCase();
+  const raw = fromExplicit || fromSource || 'owner';
   if (raw === 'admin') {
     return 'admin';
   }
