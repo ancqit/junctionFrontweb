@@ -24,8 +24,10 @@ export class PlansPage implements OnInit {
   readonly error = signal('');
   readonly success = signal('');
   readonly trialDays = FREE_TRIAL_DAYS;
+  readonly wasLocked = signal(false);
 
   ngOnInit(): void {
+    this.wasLocked.set(this.access.locked());
     this.reload();
   }
 
@@ -61,7 +63,9 @@ export class PlansPage implements OnInit {
           this.current.set(state);
           this.access.markUnlocked(state);
           this.success.set(`${state.name} is now active. You are an owner again.`);
-          void this.router.navigateByUrl('/back-office');
+          if (this.wasLocked() || state.is_active) {
+            void this.router.navigateByUrl('/back-office');
+          }
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not select this plan.')),
       });
