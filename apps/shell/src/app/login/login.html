@@ -42,19 +42,31 @@
       } @else {
         <p class="kicker">Choose your plan</p>
         <h2 id="login-title">Plans & free trial</h2>
-        <p class="subcopy">Pick Starter, Growth, or Premium — or start a {{ trialDays }}-day Premium free trial.</p>
+        <p class="subcopy">
+          @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
+            Your {{ trialDays }}-day free trial is already running
+            @if (currentPlan()?.days_remaining != null) {
+              ({{ currentPlan()?.days_remaining }} days left)
+            }.
+            Continue, or pick Starter / Growth / Premium.
+          } @else {
+            Pick Starter, Growth, or Premium. New accounts start on a {{ trialDays }}-day free trial automatically.
+          }
+        </p>
 
         @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
 
-        <button type="button" class="trial" (click)="startTrial()" [disabled]="busy()">
-          <span>Free trial</span>
-          <strong>{{ trialDays }} days of Premium</strong>
-          <small>Backend counter starts now and closes after {{ trialDays }} days</small>
-        </button>
+        @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
+          <button type="button" class="trial" (click)="continueWithTrial()" [disabled]="busy()">
+            <span>Free trial</span>
+            <strong>Continue with Premium trial</strong>
+            <small>{{ currentPlan()?.days_remaining ?? trialDays }} days remaining · closes automatically</small>
+          </button>
+        }
 
         <div class="plan-options">
-          @for (plan of plans(); track plan.id) {
-            <button type="button" class="plan-option" (click)="choosePlan(plan.id)" [disabled]="busy()">
+          @for (plan of selectablePlans(); track plan.type) {
+            <button type="button" class="plan-option" (click)="choosePlan(plan.type)" [disabled]="busy()">
               <span class="plan-name">{{ plan.name }}</span>
               <span class="plan-price">
                 @if (plan.price_inr === 0) {
@@ -68,7 +80,7 @@
           }
         </div>
 
-        <button class="back later" type="button" (click)="skipToApp()" [disabled]="busy()">Choose later on Plans page →</button>
+        <button class="back later" type="button" (click)="skipToApp()" [disabled]="busy()">Manage later on Plans page →</button>
       }
       <p class="terms">By continuing, you agree to Junction’s Terms and Privacy Policy.</p>
     </div>

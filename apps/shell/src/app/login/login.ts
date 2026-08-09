@@ -5,11 +5,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
+import { PlanSummary } from '../core/auth.models';
 import {
   FREE_TRIAL_DAYS,
   PLAN_CATALOG,
-  PlanCatalogItem,
-  PlanId,
+  PlanOption,
+  PlanType,
   PlansService,
 } from '../core/plans.service';
 import { RecaptchaService } from '../core/recaptcha.service';
@@ -31,7 +32,8 @@ export class Login implements OnInit {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly sessionInfo = signal('');
-  readonly plans = signal<PlanCatalogItem[]>(PLAN_CATALOG);
+  readonly plans = signal<PlanOption[]>(PLAN_CATALOG);
+  readonly currentPlan = signal<PlanSummary | null>(null);
   readonly trialDays = FREE_TRIAL_DAYS;
 
   readonly details = this.fb.nonNullable.group({
@@ -96,8 +98,9 @@ export class Login implements OnInit {
       .verifyOtp(this.otpForm.getRawValue().otp, phoneNumber, this.sessionInfo())
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: () => {
+        next: (response) => {
           this.error.set('');
+          this.currentPlan.set(response.plan ?? null);
           this.step.set('plans');
         },
         error: (error: unknown) =>
@@ -105,30 +108,25 @@ export class Login implements OnInit {
       });
   }
 
-  startTrial(): void {
+  choosePlan(planType: PlanType): void {
+    if (planType === 'free_trial') {
+      void this.router.navigateByUrl('/back-office');
+      return;
+    }
     this.busy.set(true);
     this.error.set('');
     this.plansApi
-      .startTrial()
-      .pipe(finalize(() => this.busy.set(false)))
-      .subscribe({
-        next: () => void this.router.navigateByUrl('/back-office'),
-        error: (error: unknown) =>
-          this.error.set(this.readError(error, 'Could not start the free trial. You can choose a plan instead.')),
-      });
-  }
-
-  choosePlan(planId: PlanId): void {
-    this.busy.set(true);
-    this.error.set('');
-    this.plansApi
-      .select(planId)
+      .select(planType)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: () => void this.router.navigateByUrl('/back-office'),
         error: (error: unknown) =>
           this.error.set(this.readError(error, 'Could not save your plan. Please try again.')),
       });
+  }
+
+  continueWithTrial(): void {
+    void this.router.navigateByUrl('/back-office');
   }
 
   skipToApp(): void {
@@ -141,14 +139,21 @@ export class Login implements OnInit {
     this.error.set('');
   }
 
-  productLimitLabel(plan: PlanCatalogItem): string {
-    if (plan.product_limit === null) {
-      return 'More than 150 products';
-    }
-    if (plan.product_limit === 0) {
+  productLimitLabel(plan: PlanOption): string {
+    if (plan.profile_only || plan.max_products === 0) {
       return 'Profile only';
     }
-    return `Up to ${plan.product_limit} products`;
+    if (plan.max_products === null) {
+      return 'More than 150 products';
+    }
+    if (plan.type === 'free_trial') {
+      return `Up to ${plan.max_products} products · ${plan.duration_days ?? this.trialDays} days`;
+    }
+    return `Up to ${plan.max_products} products`;
+  }
+
+  selectablePlans(): PlanOption[] {
+    return this.plans().filter((plan) => plan.type !== 'free_trial');
   }
 
   private readError(error: unknown, fallback: string): string {

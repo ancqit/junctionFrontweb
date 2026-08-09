@@ -152,56 +152,73 @@ export interface Order {
 
 export type OrderCreate = Omit<Order, 'id' | 'order_number' | 'created_at' | 'updated_at'>;
 
-export type PlanId = 'starter' | 'growth' | 'premium';
-export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'expired';
+/** Matches junctionBack plan_service.PlanType */
+export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
+export type PlanStatus = 'active' | 'expired' | 'cancelled';
 
-export interface PlanCatalogItem {
-  id: PlanId;
+export interface PlanOption {
+  type: PlanType;
   name: string;
   price_inr: number;
-  product_limit: number | null;
+  max_products: number | null;
+  profile_only: boolean;
   description: string;
-  features: string[];
+  duration_days?: number | null;
 }
 
-export interface SubscriptionState {
-  status: SubscriptionStatus;
-  plan_id?: PlanId | null;
-  plan_name?: string | null;
-  product_limit?: number | null;
-  price_inr?: number | null;
-  trial_started_at?: string | null;
-  trial_ends_at?: string | null;
-  trial_days_total: number;
-  trial_days_remaining?: number | null;
-  selected_at?: string | null;
+export interface PlanSummary {
+  type: PlanType;
+  status: PlanStatus;
+  name: string;
+  price_inr: number;
+  max_products: number | null;
+  profile_only: boolean;
+  description: string;
+  started_at: string;
+  ends_at?: string | null;
+  days_remaining?: number | null;
+  is_active: boolean;
+  trial_used: boolean;
+  selected_plan_type?: PlanType | null;
 }
-
-export const PLAN_CATALOG: PlanCatalogItem[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price_inr: 0,
-    product_limit: 0,
-    description: 'Get a Junction profile and explore the workspace.',
-    features: ['Store profile', 'Overview access', 'Upgrade anytime'],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    price_inr: 299,
-    product_limit: 100,
-    description: 'Add up to 100 products and run your catalog.',
-    features: ['Up to 100 products', 'Orders & billing', 'Employee records'],
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price_inr: 599,
-    product_limit: null,
-    description: 'Add more than 150 products with full store operations.',
-    features: ['More than 150 products', 'Orders & billing', 'Priority catalog tools'],
-  },
-];
 
 export const FREE_TRIAL_DAYS = 15;
+
+export const PLAN_CATALOG: PlanOption[] = [
+  {
+    type: 'free_trial',
+    name: 'Free Trial',
+    price_inr: 0,
+    max_products: 150,
+    profile_only: false,
+    description: 'Try all features free for 15 days',
+    duration_days: FREE_TRIAL_DAYS,
+  },
+  {
+    type: 'starter',
+    name: 'Starter',
+    price_inr: 0,
+    max_products: 0,
+    profile_only: true,
+    description: 'Profile only',
+    duration_days: null,
+  },
+  {
+    type: 'growth',
+    name: 'Growth',
+    price_inr: 399,
+    max_products: 100,
+    profile_only: false,
+    description: 'Add up to 100 products',
+    duration_days: null,
+  },
+  {
+    type: 'premium',
+    name: 'Premium',
+    price_inr: 599,
+    max_products: null,
+    profile_only: false,
+    description: 'Add more than 150 products',
+    duration_days: null,
+  },
+];

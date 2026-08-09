@@ -21,25 +21,26 @@ h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
   display: flex; justify-content: space-between; align-items: center; gap: 18px;
   margin-bottom: 22px; padding: 22px; border-radius: 16px; border: 1px solid #dedbd1; background: white;
 }
-.status[data-status='trial'] { border-color: #d5bd6b; background: #fbf8ef; }
+.status[data-type='free_trial'] { border-color: #d5bd6b; background: #fbf8ef; }
 .status[data-status='expired'] { border-color: #e2c4c4; background: #fbf4f4; }
-.status p:last-child, .trial-banner p:last-child { margin: 0; color: #667069; font-size: 14px; }
+.status p:last-child { margin: 0; color: #667069; font-size: 14px; }
 .plan-grid {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
 }
 .plan-grid article {
   display: flex; flex-direction: column; gap: 10px; padding: 22px;
   border: 1px solid #dedbd1; border-radius: 16px; background: white;
 }
 .plan-grid .featured { border-color: #1a6541; box-shadow: 0 0 0 1px #1a6541; }
+.plan-grid .trial { border-color: #d5bd6b; background: #fbf8ef; }
 .plan-grid .current { background: #f4faf6; }
 .price { margin: 0; font: 500 34px Georgia, serif; color: #1a281f; }
 .price small { font-size: 14px; color: #778078; margin-left: 4px; }
 .limit { margin: 0; font-size: 13px; font-weight: 800; color: #1a6541; }
-.desc { margin: 0; color: #667069; font-size: 14px; line-height: 1.5; }
-ul { margin: 4px 0 12px; padding-left: 18px; color: #445048; font-size: 14px; display: grid; gap: 6px; }
+.desc, .note { margin: 0; color: #667069; font-size: 14px; line-height: 1.5; }
+.note { font-size: 12px; }
 .plan-grid button { margin-top: auto; width: 100%; }
 @media (max-width: 980px) {
   .plan-grid { grid-template-columns: 1fr; }
-  header, .status, .trial-banner { flex-direction: column; align-items: start; }
+  header, .status { flex-direction: column; align-items: start; }
 }

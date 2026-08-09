@@ -1,39 +1,21 @@
 import { inject, Injectable } from '@angular/core';
 import { catchError, Observable, of } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
-import {
-  FREE_TRIAL_DAYS,
-  PLAN_CATALOG,
-  PlanCatalogItem,
-  PlanId,
-  SubscriptionState,
-} from './models';
+import { PLAN_CATALOG, PlanOption, PlanSummary, PlanType } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class PlansApi {
   private readonly api = inject(BackOfficeApiService);
 
-  list(): Observable<PlanCatalogItem[]> {
-    return this.api.get<PlanCatalogItem[]>('/plans').pipe(catchError(() => of(PLAN_CATALOG)));
+  list(): Observable<PlanOption[]> {
+    return this.api.get<PlanOption[]>('/plans').pipe(catchError(() => of(PLAN_CATALOG)));
   }
 
-  me(): Observable<SubscriptionState> {
-    return this.api.get<SubscriptionState>('/plans/me').pipe(
-      catchError(() =>
-        of({
-          status: 'none' as const,
-          trial_days_total: FREE_TRIAL_DAYS,
-          trial_days_remaining: null,
-        }),
-      ),
-    );
+  me(): Observable<PlanSummary> {
+    return this.api.get<PlanSummary>('/plans/me');
   }
 
-  startTrial(): Observable<SubscriptionState> {
-    return this.api.post<SubscriptionState>('/plans/trial/start', {});
-  }
-
-  select(planId: PlanId): Observable<SubscriptionState> {
-    return this.api.post<SubscriptionState>('/plans/select', { plan_id: planId });
+  select(planType: PlanType): Observable<PlanSummary> {
+    return this.api.post<PlanSummary>('/plans/select', { plan_type: planType });
   }
 }
