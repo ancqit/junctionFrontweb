@@ -5,4 +5,4 @@
  *
  * Fill this in to mint reCAPTCHA tokens without a Vercel env var or backend route.
  */
-export const IDENTITY_PLATFORM_WEB_API_KEY = '';
+export const IDENTITY_PLATFORM_WEB_API_KEY = 'AIzaSyBAT_Xm3t_QEITallMdyDZ1_KaMApIqkwg';
