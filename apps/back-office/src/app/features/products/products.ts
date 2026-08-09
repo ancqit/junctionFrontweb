@@ -141,6 +141,7 @@ export class ProductsPage implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
+    const selectedCdn = this.selectedImageUrl();
     this.saving.set(true);
     this.error.set('');
     this.api
@@ -160,19 +161,47 @@ export class ProductsPage implements OnInit {
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        image_url: this.selectedImageUrl(),
+        image_cdn: selectedCdn,
+        image: selectedCdn
+          ? { source: 'query', cdn: selectedCdn }
+          : null,
+        image_url: selectedCdn,
         barcode: value.barcode.trim() || null,
         tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
         low_stock_threshold:
           value.low_stock_threshold === '' ? null : Number(value.low_stock_threshold),
       })
-      .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: () => {
-          this.closeForm();
-          this.reload();
+        next: (created) => {
+          if (!selectedCdn) {
+            this.saving.set(false);
+            this.closeForm();
+            this.reload();
+            return;
+          }
+          // Download + store the selected CDN image from /queries onto the product.
+          this.api.useImageFromCdn(created.id, selectedCdn).subscribe({
+            next: () => {
+              this.saving.set(false);
+              this.closeForm();
+              this.reload();
+            },
+            error: (err: unknown) => {
+              this.saving.set(false);
+              this.error.set(
+                this.readError(
+                  err,
+                  'Product saved, but attaching the CDN image failed. You can retry from edit later.',
+                ),
+              );
+              this.reload();
+            },
+          });
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not create product.')),
+        error: (err: unknown) => {
+          this.saving.set(false);
+          this.error.set(this.readError(err, 'Could not create product.'));
+        },
       });
   }
 
@@ -184,6 +213,10 @@ export class ProductsPage implements OnInit {
       next: () => this.reload(),
       error: (err: unknown) => this.error.set(this.readError(err, 'Could not delete product.')),
     });
+  }
+
+  productImageSrc(product: Product): string | null {
+    return product.image_url || product.image_cdn || product.image?.cdn || null;
   }
 
   private resetImageSearch(): void {

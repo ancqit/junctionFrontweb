@@ -133,8 +133,8 @@
           <tr>
             <td>
               <div class="product-cell">
-                @if (product.image_url) {
-                  <img [src]="product.image_url" [alt]="product.name" />
+                @if (productImageSrc(product); as imageSrc) {
+                  <img [src]="imageSrc" [alt]="product.name" />
                 }
                 <div>
                   <strong>{{ product.name }}</strong>
