@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from './api.config';
+import { IDENTITY_PLATFORM_WEB_API_KEY } from './identity-platform.config';
 
 declare global {
   interface Window {
@@ -29,6 +30,10 @@ interface RecaptchaParamsResponse {
   recaptcha_site_key: string;
 }
 
+interface IdentityToolkitRecaptchaParams {
+  recaptchaSiteKey?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RecaptchaService {
   private readonly http = inject(HttpClient);
@@ -49,26 +54,58 @@ export class RecaptchaService {
   }
 
   private getSiteKey(): Promise<string> {
-    this.siteKeyPromise ??= firstValueFrom(
-      this.http.get<RecaptchaParamsResponse>(this.recaptchaParamsUrl()),
-    ).then((response) => {
-      if (!response.recaptcha_site_key) {
-        throw new Error('Missing reCAPTCHA site key');
-      }
-      return response.recaptcha_site_key;
-    });
+    this.siteKeyPromise ??= this.resolveSiteKey();
     return this.siteKeyPromise;
   }
 
-  private recaptchaParamsUrl(): string {
-    // On Vercel, /api/auth/recaptcha-params is a same-origin serverless function.
-    // Locally, call the backend route (after deploying the junctionBack change).
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const isLocal = host === 'localhost' || host === '127.0.0.1';
-    if (isLocal) {
-      return `${this.config.baseUrl.replace(/\/$/, '')}/auth/recaptcha-params`;
+  private async resolveSiteKey(): Promise<string> {
+    // 1) Backend (Render already has GCP_IDENTITY_PLATFORM_API_KEY).
+    try {
+      const fromBackend = await firstValueFrom(
+        this.http.get<RecaptchaParamsResponse>(
+          `${this.config.baseUrl.replace(/\/$/, '')}/auth/recaptcha-params`,
+        ),
+      );
+      if (fromBackend.recaptcha_site_key) {
+        return fromBackend.recaptcha_site_key;
+      }
+    } catch {
+      // continue
     }
-    return '/api/auth/recaptcha-params';
+
+    // 2) Same-origin Vercel function (needs GCP_IDENTITY_PLATFORM_API_KEY env).
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    const onVercel = host.endsWith('vercel.app') || host === 'junction-frontweb.vercel.app';
+    if (onVercel) {
+      try {
+        const fromVercel = await firstValueFrom(
+          this.http.get<RecaptchaParamsResponse>('/api/auth/recaptcha-params'),
+        );
+        if (fromVercel.recaptcha_site_key) {
+          return fromVercel.recaptcha_site_key;
+        }
+      } catch {
+        // continue
+      }
+    }
+
+    // 3) Browser → Identity Toolkit using public web API key from config.
+    const apiKey = IDENTITY_PLATFORM_WEB_API_KEY.trim();
+    if (!apiKey) {
+      throw new Error(
+        'reCAPTCHA is not configured. Fastest fix: set GCP_IDENTITY_PLATFORM_API_KEY in Vercel (same value as Render) and redeploy. Or set IDENTITY_PLATFORM_WEB_API_KEY in identity-platform.config.ts.',
+      );
+    }
+
+    const params = await firstValueFrom(
+      this.http.get<IdentityToolkitRecaptchaParams>(
+        `https://identitytoolkit.googleapis.com/v1/recaptchaParams?key=${encodeURIComponent(apiKey)}`,
+      ),
+    );
+    if (!params.recaptchaSiteKey) {
+      throw new Error('GCP did not return a reCAPTCHA site key');
+    }
+    return params.recaptchaSiteKey;
   }
 
   private loadScript(): Promise<void> {
