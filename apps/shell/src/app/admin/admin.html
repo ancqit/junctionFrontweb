@@ -1,9 +1,13 @@
 <div class="admin">
   <aside>
     <div class="brand"><span>J</span> Junction Admin</div>
+    <p class="admin-id">
+      <span>{{ adminName }}</span>
+      <small>Login ID · {{ adminId || '—' }}</small>
+    </p>
     <nav>
-      <a routerLink="/admin" class="active">Activate users</a>
-      <a routerLink="/back-office">Back office</a>
+      <a routerLink="/admin" class="active">Shops</a>
+      <a routerLink="/back-office">Full application</a>
     </nav>
     <button type="button" class="ghost" (click)="logout()">Sign out</button>
   </aside>
@@ -12,10 +16,16 @@
     <header>
       <div>
         <p class="eyebrow">PLATFORM</p>
-        <h1>Admin</h1>
-        <p class="sub">Activate and reactivate shop accounts. Pick a paid plan for each user.</p>
+        <h1>Shops</h1>
+        <p class="sub">
+          List every shop with its product count. Use the checkbox to activate or deactivate.
+          Deactivate is checked on the backend for admin or the shop’s owner.
+        </p>
       </div>
-      <button type="button" class="ghost" (click)="reload()">Refresh</button>
+      <div class="header-actions">
+        <button type="button" class="primary" (click)="goApp()">Open application</button>
+        <button type="button" class="ghost" (click)="reload()">Refresh</button>
+      </div>
     </header>
 
     @if (error()) {
@@ -34,74 +44,68 @@
     } @else {
       <section class="toolbar" [formGroup]="search">
         <label>
-          Search users
-          <input formControlName="q" placeholder="Name, phone, or email" (keydown.enter)="$event.preventDefault(); reload()" />
+          Search shops
+          <input formControlName="q" placeholder="Shop, owner, phone, or email" (keydown.enter)="$event.preventDefault(); reload()" />
         </label>
         <button type="button" class="primary" (click)="reload()">Search</button>
       </section>
 
       <section class="table-wrap">
         @if (loading()) {
-          <p class="muted">Loading users…</p>
-        } @else if (users().length === 0) {
+          <p class="muted">Loading shops…</p>
+        } @else if (shops().length === 0) {
           <div class="empty">
-            <strong>No users found</strong>
-            <p>Users appear here after OTP login once the Admin API is live on junctionBack.</p>
+            <strong>No shops found</strong>
+            <p>Shops appear here from owner/viewer accounts once the Admin shops API is live on junctionBack.</p>
           </div>
         } @else {
           <table>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Contact</th>
-                <th>Plan</th>
+                <th>Shop</th>
+                <th>Owner</th>
+                <th>Products</th>
                 <th>Status</th>
                 <th>Joined</th>
-                <th>Activate / reactivate</th>
+                <th>Active</th>
               </tr>
             </thead>
             <tbody>
-              @for (user of users(); track user.id) {
-                <tr [class.disabled-row]="needsReactivation(user)">
+              @for (shop of shops(); track shop.id) {
+                <tr [class.disabled-row]="!shop.is_active">
                   <td>
-                    <strong>{{ user.display_name }}</strong>
-                    <small>ID · {{ user.id }}</small>
-                    @if (user.is_admin) {
-                      <span class="badge">Admin</span>
-                    }
+                    <strong>{{ shop.name }}</strong>
+                    <small>Store · {{ shop.store_id }}</small>
                   </td>
                   <td>
-                    @if (user.phone_number) {
-                      <div>{{ user.phone_number }}</div>
+                    <strong>{{ shop.owner_name }}</strong>
+                    @if (shop.phone_number) {
+                      <small>{{ shop.phone_number }}</small>
                     }
-                    @if (user.email) {
-                      <small>{{ user.email }}</small>
+                    @if (shop.email) {
+                      <small>{{ shop.email }}</small>
                     }
-                    @if (!user.phone_number && !user.email) {
-                      <small>—</small>
-                    }
+                    <small>Owner ID · {{ shop.owner_id }}</small>
                   </td>
                   <td>
-                    <strong>{{ user.plan.name }}</strong>
-                    <small>{{ user.plan.description }}</small>
+                    <span class="count">{{ shop.products_count }}</span>
                   </td>
                   <td>
-                    <span class="badge" [attr.data-status]="user.plan.status">{{ statusLabel(user) | titlecase }}</span>
+                    <span class="badge" [attr.data-status]="shop.is_active ? 'active' : 'expired'">
+                      {{ shop.is_active ? 'Active' : 'Inactive' }}
+                    </span>
                   </td>
-                  <td>{{ user.created_at ? (user.created_at | date:'mediumDate') : '—' }}</td>
+                  <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>
                   <td>
-                    <div class="actions">
-                      @for (plan of paidPlans; track plan.type) {
-                        <button
-                          type="button"
-                          class="ghost"
-                          [disabled]="savingId() === user.id"
-                          (click)="assignOrActivate(user, plan.type)"
-                        >
-                          {{ actionLabel(user, plan.name) }}
-                        </button>
-                      }
-                    </div>
+                    <label class="toggle">
+                      <input
+                        type="checkbox"
+                        [checked]="shop.is_active"
+                        [disabled]="savingId() === shop.id"
+                        (change)="onActiveChange(shop, $event)"
+                      />
+                      <span>{{ shop.is_active ? 'On' : 'Off' }}</span>
+                    </label>
                   </td>
                 </tr>
               }

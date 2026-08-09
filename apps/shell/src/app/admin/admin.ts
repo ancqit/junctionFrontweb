@@ -1,34 +1,36 @@
-import { DatePipe, TitleCasePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { AdminApi, AdminUser } from '../core/admin.api';
+import { AdminApi, AdminShop } from '../core/admin.api';
 import { AuthService } from '../core/auth.service';
-import { PlanType } from '../core/auth.models';
-import { PLAN_CATALOG } from '../core/plans.service';
+import { SessionService } from '../core/session.service';
 
 @Component({
   selector: 'app-admin',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TitleCasePipe],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
 export class AdminPage implements OnInit {
   private readonly api = inject(AdminApi);
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  readonly users = signal<AdminUser[]>([]);
+  readonly shops = signal<AdminShop[]>([]);
   readonly loading = signal(true);
   readonly savingId = signal<string | null>(null);
   readonly error = signal('');
   readonly success = signal('');
   readonly forbidden = signal(false);
 
-  readonly paidPlans = PLAN_CATALOG.filter((plan) => plan.type !== 'free_trial');
+  /** Login ID from OTP / refresh — used for admin session identity. */
+  readonly adminId = this.session.user?.id ?? '';
+  readonly adminName = this.session.user?.display_name ?? 'Admin';
 
   readonly search = this.fb.nonNullable.group({
     q: [''],
@@ -43,10 +45,10 @@ export class AdminPage implements OnInit {
     this.error.set('');
     this.forbidden.set(false);
     this.api
-      .listUsers(this.search.controls.q.value)
+      .listShops(this.search.controls.q.value)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (rows) => this.users.set(rows),
+        next: (rows) => this.shops.set(rows),
         error: (err: unknown) => {
           if (err instanceof HttpErrorResponse && err.status === 403) {
             this.forbidden.set(true);
@@ -55,66 +57,43 @@ export class AdminPage implements OnInit {
           }
           if (err instanceof HttpErrorResponse && err.status === 404) {
             this.error.set(
-              'Admin API is not deployed yet. Apply tools/junctionback-admin to junctionBack.',
+              'Admin shops API is not deployed yet. Apply tools/junctionback-admin to junctionBack.',
             );
             return;
           }
-          this.error.set(this.readError(err, 'Could not load admin users.'));
+          this.error.set(this.readError(err, 'Could not load shops.'));
         },
       });
   }
 
-  needsReactivation(user: AdminUser): boolean {
-    return !user.plan.is_active || user.plan.status === 'expired';
-  }
-
-  actionLabel(user: AdminUser, planName: string): string {
-    return this.needsReactivation(user) ? `Reactivate · ${planName}` : `Activate · ${planName}`;
-  }
-
-  assignOrActivate(user: AdminUser, planType: PlanType): void {
-    if (this.needsReactivation(user)) {
-      this.activate(user, planType);
-      return;
-    }
-    this.assignPlan(user, planType);
-  }
-
-  assignPlan(user: AdminUser, planType: PlanType): void {
-    if (planType === 'free_trial') {
-      return;
-    }
-    this.savingId.set(user.id);
+  onActiveChange(shop: AdminShop, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const nextActive = input.checked;
+    this.savingId.set(shop.id);
     this.error.set('');
     this.success.set('');
+
     this.api
-      .setPlan(user.id, planType)
+      .setShopActive(shop.id, nextActive)
       .pipe(finalize(() => this.savingId.set(null)))
       .subscribe({
         next: (updated) => {
-          this.users.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-          this.success.set(`${updated.display_name} activated on ${updated.plan.name}.`);
+          this.shops.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+          this.success.set(
+            updated.is_active
+              ? `${updated.name} activated.`
+              : `${updated.name} deactivated.`,
+          );
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not activate account.')),
-      });
-  }
-
-  activate(user: AdminUser, planType: PlanType): void {
-    if (planType === 'free_trial') {
-      return;
-    }
-    this.savingId.set(user.id);
-    this.error.set('');
-    this.success.set('');
-    this.api
-      .activate(user.id, planType)
-      .pipe(finalize(() => this.savingId.set(null)))
-      .subscribe({
-        next: (updated) => {
-          this.users.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-          this.success.set(`${updated.display_name} reactivated on ${updated.plan.name}.`);
+        error: (err: unknown) => {
+          input.checked = shop.is_active;
+          this.error.set(
+            this.readError(
+              err,
+              nextActive ? 'Could not activate shop.' : 'Could not deactivate shop.',
+            ),
+          );
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not reactivate account.')),
       });
   }
 
@@ -122,18 +101,8 @@ export class AdminPage implements OnInit {
     this.auth.logout();
   }
 
-  goBackOffice(): void {
+  goApp(): void {
     void this.router.navigateByUrl('/back-office');
-  }
-
-  statusLabel(user: AdminUser): string {
-    if (this.needsReactivation(user)) {
-      return 'Inactive';
-    }
-    if (user.plan.type === 'free_trial') {
-      return `Trial · ${user.plan.days_remaining ?? 0}d left`;
-    }
-    return user.plan.status;
   }
 
   private readError(error: unknown, fallback: string): string {

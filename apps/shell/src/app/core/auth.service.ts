@@ -26,6 +26,15 @@ export class AuthService {
     return this.session.role;
   }
 
+  /** Login user id from OTP / refresh (admin identity for the console). */
+  get userId(): string | null {
+    return this.session.user?.id ?? null;
+  }
+
+  get displayName(): string | null {
+    return this.session.user?.display_name ?? null;
+  }
+
   requestOtp(payload: OtpRequest): Observable<OtpChallenge> {
     return this.api.post<OtpChallenge>('/auth/otp/request', payload);
   }
