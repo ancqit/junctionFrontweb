@@ -16,9 +16,51 @@ export interface AdminUser {
   plan: PlanSummary;
 }
 
+/** Shop row for the admin console (owner account + product count). */
+export interface AdminShop {
+  id: string;
+  name: string;
+  store_id: string;
+  owner_id: string;
+  owner_name: string;
+  phone_number?: string | null;
+  email?: string | null;
+  products_count: number;
+  is_active: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AdminShopStatusRequest {
+  is_active: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly api = inject(ApiService);
+
+  listShops(query = ''): Observable<AdminShop[]> {
+    const params = query.trim() ? { q: query.trim() } : undefined;
+    return this.api.get<AdminShop[]>('/admin/shops', params);
+  }
+
+  getShop(shopId: string): Observable<AdminShop> {
+    return this.api.get<AdminShop>(`/admin/shops/${shopId}`);
+  }
+
+  setShopActive(shopId: string, isActive: boolean): Observable<AdminShop> {
+    return this.api.post<AdminShop>(`/admin/shops/${shopId}/status`, {
+      is_active: isActive,
+    } satisfies AdminShopStatusRequest);
+  }
+
+  activateShop(shopId: string): Observable<AdminShop> {
+    return this.api.post<AdminShop>(`/admin/shops/${shopId}/activate`, {});
+  }
+
+  deactivateShop(shopId: string): Observable<AdminShop> {
+    return this.api.post<AdminShop>(`/admin/shops/${shopId}/deactivate`, {});
+  }
 
   listUsers(query = ''): Observable<AdminUser[]> {
     const params = query.trim() ? { q: query.trim() } : undefined;
