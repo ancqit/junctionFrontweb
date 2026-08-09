@@ -5,7 +5,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
-import { isPostGraceViewerPlan, PlanSummary } from '../core/auth.models';
+import {
+  homePathForRole,
+  isPostGraceViewerPlan,
+  normalizeUserRole,
+  PlanSummary,
+} from '../core/auth.models';
 import {
   FREE_TRIAL_DAYS,
   PLAN_CATALOG,
@@ -106,9 +111,10 @@ export class Login implements OnInit {
       .subscribe({
         next: (response) => {
           this.error.set('');
-          const role = this.auth.role;
+          // Prefer TokenResponse.role so admins skip plans and go straight to /admin.
+          const role = normalizeUserRole(response.user, response.role ?? response.user?.role);
           if (role === 'admin') {
-            void this.router.navigateByUrl('/admin');
+            void this.router.navigateByUrl(homePathForRole('admin'));
             return;
           }
 
@@ -118,7 +124,7 @@ export class Login implements OnInit {
             if (this.session.user) {
               this.session.saveFromAuthUser({ ...this.session.user, role: 'viewer' }, 'viewer');
             }
-            void this.router.navigateByUrl('/back-office/activate');
+            void this.router.navigateByUrl(homePathForRole('viewer'));
             return;
           }
 
