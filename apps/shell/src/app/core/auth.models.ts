@@ -16,7 +16,7 @@ export interface AuthTokens {
   expiresInSeconds: number;
 }
 
-/** Roles returned by the login / refresh API. */
+/** Roles from junctionBack (`UserRole` / login TokenResponse). */
 export type UserRole = 'admin' | 'owner' | 'viewer';
 
 export interface AuthUser {
@@ -24,13 +24,12 @@ export interface AuthUser {
   email: string | null;
   phone_number: string | null;
   display_name: string;
-  /** Prefer `role`; some backends may send `user_type`. */
   role?: UserRole | string | null;
   user_type?: UserRole | string | null;
 }
 
 export type PlanType = 'free_trial' | 'starter' | 'growth' | 'premium';
-export type PlanStatus = 'active' | 'expired' | 'cancelled';
+export type PlanStatus = 'active' | 'grace_period' | 'expired' | 'cancelled' | 'deactivated';
 
 export interface PlanSummary {
   type: PlanType;
@@ -46,19 +45,31 @@ export interface PlanSummary {
   is_active: boolean;
   trial_used: boolean;
   selected_plan_type?: PlanType | null;
+  in_grace_period?: boolean;
+  grace_ends_at?: string | null;
 }
 
+/** Matches junctionBack TokenResponse (OTP verify / refresh / login). */
 export interface RefreshResponse {
   access_token: string;
   token_type: 'bearer';
   user: AuthUser;
   plan?: PlanSummary;
+  /** Top-level role from junctionBack; also mirrored on `user.role`. */
+  role?: UserRole | string | null;
 }
 
 export type OtpVerification = RefreshResponse;
 
-export function normalizeUserRole(user?: AuthUser | null): UserRole {
-  const raw = String(user?.role ?? user?.user_type ?? 'owner')
+export function normalizeUserRole(
+  source?: AuthUser | UserRole | string | null,
+  fallbackRole?: UserRole | string | null,
+): UserRole {
+  const raw = String(
+    typeof source === 'string'
+      ? source
+      : (source?.role ?? source?.user_type ?? fallbackRole ?? 'owner'),
+  )
     .trim()
     .toLowerCase();
   if (raw === 'admin') {

@@ -19,6 +19,8 @@ export type AuthorGuardOptions = {
  *
  * Use on any route that should only open for specific login roles.
  * Easy to extend later (more roles, permissions, feature flags).
+ * Prefer including `'admin'` when a route should stay open to platform admins
+ * who already have access to the entire application.
  *
  * @example
  * canActivate: [authGuard, authorGuard('admin')]

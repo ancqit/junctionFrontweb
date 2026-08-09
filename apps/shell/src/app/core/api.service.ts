@@ -17,8 +17,20 @@ export class ApiService {
     });
   }
 
-  post<T>(path: string, body: unknown): Observable<T> {
+  post<T>(path: string, body: unknown = {}): Observable<T> {
     return this.http.post<T>(this.url(path), body, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  patch<T>(path: string, body: unknown): Observable<T> {
+    return this.http.patch<T>(this.url(path), body, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  put<T>(path: string, body: unknown): Observable<T> {
+    return this.http.put<T>(this.url(path), body, {
       headers: this.getAuthHeaders(),
     });
   }
