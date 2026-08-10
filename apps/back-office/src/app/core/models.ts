@@ -245,3 +245,8 @@ export interface ProfileUpdate {
   bio?: string | null;
   avatar_url?: string | null;
 }
+
+/** Matches junctionBack POST /descriptions/generate */
+export interface DescriptionResponse {
+  description: string;
+}

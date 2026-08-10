@@ -8,23 +8,23 @@ export class QueriesApi {
   private readonly api = inject(BackOfficeApiService);
 
   /**
-   * Search CDN product pictures via junctionBack GET /queries.
-   * Response images include cdn_url for attaching to a product.
+   * Generate CDN pictures from a keyword via junctionBack Gemini image API.
+   * `GET /queries?query=…&per_page=…` (max 10 on backend).
    */
-  searchImages(query: string, page = 1, perPage = 12): Observable<ImageSearchResponse> {
+  searchImages(query: string, page = 1, perPage = 10): Observable<ImageSearchResponse> {
     return this.api.get<ImageSearchResponse>('/queries', {
       query: query.trim(),
       page: String(page),
-      per_page: String(perPage),
+      per_page: String(Math.min(perPage, 10)),
     });
   }
 
   /** Same search via POST /queries body. */
-  searchImagesPost(query: string, page = 1, perPage = 12): Observable<ImageSearchResponse> {
+  searchImagesPost(query: string, page = 1, perPage = 10): Observable<ImageSearchResponse> {
     return this.api.post<ImageSearchResponse>('/queries', {
       query: query.trim(),
       page,
-      per_page: perPage,
+      per_page: Math.min(perPage, 10),
     });
   }
 }
