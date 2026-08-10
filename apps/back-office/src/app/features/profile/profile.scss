@@ -248,6 +248,47 @@ h3 {
   line-height: 1.5;
 }
 
+.answers {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #1a281f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.answers li + li {
+  margin-top: 6px;
+}
+
+.generated-card {
+  margin: 0 0 18px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  border: 1px solid #cfe0d6;
+  background: linear-gradient(180deg, #f4faf6 0%, #eef6f1 100%);
+}
+
+.generated-card .eyebrow {
+  margin-bottom: 10px;
+}
+
+.generated-card > p:last-child {
+  margin: 0;
+  color: #1a281f;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.bio-text {
+  white-space: pre-wrap;
+}
+
+.edit-bio {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebe9e2;
+}
+
 .avatar-block {
   margin: 8px 0 18px;
   padding-top: 8px;

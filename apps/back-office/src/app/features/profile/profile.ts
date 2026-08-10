@@ -1,15 +1,33 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError, finalize, map } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { DescriptionsApi } from '../../core/descriptions.api';
 import { ImageSearchResult, UserProfile } from '../../core/models';
 import { ProfileApi } from '../../core/profile.api';
 import { QueriesApi } from '../../core/queries.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 
-export type ProfileWizardStep = 'keyword' | 'prompts' | 'review' | 'done' | 'manage';
+/** Wizard while unset; `profile` is the locked one-profile view after save. */
+export type ProfileWizardStep = 'keyword' | 'prompts' | 'review' | 'profile';
+
+const PROFILE_QUESTIONS = [
+  {
+    control: 'prompt1' as const,
+    label: 'What do you sell or offer?',
+    placeholder: 'e.g. Fresh vegetables, rice, and daily groceries',
+  },
+  {
+    control: 'prompt2' as const,
+    label: 'What makes your shop special?',
+    placeholder: 'e.g. Local produce every morning and fair prices',
+  },
+  {
+    control: 'prompt3' as const,
+    label: 'What should customers know about you?',
+    placeholder: 'e.g. Open early, home delivery on Main Road',
+  },
+];
 
 @Component({
   selector: 'app-profile-page',
@@ -24,6 +42,7 @@ export class ProfilePage implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly shopTypeOptions = SHOP_TYPE_OPTIONS;
+  readonly questions = PROFILE_QUESTIONS;
   readonly step = signal<ProfileWizardStep>('keyword');
   readonly profile = signal<UserProfile | null>(null);
   readonly loading = signal(true);
@@ -36,23 +55,26 @@ export class ProfilePage implements OnInit {
   readonly keyword = signal('');
   readonly selectedShopType = signal<string | null>(null);
   readonly promptSentences = signal<string[]>([]);
+  /** Exact `{ description }` from POST /descriptions/generate. */
+  readonly generatedDescription = signal('');
   readonly imageResults = signal<ImageSearchResult[]>([]);
   readonly selectedAvatarUrl = signal<string | null>(null);
+  readonly editingBio = signal(false);
 
   readonly keywordForm = this.fb.nonNullable.group({
     keyword: ['', [Validators.required, Validators.maxLength(120)]],
+    shop_type: ['', [Validators.required]],
   });
 
   readonly promptsForm = this.fb.nonNullable.group({
-    prompt1: ['', [Validators.required, Validators.maxLength(500)]],
-    prompt2: ['', [Validators.maxLength(500)]],
-    prompt3: ['', [Validators.maxLength(500)]],
+    prompt1: ['', [Validators.required, Validators.maxLength(400)]],
+    prompt2: ['', [Validators.required, Validators.maxLength(400)]],
+    prompt3: ['', [Validators.required, Validators.maxLength(400)]],
   });
 
   readonly reviewForm = this.fb.nonNullable.group({
     display_name: ['', [Validators.required, Validators.maxLength(100)]],
-    bio: ['', [Validators.maxLength(500)]],
-    shop_type: ['', [Validators.required]],
+    bio: ['', [Validators.required, Validators.maxLength(500)]],
   });
 
   readonly manageForm = this.fb.nonNullable.group({
@@ -60,7 +82,9 @@ export class ProfilePage implements OnInit {
   });
 
   readonly selectedShopTypeLabel = computed(() => shopTypeLabel(this.selectedShopType()));
-  readonly hasExistingBio = computed(() => !!this.profile()?.bio?.trim());
+  /** One profile only — bio on the user document means the profile is set. */
+  readonly hasProfile = computed(() => !!this.profile()?.bio?.trim());
+  readonly inWizard = computed(() => this.step() !== 'profile');
 
   readonly stepIndex = computed(() => {
     switch (this.step()) {
@@ -70,8 +94,7 @@ export class ProfilePage implements OnInit {
         return 2;
       case 'review':
         return 3;
-      case 'done':
-      case 'manage':
+      case 'profile':
         return 4;
     }
   });
@@ -80,7 +103,7 @@ export class ProfilePage implements OnInit {
     this.reloadProfile(true);
   }
 
-  reloadProfile(preferManageIfBio = false): void {
+  reloadProfile(preferProfileIfSet = false): void {
     this.loading.set(true);
     this.error.set('');
     this.profileApi
@@ -89,9 +112,9 @@ export class ProfilePage implements OnInit {
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
-          if (preferManageIfBio && profile.bio?.trim()) {
-            this.manageForm.patchValue({ bio: profile.bio });
-            this.step.set('manage');
+          this.selectedAvatarUrl.set(profile.avatar_url ?? null);
+          if (preferProfileIfSet && profile.bio?.trim()) {
+            this.showProfileView(profile, '');
           }
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load profile.')),
@@ -103,8 +126,9 @@ export class ProfilePage implements OnInit {
       this.keywordForm.markAllAsTouched();
       return;
     }
-    const value = this.keywordForm.controls.keyword.value.trim();
-    this.keyword.set(value);
+    const raw = this.keywordForm.getRawValue();
+    this.keyword.set(raw.keyword.trim());
+    this.selectedShopType.set(raw.shop_type.trim());
     this.error.set('');
     this.success.set('');
     this.step.set('prompts');
@@ -115,9 +139,14 @@ export class ProfilePage implements OnInit {
     this.error.set('');
   }
 
+  /**
+   * After all three questions, call junctionBack `POST /descriptions/generate`
+   * and show the returned `{ description }` on the review step.
+   */
   enhancePrompts(): void {
-    if (this.promptsForm.controls.prompt1.invalid) {
+    if (this.promptsForm.invalid) {
       this.promptsForm.markAllAsTouched();
+      this.error.set('Answer all three questions so Gemini can write your description.');
       return;
     }
 
@@ -130,8 +159,8 @@ export class ProfilePage implements OnInit {
       .filter(Boolean)
       .map((value) => this.asSentence(value));
 
-    if (sentences.length === 0) {
-      this.error.set('Add at least one short prompt for Gemini to enhance.');
+    if (sentences.length < 3) {
+      this.error.set('Answer all three questions before generating a description.');
       return;
     }
 
@@ -139,31 +168,34 @@ export class ProfilePage implements OnInit {
     this.error.set('');
     this.success.set('');
     this.promptSentences.set(sentences);
+    this.generatedDescription.set('');
 
-    // junctionBack only exposes POST /descriptions/generate (Gemini text).
-    // There is no dedicated bio endpoint — we send one concatenated prompt for a full bio.
-    this.descriptionsApi
-      .generate(this.buildBioEnhanceInput(sentences))
-      .pipe(
-        map((response) => response.description.trim()),
-        catchError(() => of(sentences.join(' '))),
-        finalize(() => this.enhancing.set(false)),
-      )
-      .subscribe({
-        next: (bio) => {
-          const existingName = this.profile()?.display_name?.trim();
-          this.reviewForm.patchValue({
-            display_name: existingName || this.keyword(),
-            bio: bio.slice(0, 500),
-            shop_type: this.selectedShopType() ?? this.guessShopTypeFromKeyword() ?? '',
-          });
-          this.selectedAvatarUrl.set(this.profile()?.avatar_url ?? null);
-          this.step.set('review');
-          this.loadAvatarOptions();
-        },
-        error: (err: unknown) =>
-          this.error.set(this.readError(err, 'Gemini could not enhance your prompts.')),
-      });
+    this.descriptionsApi.generate(this.buildDescriptionSummary(sentences)).subscribe({
+      next: (response) => {
+        const description = (response.description ?? '').trim();
+        this.enhancing.set(false);
+        if (!description) {
+          this.error.set('Gemini returned an empty description. Try adjusting your answers.');
+          return;
+        }
+        const bio = description.slice(0, 500);
+        this.generatedDescription.set(bio);
+        const existingName = this.profile()?.display_name?.trim();
+        this.reviewForm.patchValue({
+          display_name: existingName || this.keyword(),
+          bio,
+        });
+        this.selectedAvatarUrl.set(this.profile()?.avatar_url ?? null);
+        this.step.set('review');
+        this.loadAvatarOptions();
+      },
+      error: (err: unknown) => {
+        this.enhancing.set(false);
+        this.error.set(
+          this.readError(err, 'Could not generate a description. Check Gemini on junctionBack and try again.'),
+        );
+      },
+    });
   }
 
   backToPrompts(): void {
@@ -195,6 +227,7 @@ export class ProfilePage implements OnInit {
     return this.selectedAvatarUrl() === String(image.cdn_url);
   }
 
+  /** One profile — save once, then toggle to the profile view. */
   saveProfile(): void {
     if (this.reviewForm.invalid) {
       this.reviewForm.markAllAsTouched();
@@ -204,75 +237,111 @@ export class ProfilePage implements OnInit {
     const raw = this.reviewForm.getRawValue();
     const displayName = raw.display_name.trim();
     const bio = raw.bio.trim();
-    const shopType = raw.shop_type.trim();
     const avatarUrl = this.selectedAvatarUrl()?.trim() || undefined;
+
+    if (!bio) {
+      this.error.set('A generated description is required before saving your profile.');
+      return;
+    }
 
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
-    this.selectedShopType.set(shopType || null);
 
     this.profileApi
       .update({
         display_name: displayName,
-        bio: bio || null,
+        bio,
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
-          this.manageForm.patchValue({ bio: profile.bio ?? '' });
-          this.success.set('Profile created and saved.');
-          this.step.set('done');
+          this.showProfileView(profile, 'Profile saved. This is your Junction profile.');
         },
         error: (err: unknown) =>
           this.error.set(this.readError(err, 'Could not save profile.')),
       });
   }
 
-  openManageBio(): void {
+  startEditBio(): void {
     this.manageForm.patchValue({ bio: this.profile()?.bio ?? '' });
+    this.editingBio.set(true);
     this.error.set('');
     this.success.set('');
-    this.step.set('manage');
+  }
+
+  cancelEditBio(): void {
+    this.editingBio.set(false);
+    this.manageForm.patchValue({ bio: this.profile()?.bio ?? '' });
+    this.error.set('');
   }
 
   updateBio(): void {
     const bio = this.manageForm.controls.bio.value.trim();
+    if (!bio) {
+      this.error.set('Bio cannot be empty while keeping this profile. Use Delete profile to clear it.');
+      return;
+    }
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
     this.profileApi
-      .update({ bio: bio || null })
+      .update({ bio })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
           this.manageForm.patchValue({ bio: profile.bio ?? '' });
-          this.success.set(bio ? 'Bio updated.' : 'Bio cleared.');
+          this.editingBio.set(false);
+          this.success.set('Profile description updated.');
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not update bio.')),
       });
   }
 
-  deleteBio(): void {
-    this.manageForm.patchValue({ bio: '' });
-    this.updateBio();
+  /** Clears bio so the one-profile wizard can run again. */
+  deleteProfile(): void {
+    this.saving.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.profileApi
+      .update({ bio: null })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (profile) => {
+          this.profile.set(profile);
+          this.editingBio.set(false);
+          this.resetWizardState();
+          this.success.set('Profile cleared. Answer the three questions to create a new one.');
+          this.step.set('keyword');
+        },
+        error: (err: unknown) => this.error.set(this.readError(err, 'Could not clear profile.')),
+      });
   }
 
-  startOver(): void {
-    this.keywordForm.reset({ keyword: this.keyword() });
+  private showProfileView(profile: UserProfile, message: string): void {
+    this.manageForm.patchValue({ bio: profile.bio ?? '' });
+    this.selectedAvatarUrl.set(profile.avatar_url ?? null);
+    this.editingBio.set(false);
+    if (message) {
+      this.success.set(message);
+    }
+    this.step.set('profile');
+  }
+
+  private resetWizardState(): void {
+    this.keywordForm.reset({ keyword: '', shop_type: '' });
     this.promptsForm.reset({ prompt1: '', prompt2: '', prompt3: '' });
-    this.reviewForm.reset({ display_name: '', bio: '', shop_type: '' });
+    this.reviewForm.reset({ display_name: '', bio: '' });
     this.manageForm.reset({ bio: '' });
+    this.keyword.set('');
     this.promptSentences.set([]);
+    this.generatedDescription.set('');
     this.imageResults.set([]);
     this.selectedAvatarUrl.set(null);
     this.selectedShopType.set(null);
-    this.success.set('');
-    this.error.set('');
-    this.step.set('keyword');
   }
 
   private asSentence(value: string): string {
@@ -284,34 +353,23 @@ export class ProfilePage implements OnInit {
     return /[.!?]$/.test(capped) ? capped : `${capped}.`;
   }
 
-  private guessShopTypeFromKeyword(): string | null {
-    const keyword = this.keyword().trim().toLowerCase();
-    if (!keyword) {
-      return null;
-    }
-    const match = this.shopTypeOptions.find(
-      (row) =>
-        row.label.toLowerCase().includes(keyword) ||
-        row.description.toLowerCase().includes(keyword) ||
-        row.value.replace(/_/g, ' ').includes(keyword),
-    );
-    return match?.value ?? null;
-  }
-
-  private buildBioEnhanceInput(sentences: string[]): string {
-    const keyword = this.keyword().trim();
-    const shopType = shopTypeLabel(this.selectedShopType()) || this.guessShopTypeFromKeyword() || 'shop';
-    return [
-      'You are writing a Junction shop-owner profile bio.',
-      `Profile keyword: ${keyword}`,
-      `Shop type context: ${shopType}`,
-      'Combine the following owner notes into one cohesive full-length bio paragraph.',
-      'Use complete sentences, keep a warm professional tone, and stay under 480 characters.',
-      'Do not invent facts that are not implied by the notes. Return only the bio text.',
-      '',
-      'Owner notes (already as sentences):',
-      ...sentences.map((line, index) => `${index + 1}. ${line}`),
-    ].join('\n');
+  /**
+   * Build the `text` body for POST /descriptions/generate.
+   * Backend wraps this in a product-description prompt — we pass a shop summary
+   * so Gemini returns a proper customer-facing description.
+   */
+  private buildDescriptionSummary(sentences: string[]): string {
+    const keyword = this.keyword().trim() || 'local shop';
+    const typeLabel =
+      shopTypeLabel(this.selectedShopType()) ||
+      this.shopTypeOptions.find((row) => row.value === this.keywordForm.controls.shop_type.value)?.label ||
+      'shop';
+    const summary = [
+      `${keyword} — ${typeLabel} on Junction.`,
+      ...sentences,
+      'Write a clear, inviting shop description customers would read on a profile page.',
+    ].join(' ');
+    return summary.slice(0, 2000);
   }
 
   private readError(error: unknown, fallback: string): string {
