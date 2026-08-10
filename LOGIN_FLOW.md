@@ -39,7 +39,8 @@ Guards: `authGuard`, `authorGuard(...)`, and back-office `planActiveGuard`.
    - **Waitlist** — viewers who applied (`GET /admin/waitlist`); approve with
      `POST /admin/users/{id}/activate` (viewer → owner + requested plan)
 3. Owners choose plans themselves via `POST /plans/select` (not waitlist approval).
-4. Can also open the full back office.
+4. **Admin role is permanent** — never upgraded or downgraded on login.
+5. Can also open the full back office.
 
 ### Owner
 

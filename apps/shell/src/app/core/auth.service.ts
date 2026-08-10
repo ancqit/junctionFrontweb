@@ -8,6 +8,7 @@ import {
   OtpRequest,
   OtpVerification,
   RefreshResponse,
+  resolveLoginRole,
   UserRole,
 } from './auth.models';
 import { SessionService } from './session.service';
@@ -89,8 +90,9 @@ export class AuthService {
     if (!value.user) {
       return;
     }
-    // junctionBack returns role on TokenResponse and on user.role
-    this.session.saveFromAuthUser(value.user, value.role ?? value.user.role);
+    // Admins never upgrade/downgrade — resolveLoginRole keeps them as admin.
+    const role = resolveLoginRole(value.user, value.role ?? value.user.role, value.plan);
+    this.session.saveFromAuthUser(value.user, role);
   }
 
   private scheduleRefresh(): void {

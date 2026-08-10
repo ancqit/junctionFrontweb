@@ -7,9 +7,8 @@ import { finalize, from, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import {
   homePathForRole,
-  isPostGraceViewerPlan,
-  normalizeUserRole,
   PlanSummary,
+  resolveLoginRole,
 } from '../core/auth.models';
 import {
   FREE_TRIAL_DAYS,
@@ -174,17 +173,20 @@ export class Login implements OnInit {
       .subscribe({
         next: (response) => {
           this.error.set('');
-          const role = normalizeUserRole(response.user, response.role ?? response.user?.role);
+          // Admins never upgrade/downgrade — always land on /admin.
+          const role = resolveLoginRole(
+            response.user,
+            response.role ?? response.user?.role,
+            response.plan,
+          );
+          if (this.session.user) {
+            this.session.saveFromAuthUser(this.session.user, role);
+          }
           if (role === 'admin') {
             void this.router.navigateByUrl(homePathForRole('admin'));
             return;
           }
-
-          const postGrace = isPostGraceViewerPlan(response.plan);
-          if (role === 'viewer' || postGrace) {
-            if (this.session.user) {
-              this.session.saveFromAuthUser({ ...this.session.user, role: 'viewer' }, 'viewer');
-            }
+          if (role === 'viewer') {
             void this.router.navigateByUrl(homePathForRole('viewer'));
             return;
           }
