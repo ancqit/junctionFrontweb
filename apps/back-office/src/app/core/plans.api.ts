@@ -88,24 +88,29 @@ export class PlansApi {
   }
 
   /**
-   * Join the waitlist for a plan. Backend snapshots shop_name, city, and locality
-   * from the shop record (shop must already have city + locality).
+   * Join the waitlist — prefer junctionBack `POST /waitlist`
+   * (alias of `/plans/apply`).
    */
   apply(planType: PlanType, shopId: string): Observable<PlanApplication> {
-    return this.api.post<PlanApplication>('/plans/apply', {
-      plan_type: planType,
-      shop_id: shopId,
-    });
+    const body = { plan_type: planType, shop_id: shopId };
+    return this.api.post<PlanApplication>('/waitlist', body).pipe(
+      catchError(() => this.api.post<PlanApplication>('/plans/apply', body)),
+    );
   }
 
   preview(planType: PlanType): Observable<PlanApplyPreview> {
-    return this.api.get<PlanApplyPreview>('/plans/apply/preview', { plan_type: planType });
+    return this.api.get<PlanApplyPreview>('/waitlist/preview', { plan_type: planType }).pipe(
+      catchError(() =>
+        this.api.get<PlanApplyPreview>('/plans/apply/preview', { plan_type: planType }),
+      ),
+    );
   }
 
+  /** Pending waitlist entry — prefer `GET /waitlist/me`. */
   myApplication(): Observable<PlanApplication | null> {
-    return this.api.get<PlanApplication | null>('/plans/applications/me').pipe(
+    return this.api.get<PlanApplication | null>('/waitlist/me').pipe(
       catchError(() =>
-        this.api.get<PlanApplication | null>('/waitlist/me').pipe(catchError(() => of(null))),
+        this.api.get<PlanApplication | null>('/plans/applications/me').pipe(catchError(() => of(null))),
       ),
       map((app) => app ?? null),
     );

@@ -5,6 +5,33 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 h2 { margin: 8px 0 6px; font: 500 28px Georgia, serif; }
 h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
 .sub { margin: 0; color: #778078; font-size: 14px; }
+.view-toggle {
+  display: inline-flex; gap: 6px; margin: 0 0 22px; padding: 4px;
+  border-radius: 12px; background: #e8ebe6;
+}
+.view-toggle button {
+  border: 0; border-radius: 9px; padding: 10px 16px; font: inherit; font-weight: 700;
+  color: #556057; background: transparent; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.view-toggle button.active { color: white; background: #1a6541; }
+.toggle-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #efd276;
+}
+.confirm {
+  margin-bottom: 22px; padding: 22px 24px; border-radius: 16px;
+  border: 1px solid #cfe0d6; background: #f4faf6;
+}
+.confirm h2 { margin: 8px 0 10px; font: 500 24px Georgia, serif; max-width: 560px; }
+.confirm > p { margin: 0 0 16px; color: #5f6a63; font-size: 14px; line-height: 1.55; max-width: 560px; }
+.confirm-actions, .forwarded-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;
+}
+.empty-waitlist {
+  padding: 36px 32px; border-radius: 20px; border: 1px solid #dedbd1; background: white;
+}
+.empty-waitlist h2 { margin: 10px 0 12px; font: 500 28px Georgia, serif; }
+.empty-waitlist p { margin: 0 0 18px; color: #667069; font-size: 14px; line-height: 1.55; max-width: 480px; }
 .primary, .ghost {
   border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 700; cursor: pointer;
 }
@@ -64,8 +91,9 @@ h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
 }
 .forwarded dt { margin: 0 0 6px; color: #808780; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .forwarded dd { margin: 0; font-weight: 700; color: #1a281f; }
+.forwarded-actions { margin-top: 22px; justify-content: flex-start; }
 @media (max-width: 980px) {
   .plan-grid { grid-template-columns: 1fr; }
-  header, .status, .shop-needed { flex-direction: column; align-items: start; }
+  header, .status, .shop-needed, .confirm-actions { flex-direction: column; align-items: start; }
   .forwarded dl { grid-template-columns: 1fr; }
 }
