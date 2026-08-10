@@ -121,6 +121,9 @@ export class PlansPage implements OnInit {
       const days = 'duration_days' in plan ? (plan.duration_days ?? this.trialDays) : this.trialDays;
       return `Up to ${plan.max_products} products for ${days} days`;
     }
+    if (plan.type === 'starter') {
+      return `Profile and up to ${plan.max_products} products · yearly`;
+    }
     return `Up to ${plan.max_products} products · yearly`;
   }
 
