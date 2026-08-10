@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiService } from './api.service';
-import { PlanStatus, PlanType, UserRole } from './auth.models';
+import { PlanStatus, PlanSummary, PlanType, UserRole } from './auth.models';
 
 /** junctionBack `Shop` (`GET /shops`). */
 export interface Shop {
@@ -39,6 +39,39 @@ export interface AdminUserRecord {
   days_remaining?: number | null;
   created_at: string;
   updated_at: string;
+}
+
+/** junctionBack `ViewerRecord` (`GET /admin/viewers`). */
+export interface ViewerRecord {
+  id: string;
+  display_name: string;
+  email?: string | null;
+  phone_number?: string | null;
+  account_status: string;
+  plan_type: PlanType | string;
+  plan_status: PlanStatus | string;
+  days_remaining?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * junctionBack `ReactivateUserResponse`
+ * (`POST /admin/users/{id}/reactivate`).
+ */
+export interface ReactivateUserResponse {
+  user: AdminUserRecord;
+  restored_role: UserRole | string;
+  restored_plan: PlanSummary;
+  restored_activities: string[];
+}
+
+export interface BulkDeleteUsersResponse {
+  deleted_count: number;
+  deleted_ids: string[];
+  not_found_ids: string[];
+  protected_owner_ids: string[];
+  protected_admin_ids: string[];
 }
 
 /** Admin console row: shop + owner account + product count. */
@@ -88,9 +121,25 @@ export class AdminApi {
     return this.api.get<AdminUserRecord[]>('/admin/users');
   }
 
-  /** Activate owner account — `POST /admin/users/{id}/activate` (no body). */
+  /** Viewers only — `GET /admin/viewers`. */
+  listViewers(): Observable<ViewerRecord[]> {
+    return this.api.get<ViewerRecord[]>('/admin/viewers');
+  }
+
+  /**
+   * Activate account / plan — `POST /admin/users/{id}/activate`.
+   * On junctionBack, deactivated users are routed through reactivate.
+   */
   activateUser(userId: string): Observable<AdminUserRecord> {
     return this.api.post<AdminUserRecord>(`/admin/users/${userId}/activate`);
+  }
+
+  /**
+   * Reactivate a deactivated account — `POST /admin/users/{id}/reactivate`.
+   * Restores previous role, active plan, and returns restored activity slugs.
+   */
+  reactivateUser(userId: string): Observable<ReactivateUserResponse> {
+    return this.api.post<ReactivateUserResponse>(`/admin/users/${userId}/reactivate`);
   }
 
   /** Deactivate owner account — `POST /admin/users/{id}/deactivate` (admin only). */
@@ -100,6 +149,13 @@ export class AdminApi {
 
   updateUserRole(userId: string, role: UserRole): Observable<AdminUserRecord> {
     return this.api.patch<AdminUserRecord>(`/admin/users/${userId}/role`, { role });
+  }
+
+  /** Bulk-delete viewers only — `DELETE /admin/viewers`. */
+  deleteViewers(userIds: string[]): Observable<BulkDeleteUsersResponse> {
+    return this.api.delete<BulkDeleteUsersResponse>('/admin/viewers', {
+      user_ids: userIds,
+    });
   }
 
   /**

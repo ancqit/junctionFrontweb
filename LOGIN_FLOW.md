@@ -12,7 +12,9 @@ What happens when someone signs in to Junction (shell + junctionBack).
 6. Shell stores the access token and session (`user` + `role`).
 7. Routing uses **role** and plan status.
 
-If `account_status` is `deactivated` by an admin, login is rejected by the backend.
+If `account_status` is `deactivated` by an admin, login is still allowed — the backend
+downgrades the user to **viewer** (junctionBack #20). Admins can reactivate via
+`POST /admin/users/{id}/reactivate` (or the activate alias).
 
 ---
 
@@ -34,8 +36,12 @@ Guards: `authGuard`, `authorGuard(...)`, and back-office `planActiveGuard`.
 
 1. Login ID shown in the admin sidebar.
 2. Lands on **`/admin`** (shops + product counts).
-3. Checkbox activates / deactivates shop **owners** via `/admin/users/{id}/activate|deactivate`.
-4. Can also open the full back office.
+3. Current workings:
+   - Active owners cannot be deactivated (owners are protected in the UI)
+   - Inactive / deactivated shop accounts → `/admin/users/{id}/reactivate` or `/activate`
+4. **Viewers** tab (`GET /admin/viewers`): only viewers can be deactivated
+   via `/admin/users/{id}/deactivate`; also Reactivate / Activate / Delete.
+5. Can also open the full back office.
 
 ### Owner
 

@@ -3,12 +3,19 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
-import { AdminApi, AdminShopRow, Shop } from '../core/admin.api';
+import { finalize, Observable } from 'rxjs';
+import {
+  AdminApi,
+  AdminShopRow,
+  AdminUserRecord,
+  ReactivateUserResponse,
+  Shop,
+  ViewerRecord,
+} from '../core/admin.api';
 import { AuthService } from '../core/auth.service';
 import { SessionService } from '../core/session.service';
 
-export type AdminTab = 'workings' | 'add';
+export type AdminTab = 'workings' | 'add' | 'viewers';
 
 @Component({
   selector: 'app-admin',
@@ -26,11 +33,14 @@ export class AdminPage implements OnInit {
   readonly tab = signal<AdminTab>('workings');
   readonly shops = signal<AdminShopRow[]>([]);
   readonly filtered = signal<AdminShopRow[]>([]);
+  readonly viewers = signal<ViewerRecord[]>([]);
   readonly loading = signal(true);
+  readonly viewersLoading = signal(false);
   readonly savingId = signal<string | null>(null);
   readonly creating = signal(false);
   readonly error = signal('');
   readonly success = signal('');
+  readonly restoredActivities = signal<string[]>([]);
   readonly forbidden = signal(false);
   readonly menuOpen = signal(false);
 
@@ -52,6 +62,10 @@ export class AdminPage implements OnInit {
   readonly productTotal = computed(() =>
     this.shops().reduce((sum, shop) => sum + (shop.products_count || 0), 0),
   );
+  readonly viewerCount = computed(() => this.viewers().length);
+  readonly deactivatedViewerCount = computed(
+    () => this.viewers().filter((row) => row.account_status === 'deactivated').length,
+  );
 
   ngOnInit(): void {
     this.reload();
@@ -61,7 +75,11 @@ export class AdminPage implements OnInit {
     this.tab.set(tab);
     this.error.set('');
     this.success.set('');
+    this.restoredActivities.set([]);
     this.menuOpen.set(false);
+    if (tab === 'viewers') {
+      this.reloadViewers();
+    }
   }
 
   toggleMenu(): void {
@@ -92,11 +110,30 @@ export class AdminPage implements OnInit {
           }
           if (err instanceof HttpErrorResponse && err.status === 404) {
             this.error.set(
-              'Shops API is not live yet. Merge junctionBack PR #10 (shops + admin activate/deactivate).',
+              'Shops API is not live yet. Deploy junctionBack shops + admin activate/reactivate.',
             );
             return;
           }
           this.error.set(this.readError(err, 'Could not load shops.'));
+        },
+      });
+  }
+
+  reloadViewers(): void {
+    this.viewersLoading.set(true);
+    this.error.set('');
+    this.api
+      .listViewers()
+      .pipe(finalize(() => this.viewersLoading.set(false)))
+      .subscribe({
+        next: (rows) => this.viewers.set(rows),
+        error: (err: unknown) => {
+          if (err instanceof HttpErrorResponse && err.status === 403) {
+            this.forbidden.set(true);
+            this.error.set('Admin access required.');
+            return;
+          }
+          this.error.set(this.readError(err, 'Could not load viewers.'));
         },
       });
   }
@@ -131,6 +168,7 @@ export class AdminPage implements OnInit {
     this.creating.set(true);
     this.error.set('');
     this.success.set('');
+    this.restoredActivities.set([]);
     this.api
       .createShop(payload)
       .pipe(finalize(() => this.creating.set(false)))
@@ -146,52 +184,150 @@ export class AdminPage implements OnInit {
       });
   }
 
-  onActiveChange(shop: AdminShopRow, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const nextActive = input.checked;
+  /**
+   * Reactivate / activate a shop account that is not active.
+   * Owners are never deactivated from this table — use Viewers tab for deactivate.
+   */
+  reactivateShopOwner(shop: AdminShopRow): void {
+    if (shop.is_active) {
+      this.error.set('Owners cannot be deactivated. Only viewers can be deactivated.');
+      return;
+    }
+
     this.savingId.set(shop.id);
     this.error.set('');
     this.success.set('');
+    this.restoredActivities.set([]);
 
-    const request$ = nextActive
-      ? this.api.activateUser(shop.owner_user_id)
-      : this.api.deactivateUser(shop.owner_user_id);
+    const request$: Observable<AdminUserRecord | ReactivateUserResponse> =
+      shop.account_status === 'deactivated'
+        ? this.api.reactivateUser(shop.owner_user_id)
+        : this.api.activateUser(shop.owner_user_id);
 
     request$.pipe(finalize(() => this.savingId.set(null))).subscribe({
-      next: (owner) => {
-        const isActive = owner.account_status === 'active';
-        this.shops.update((rows) =>
-          rows.map((row) =>
-            row.id === shop.id
-              ? {
-                  ...row,
-                  account_status: owner.account_status,
-                  plan_name: owner.plan_name,
-                  plan_is_active: owner.plan_is_active,
-                  owner_name: owner.display_name || row.owner_name,
-                  owner_role: String(owner.role),
-                  is_active: isActive,
-                }
-              : row,
-          ),
-        );
-        this.applyFilter();
-        this.success.set(
-          isActive
-            ? `${shop.name} owner activated.`
-            : `${shop.name} owner deactivated.`,
-        );
+      next: (result) => {
+        const owner = this.asUserRecord(result);
+        this.patchShopOwner(shop.id, owner);
+        if (this.isReactivateResponse(result)) {
+          this.restoredActivities.set(result.restored_activities ?? []);
+          this.success.set(
+            `${shop.name} owner reactivated as ${result.restored_role}. Plan: ${result.restored_plan?.name ?? owner.plan_name}.`,
+          );
+        } else {
+          this.success.set(`${shop.name} owner activated.`);
+        }
       },
       error: (err: unknown) => {
-        input.checked = shop.is_active;
         this.error.set(
           this.readError(
             err,
-            nextActive ? 'Could not activate shop owner.' : 'Could not deactivate shop owner.',
+            shop.account_status === 'deactivated'
+              ? 'Could not reactivate shop owner.'
+              : 'Could not activate shop owner.',
           ),
         );
       },
     });
+  }
+
+  reactivateViewer(viewer: ViewerRecord): void {
+    this.savingId.set(viewer.id);
+    this.error.set('');
+    this.success.set('');
+    this.restoredActivities.set([]);
+
+    const request$: Observable<AdminUserRecord | ReactivateUserResponse> =
+      viewer.account_status === 'deactivated'
+        ? this.api.reactivateUser(viewer.id)
+        : this.api.activateUser(viewer.id);
+
+    request$.pipe(finalize(() => this.savingId.set(null))).subscribe({
+      next: (result) => {
+        if (this.isReactivateResponse(result)) {
+          this.restoredActivities.set(result.restored_activities ?? []);
+          this.success.set(
+            `${viewer.display_name || 'User'} reactivated as ${result.restored_role}. Plan: ${result.restored_plan?.name ?? '—'}.`,
+          );
+        } else {
+          this.success.set(
+            `${viewer.display_name || 'User'} activated as ${result.role}. Plan: ${result.plan_name}.`,
+          );
+        }
+        this.reloadViewers();
+        this.reload();
+      },
+      error: (err: unknown) => {
+        this.error.set(
+          this.readError(
+            err,
+            viewer.account_status === 'deactivated'
+              ? 'Could not reactivate viewer.'
+              : 'Could not activate viewer.',
+          ),
+        );
+      },
+    });
+  }
+
+  /** Deactivate is viewers-only — never call this for owners. */
+  deactivateViewer(viewer: ViewerRecord): void {
+    if (viewer.account_status === 'deactivated') {
+      this.error.set('This viewer is already deactivated.');
+      return;
+    }
+
+    this.savingId.set(viewer.id);
+    this.error.set('');
+    this.success.set('');
+    this.restoredActivities.set([]);
+    this.api
+      .deactivateUser(viewer.id)
+      .pipe(finalize(() => this.savingId.set(null)))
+      .subscribe({
+        next: () => {
+          this.success.set(
+            `${viewer.display_name || 'Viewer'} deactivated. Login remains available as viewer.`,
+          );
+          this.reloadViewers();
+          this.reload();
+        },
+        error: (err: unknown) =>
+          this.error.set(this.readError(err, 'Could not deactivate viewer.')),
+      });
+  }
+
+  deleteViewer(viewer: ViewerRecord): void {
+    this.savingId.set(viewer.id);
+    this.error.set('');
+    this.success.set('');
+    this.restoredActivities.set([]);
+    this.api
+      .deleteViewers([viewer.id])
+      .pipe(finalize(() => this.savingId.set(null)))
+      .subscribe({
+        next: (result) => {
+          if (result.protected_owner_ids?.length || result.protected_admin_ids?.length) {
+            this.error.set('Owners and admins cannot be deleted — only viewer accounts.');
+            return;
+          }
+          if (!result.deleted_count) {
+            this.error.set('Viewer was not deleted.');
+            return;
+          }
+          this.success.set(`${viewer.display_name || 'Viewer'} deleted.`);
+          this.reloadViewers();
+        },
+        error: (err: unknown) =>
+          this.error.set(this.readError(err, 'Could not delete viewer.')),
+      });
+  }
+
+  activityLabel(slug: string): string {
+    return slug
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
   }
 
   logout(): void {
@@ -200,6 +336,36 @@ export class AdminPage implements OnInit {
 
   goApp(): void {
     void this.router.navigateByUrl('/back-office');
+  }
+
+  private patchShopOwner(shopId: string, owner: AdminUserRecord): void {
+    const isActive = owner.account_status === 'active';
+    this.shops.update((rows) =>
+      rows.map((row) =>
+        row.id === shopId
+          ? {
+              ...row,
+              account_status: owner.account_status,
+              plan_name: owner.plan_name,
+              plan_is_active: owner.plan_is_active,
+              owner_name: owner.display_name || row.owner_name,
+              owner_role: String(owner.role),
+              is_active: isActive,
+            }
+          : row,
+      ),
+    );
+    this.applyFilter();
+  }
+
+  private asUserRecord(result: AdminUserRecord | ReactivateUserResponse): AdminUserRecord {
+    return this.isReactivateResponse(result) ? result.user : result;
+  }
+
+  private isReactivateResponse(
+    result: AdminUserRecord | ReactivateUserResponse,
+  ): result is ReactivateUserResponse {
+    return !!result && typeof result === 'object' && 'restored_activities' in result;
   }
 
   private readError(error: unknown, fallback: string): string {

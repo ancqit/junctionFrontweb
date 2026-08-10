@@ -15,6 +15,7 @@
     </p>
     <nav>
       <button type="button" [class.active]="tab() === 'workings'" (click)="setTab('workings')">Current workings</button>
+      <button type="button" [class.active]="tab() === 'viewers'" (click)="setTab('viewers')">Viewers</button>
       <button type="button" [class.active]="tab() === 'add'" (click)="setTab('add')">Add shops</button>
       <a routerLink="/back-office" (click)="closeMenu()">Full application</a>
     </nav>
@@ -28,8 +29,16 @@
         @if (tab() === 'workings') {
           <h1>Current workings</h1>
           <p class="sub">
-            Live shops, product counts, and owner activation — from junctionBack
-            <code>GET /shops</code> + <code>GET /admin/users</code>.
+            Live shops and owner <strong>activate / reactivate</strong> —
+            junctionBack <code>POST /admin/users/{'{id}'}/activate|reactivate</code>.
+            Deactivate is for <strong>viewers only</strong> (see Viewers tab).
+          </p>
+        } @else if (tab() === 'viewers') {
+          <h1>Viewers</h1>
+          <p class="sub">
+            Only current viewers can be deactivated.
+            Reactivate restores role, plan, and activities via
+            <code>POST /admin/users/{'{id}'}/reactivate</code>.
           </p>
         } @else {
           <h1>Add shops</h1>
@@ -40,13 +49,22 @@
       </div>
       <div class="header-actions">
         <button type="button" class="primary" (click)="goApp()">Open application</button>
-        <button type="button" class="ghost" (click)="reload()">Refresh</button>
+        <button
+          type="button"
+          class="ghost"
+          (click)="tab() === 'viewers' ? reloadViewers() : reload()"
+        >
+          Refresh
+        </button>
       </div>
     </header>
 
     <div class="tabs" role="tablist">
       <button type="button" role="tab" [attr.aria-selected]="tab() === 'workings'" [class.active]="tab() === 'workings'" (click)="setTab('workings')">
         Current workings
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'viewers'" [class.active]="tab() === 'viewers'" (click)="setTab('viewers')">
+        Viewers
       </button>
       <button type="button" role="tab" [attr.aria-selected]="tab() === 'add'" [class.active]="tab() === 'add'" (click)="setTab('add')">
         Add shops
@@ -58,6 +76,16 @@
     }
     @if (success()) {
       <p class="success" role="status">{{ success() }}</p>
+    }
+    @if (restoredActivities().length) {
+      <section class="restored" aria-label="Restored activities">
+        <p class="eyebrow">RESTORED ACTIVITIES</p>
+        <ul>
+          @for (activity of restoredActivities(); track activity) {
+            <li>{{ activityLabel(activity) }}</li>
+          }
+        </ul>
+      </section>
     }
 
     @if (forbidden()) {
@@ -93,6 +121,101 @@
             {{ creating() ? 'Creating…' : 'Create shop' }}
           </button>
         </div>
+      </section>
+    } @else if (tab() === 'viewers') {
+      <section class="stats">
+        <article>
+          <p>Viewers</p>
+          <strong>{{ viewerCount() }}</strong>
+        </article>
+        <article>
+          <p>Admin-deactivated</p>
+          <strong>{{ deactivatedViewerCount() }}</strong>
+        </article>
+        <article>
+          <p>Can reactivate</p>
+          <strong>{{ viewerCount() }}</strong>
+        </article>
+      </section>
+
+      <section class="table-wrap">
+        @if (viewersLoading()) {
+          <p class="muted">Loading viewers…</p>
+        } @else if (viewers().length === 0) {
+          <div class="empty">
+            <strong>No viewers</strong>
+            <p>Deactivated or post-grace accounts appear here from <code>GET /admin/viewers</code>.</p>
+          </div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Plan</th>
+                <th>Account</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (viewer of viewers(); track viewer.id) {
+                <tr [class.disabled-row]="viewer.account_status === 'deactivated'">
+                  <td>
+                    <strong>{{ viewer.display_name || 'Viewer' }}</strong>
+                    <small>{{ viewer.phone_number || viewer.email || '—' }}</small>
+                    <small>User ID · {{ viewer.id }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ viewer.plan_type | titlecase }}</strong>
+                    <small>{{ viewer.plan_status | titlecase }}</small>
+                  </td>
+                  <td>
+                    <span class="badge" [attr.data-status]="viewer.account_status === 'active' ? 'active' : 'expired'">
+                      {{ viewer.account_status | titlecase }}
+                    </span>
+                  </td>
+                  <td>{{ viewer.created_at ? (viewer.created_at | date:'mediumDate') : '—' }}</td>
+                  <td>
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="primary"
+                        [disabled]="savingId() === viewer.id"
+                        (click)="reactivateViewer(viewer)"
+                      >
+                        {{
+                          savingId() === viewer.id
+                            ? 'Working…'
+                            : viewer.account_status === 'deactivated'
+                              ? 'Reactivate'
+                              : 'Activate'
+                        }}
+                      </button>
+                      @if (viewer.account_status !== 'deactivated') {
+                        <button
+                          type="button"
+                          class="ghost"
+                          [disabled]="savingId() === viewer.id"
+                          (click)="deactivateViewer(viewer)"
+                        >
+                          Deactivate
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="ghost danger"
+                        [disabled]="savingId() === viewer.id"
+                        (click)="deleteViewer(viewer)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </section>
     } @else {
       <section class="stats">
@@ -137,7 +260,7 @@
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined</th>
-                <th>Active</th>
+                <th>Account</th>
               </tr>
             </thead>
             <tbody>
@@ -166,15 +289,24 @@
                   </td>
                   <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>
                   <td>
-                    <label class="toggle">
-                      <input
-                        type="checkbox"
-                        [checked]="shop.is_active"
+                    @if (shop.is_active) {
+                      <span class="owner-lock" title="Owners cannot be deactivated">Owner · active</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="primary"
                         [disabled]="savingId() === shop.id"
-                        (change)="onActiveChange(shop, $event)"
-                      />
-                      <span>{{ shop.is_active ? 'On' : 'Off' }}</span>
-                    </label>
+                        (click)="reactivateShopOwner(shop)"
+                      >
+                        {{
+                          savingId() === shop.id
+                            ? 'Working…'
+                            : shop.account_status === 'deactivated'
+                              ? 'Reactivate'
+                              : 'Activate'
+                        }}
+                      </button>
+                    }
                   </td>
                 </tr>
               }

@@ -35,6 +35,13 @@ export class ApiService {
     });
   }
 
+  delete<T>(path: string, body?: unknown): Observable<T> {
+    return this.http.request<T>('DELETE', this.url(path), {
+      body,
+      headers: this.getAuthHeaders(),
+    });
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const accessToken = this.tokens.accessToken;
     if (accessToken) {
