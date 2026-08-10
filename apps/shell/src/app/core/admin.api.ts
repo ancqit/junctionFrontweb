@@ -10,8 +10,16 @@ export interface Shop {
   name: string;
   phone_number: string;
   owner_user_id: string;
+  city?: string;
+  locality?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ShopCreate {
+  name: string;
+  city: string;
+  locality: string;
 }
 
 /** junctionBack `AdminUserRecord` (`GET /admin/users`). */
@@ -62,6 +70,18 @@ export class AdminApi {
   /** Admin sees all shops (`GET /shops`). */
   listShops(): Observable<Shop[]> {
     return this.api.get<Shop[]>('/shops');
+  }
+
+  /**
+   * Create a shop — junctionBack `POST /shops`
+   * Body: `{ name, city, locality }` (phone taken from the logged-in admin).
+   */
+  createShop(payload: ShopCreate): Observable<Shop> {
+    return this.api.post<Shop>('/shops', {
+      name: payload.name.trim(),
+      city: payload.city.trim(),
+      locality: payload.locality.trim(),
+    });
   }
 
   listUsers(): Observable<AdminUserRecord[]> {

@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { DescriptionsApi } from '../../core/descriptions.api';
 import { ImageSearchResult, UserProfile } from '../../core/models';
@@ -9,12 +9,7 @@ import { ProfileApi } from '../../core/profile.api';
 import { QueriesApi } from '../../core/queries.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 
-export type ProfileWizardStep = 'keyword' | 'prompts' | 'review' | 'done';
-
-export interface EnhancedPrompt {
-  original: string;
-  enhanced: string;
-}
+export type ProfileWizardStep = 'keyword' | 'prompts' | 'review' | 'done' | 'manage';
 
 @Component({
   selector: 'app-profile-page',
@@ -40,7 +35,7 @@ export class ProfilePage implements OnInit {
 
   readonly keyword = signal('');
   readonly selectedShopType = signal<string | null>(null);
-  readonly enhancedPrompts = signal<EnhancedPrompt[]>([]);
+  readonly promptSentences = signal<string[]>([]);
   readonly imageResults = signal<ImageSearchResult[]>([]);
   readonly selectedAvatarUrl = signal<string | null>(null);
 
@@ -60,7 +55,12 @@ export class ProfilePage implements OnInit {
     shop_type: ['', [Validators.required]],
   });
 
+  readonly manageForm = this.fb.nonNullable.group({
+    bio: ['', [Validators.maxLength(500)]],
+  });
+
   readonly selectedShopTypeLabel = computed(() => shopTypeLabel(this.selectedShopType()));
+  readonly hasExistingBio = computed(() => !!this.profile()?.bio?.trim());
 
   readonly stepIndex = computed(() => {
     switch (this.step()) {
@@ -71,22 +71,29 @@ export class ProfilePage implements OnInit {
       case 'review':
         return 3;
       case 'done':
+      case 'manage':
         return 4;
     }
   });
 
   ngOnInit(): void {
-    this.reloadProfile();
+    this.reloadProfile(true);
   }
 
-  reloadProfile(): void {
+  reloadProfile(preferManageIfBio = false): void {
     this.loading.set(true);
     this.error.set('');
     this.profileApi
       .me()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (profile) => this.profile.set(profile),
+        next: (profile) => {
+          this.profile.set(profile);
+          if (preferManageIfBio && profile.bio?.trim()) {
+            this.manageForm.patchValue({ bio: profile.bio });
+            this.step.set('manage');
+          }
+        },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load profile.')),
       });
   }
@@ -114,15 +121,16 @@ export class ProfilePage implements OnInit {
       return;
     }
 
-    const prompts = [
+    const sentences = [
       this.promptsForm.controls.prompt1.value,
       this.promptsForm.controls.prompt2.value,
       this.promptsForm.controls.prompt3.value,
     ]
       .map((value) => value.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((value) => this.asSentence(value));
 
-    if (prompts.length === 0) {
+    if (sentences.length === 0) {
       this.error.set('Add at least one short prompt for Gemini to enhance.');
       return;
     }
@@ -130,30 +138,23 @@ export class ProfilePage implements OnInit {
     this.enhancing.set(true);
     this.error.set('');
     this.success.set('');
+    this.promptSentences.set(sentences);
 
-    forkJoin(
-      prompts.map((original) =>
-        this.descriptionsApi.generate(this.buildEnhanceInput(original)).pipe(
-          map((response) => ({
-            original,
-            enhanced: response.description.trim() || original,
-          })),
-          catchError(() => of({ original, enhanced: original })),
-        ),
-      ),
-    )
-      .pipe(finalize(() => this.enhancing.set(false)))
+    // junctionBack only exposes POST /descriptions/generate (Gemini text).
+    // There is no dedicated bio endpoint — we send one concatenated prompt for a full bio.
+    this.descriptionsApi
+      .generate(this.buildBioEnhanceInput(sentences))
+      .pipe(
+        map((response) => response.description.trim()),
+        catchError(() => of(sentences.join(' '))),
+        finalize(() => this.enhancing.set(false)),
+      )
       .subscribe({
-        next: (rows) => {
-          this.enhancedPrompts.set(rows);
+        next: (bio) => {
           const existingName = this.profile()?.display_name?.trim();
           this.reviewForm.patchValue({
             display_name: existingName || this.keyword(),
-            bio: rows
-              .map((row) => row.enhanced.trim())
-              .filter(Boolean)
-              .join('\n\n')
-              .slice(0, 500),
+            bio: bio.slice(0, 500),
             shop_type: this.selectedShopType() ?? this.guessShopTypeFromKeyword() ?? '',
           });
           this.selectedAvatarUrl.set(this.profile()?.avatar_url ?? null);
@@ -209,8 +210,6 @@ export class ProfilePage implements OnInit {
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
-
-    // Shop type is kept locally for now — will sync with GET /shops/types + shop/profile APIs later.
     this.selectedShopType.set(shopType || null);
 
     this.profileApi
@@ -223,6 +222,7 @@ export class ProfilePage implements OnInit {
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
+          this.manageForm.patchValue({ bio: profile.bio ?? '' });
           this.success.set('Profile created and saved.');
           this.step.set('done');
         },
@@ -231,17 +231,57 @@ export class ProfilePage implements OnInit {
       });
   }
 
+  openManageBio(): void {
+    this.manageForm.patchValue({ bio: this.profile()?.bio ?? '' });
+    this.error.set('');
+    this.success.set('');
+    this.step.set('manage');
+  }
+
+  updateBio(): void {
+    const bio = this.manageForm.controls.bio.value.trim();
+    this.saving.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.profileApi
+      .update({ bio: bio || null })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (profile) => {
+          this.profile.set(profile);
+          this.manageForm.patchValue({ bio: profile.bio ?? '' });
+          this.success.set(bio ? 'Bio updated.' : 'Bio cleared.');
+        },
+        error: (err: unknown) => this.error.set(this.readError(err, 'Could not update bio.')),
+      });
+  }
+
+  deleteBio(): void {
+    this.manageForm.patchValue({ bio: '' });
+    this.updateBio();
+  }
+
   startOver(): void {
     this.keywordForm.reset({ keyword: this.keyword() });
     this.promptsForm.reset({ prompt1: '', prompt2: '', prompt3: '' });
     this.reviewForm.reset({ display_name: '', bio: '', shop_type: '' });
-    this.enhancedPrompts.set([]);
+    this.manageForm.reset({ bio: '' });
+    this.promptSentences.set([]);
     this.imageResults.set([]);
     this.selectedAvatarUrl.set(null);
     this.selectedShopType.set(null);
     this.success.set('');
     this.error.set('');
     this.step.set('keyword');
+  }
+
+  private asSentence(value: string): string {
+    const trimmed = value.replace(/\s+/g, ' ').trim();
+    if (!trimmed) {
+      return '';
+    }
+    const capped = trimmed[0].toUpperCase() + trimmed.slice(1);
+    return /[.!?]$/.test(capped) ? capped : `${capped}.`;
   }
 
   private guessShopTypeFromKeyword(): string | null {
@@ -258,12 +298,19 @@ export class ProfilePage implements OnInit {
     return match?.value ?? null;
   }
 
-  private buildEnhanceInput(prompt: string): string {
+  private buildBioEnhanceInput(sentences: string[]): string {
     const keyword = this.keyword().trim();
+    const shopType = shopTypeLabel(this.selectedShopType()) || this.guessShopTypeFromKeyword() || 'shop';
     return [
+      'You are writing a Junction shop-owner profile bio.',
       `Profile keyword: ${keyword}`,
-      'Write a short profile bio line for a Junction shop owner.',
-      `Prompt: ${prompt}`,
+      `Shop type context: ${shopType}`,
+      'Combine the following owner notes into one cohesive full-length bio paragraph.',
+      'Use complete sentences, keep a warm professional tone, and stay under 480 characters.',
+      'Do not invent facts that are not implied by the notes. Return only the bio text.',
+      '',
+      'Owner notes (already as sentences):',
+      ...sentences.map((line, index) => `${index + 1}. ${line}`),
     ].join('\n');
   }
 

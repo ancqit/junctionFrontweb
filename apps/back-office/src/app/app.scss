@@ -119,14 +119,33 @@ main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
 .error { background: #f8eaea; color: #7a2a2a; }
 .success { background: #eef6f1; color: #1a6541; }
 
+.menu-toggle { display: none; }
+.menu-backdrop { display: none; }
+
 @media (max-width: 800px) {
   .office { grid-template-columns: 1fr; }
-  aside { position: static; height: auto; }
-  nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; gap: 6px; }
-  nav a { text-align: center; padding: 10px 8px; font-size: 12px; }
+  .menu-toggle {
+    display: inline-flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 30;
+    margin: 12px 12px 0; border: 0; border-radius: 10px; padding: 11px 14px;
+    color: white; background: #103d29; font: inherit; font-weight: 700; cursor: pointer; width: fit-content;
+  }
+  .office.locked .menu-toggle { background: #2a1818; }
+  .menu-bars {
+    width: 18px; height: 2px; background: white; box-shadow: 0 6px 0 white, 0 -6px 0 white;
+  }
+  .menu-backdrop {
+    display: block; position: fixed; inset: 0; z-index: 35; background: rgba(10, 20, 16, .45);
+  }
+  aside {
+    position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
+    height: 100vh; transform: translateX(-105%); transition: transform .2s ease;
+  }
+  .office.menu-open aside { transform: translateX(0); }
+  nav { display: grid; grid-template-columns: 1fr; margin-top: 24px; gap: 6px; }
+  nav a { text-align: left; padding: 12px 14px; font-size: 14px; }
   .lock-note { margin-top: 12px; }
   .store { display: flex; }
-  .logout { text-align: center; }
+  .logout { text-align: left; }
   main { padding: 28px 20px; }
   .checks li { grid-template-columns: auto 1fr; }
   .checks li .ghost { grid-column: 2; justify-self: start; }

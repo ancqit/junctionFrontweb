@@ -17,12 +17,14 @@
   }
 </header>
 
-<ol class="steps" aria-label="Profile setup steps">
-  <li [class.active]="stepIndex() === 1" [class.done]="stepIndex() > 1">1 · Keyword</li>
-  <li [class.active]="stepIndex() === 2" [class.done]="stepIndex() > 2">2 · Prompts</li>
-  <li [class.active]="stepIndex() === 3" [class.done]="stepIndex() > 3">3 · Review & save</li>
-  <li [class.active]="stepIndex() === 4" [class.done]="stepIndex() === 4">4 · Created</li>
-</ol>
+@if (step() !== 'manage') {
+  <ol class="steps" aria-label="Profile setup steps">
+    <li [class.active]="stepIndex() === 1" [class.done]="stepIndex() > 1">1 · Keyword</li>
+    <li [class.active]="stepIndex() === 2" [class.done]="stepIndex() > 2">2 · Prompts</li>
+    <li [class.active]="stepIndex() === 3" [class.done]="stepIndex() > 3">3 · Review & save</li>
+    <li [class.active]="stepIndex() === 4" [class.done]="stepIndex() === 4">4 · Created</li>
+  </ol>
+}
 
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
@@ -38,8 +40,8 @@
     <p class="eyebrow">STEP 1</p>
     <h2>Enter your profile keyword</h2>
     <p class="lead">
-      We use <strong>Google Gemini</strong> to help create your profile. Start with one keyword that
-      describes you or your shop — for example <em>artisan bakery</em> or <em>phone repair Ranchi</em>.
+      We use <strong>Google Gemini</strong> via junctionBack <code>POST /descriptions/generate</code>.
+      Start with one keyword that describes you or your shop.
     </p>
 
     <label>
@@ -53,6 +55,9 @@
     </label>
 
     <div class="actions">
+      @if (hasExistingBio()) {
+        <button type="button" class="ghost" (click)="openManageBio()">Manage existing bio</button>
+      }
       <button type="button" class="primary" (click)="continueFromKeyword()">Continue</button>
     </div>
   </section>
@@ -61,9 +66,8 @@
     <p class="eyebrow">STEP 2 · GEMINI</p>
     <h2>Give us a few short prompts</h2>
     <p class="lead">
-      Keyword: <strong>{{ keyword() }}</strong>. Add a few plain prompts about yourself or your shop.
-      We will enhance them with Gemini (<code>POST /descriptions/generate</code>) before your profile
-      is created.
+      Keyword: <strong>{{ keyword() }}</strong>. Add up to three notes. We turn them into sentences,
+      concatenate them, and ask Gemini for one full bio (not three separate lines).
     </p>
 
     <label>
@@ -82,7 +86,7 @@
     <div class="actions">
       <button type="button" class="ghost" (click)="backToKeyword()">Back</button>
       <button type="button" class="primary" (click)="enhancePrompts()" [disabled]="enhancing()">
-        {{ enhancing() ? 'Enhancing with Gemini…' : 'Enhance prompts' }}
+        {{ enhancing() ? 'Writing bio with Gemini…' : 'Enhance into full bio' }}
       </button>
     </div>
   </section>
@@ -91,18 +95,16 @@
     <p class="eyebrow">STEP 3</p>
     <h2>Review enhanced profile</h2>
     <p class="lead">
-      Edit the Gemini-enhanced bio if needed, pick an optional avatar from Gemini images for your
-      keyword, then save. Saving calls <code>PATCH /profile</code> and creates your profile.
+      Edit the Gemini bio if needed, choose a shop type, optionally pick an avatar, then save with
+      <code>PATCH /profile</code>.
     </p>
 
-    @if (enhancedPrompts().length > 0) {
+    @if (promptSentences().length > 0) {
       <div class="enhance-list">
-        @for (row of enhancedPrompts(); track row.original) {
-          <article>
-            <p class="from">{{ row.original }}</p>
-            <p class="to">{{ row.enhanced }}</p>
-          </article>
-        }
+        <article>
+          <p class="from">Your notes</p>
+          <p class="to">{{ promptSentences().join(' ') }}</p>
+        </article>
       </div>
     }
 
@@ -128,7 +130,7 @@
     }
     <label>
       Bio
-      <textarea formControlName="bio" rows="5" maxlength="500"></textarea>
+      <textarea formControlName="bio" rows="6" maxlength="500"></textarea>
     </label>
 
     <div class="avatar-block">
@@ -172,13 +174,35 @@
       </button>
     </div>
   </section>
+} @else if (step() === 'manage') {
+  <section class="panel" [formGroup]="manageForm">
+    <p class="eyebrow">UPDATE BIO</p>
+    <h2>Edit or delete your bio</h2>
+    <p class="lead">
+      Saved with junctionBack <code>PATCH /profile</code>. Clear the text and save, or use Delete bio.
+    </p>
+
+    <label>
+      Bio
+      <textarea formControlName="bio" rows="6" maxlength="500"></textarea>
+    </label>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="startOver()">Create new profile</button>
+      <button type="button" class="ghost danger-text" (click)="deleteBio()" [disabled]="saving()">
+        Delete bio
+      </button>
+      <button type="button" class="primary" (click)="updateBio()" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Update bio' }}
+      </button>
+    </div>
+  </section>
 } @else {
   <section class="panel done">
     <p class="eyebrow">STEP 4</p>
     <h2>Your profile is created</h2>
     <p class="lead">
-      Saved with junctionBack <code>PATCH /profile</code>. You can update it anytime from this page
-      or the sidebar profile panel.
+      Saved with junctionBack <code>PATCH /profile</code>. You can update or delete the bio anytime.
     </p>
 
     @if (profile(); as current) {
@@ -200,6 +224,7 @@
     }
 
     <div class="actions">
+      <button type="button" class="ghost" (click)="openManageBio()">Edit / delete bio</button>
       <button type="button" class="ghost" (click)="startOver()">Create again</button>
       <a routerLink="/back-office" class="primary">Back to Overview</a>
     </div>

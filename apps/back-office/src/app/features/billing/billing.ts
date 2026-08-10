@@ -3,10 +3,10 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { CurrentShopService } from '../../core/current-shop.service';
 import { OrderLineItem, PaymentMethod, Product } from '../../core/models';
 import { OrdersApi } from '../../core/orders.api';
 import { ProductsApi } from '../../core/products.api';
-import { DEFAULT_STORE_ID } from '../../core/store.config';
 
 interface BillLine {
   product: Product;
@@ -24,6 +24,7 @@ interface BillLine {
 export class BillingPage implements OnInit {
   private readonly productsApi = inject(ProductsApi);
   private readonly ordersApi = inject(OrdersApi);
+  private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
 
@@ -76,7 +77,10 @@ export class BillingPage implements OnInit {
   });
 
   ngOnInit(): void {
-    this.reloadCatalog();
+    this.currentShop.ensureShop().subscribe({
+      next: () => this.reloadCatalog(),
+      error: () => this.reloadCatalog(),
+    });
   }
 
   reloadCatalog(): void {
@@ -148,10 +152,22 @@ export class BillingPage implements OnInit {
       return;
     }
 
+    const storeId = this.currentShop.storeId() || this.currentShop.shop()?.id;
+    if (!storeId) {
+      this.error.set('Save your shop on Overview before creating an order.');
+      return;
+    }
+
     const customer = this.customerForm.getRawValue();
     const phone = customer.customer_phone.trim();
     if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
       this.error.set('Phone must be in E.164 format, e.g. +919876543210.');
+      return;
+    }
+
+    const email = customer.customer_email.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.error.set('Enter a valid email, or leave it blank.');
       return;
     }
 
@@ -171,10 +187,10 @@ export class BillingPage implements OnInit {
     this.error.set('');
     this.ordersApi
       .create({
-        store_id: DEFAULT_STORE_ID,
+        store_id: storeId,
         customer_name: customer.customer_name.trim(),
         customer_phone: phone || null,
-        customer_email: customer.customer_email.trim() || null,
+        customer_email: email || null,
         items,
         billing: {
           subtotal,

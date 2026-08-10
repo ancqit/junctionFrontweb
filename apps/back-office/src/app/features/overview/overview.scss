@@ -53,18 +53,34 @@ h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; 
 .shop-card h2 { margin: 8px 0 8px; font: 500 26px Georgia, serif; }
 .shop-sub { margin: 0 0 18px; color: #667069; font-size: 14px; max-width: 560px; }
 .shop-fields {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px;
 }
 .shop-fields label { display: grid; gap: 7px; color: #36453b; font-size: 12px; font-weight: 700; }
 .shop-fields input, .shop-fields select {
   width: 100%; box-sizing: border-box; border: 1px solid #d8d4c8; border-radius: 10px;
   padding: 11px 12px; font: inherit; background: #fff; color: #17251c;
 }
-.shop-card .error, .shop-card .success {
+.shop-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.shop-card .error, .shop-card .success, .success {
   margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px;
 }
 .shop-card .error { background: #f8eaea; color: #7a2a2a; }
-.shop-card .success { background: #eef6f1; color: #1a6541; }
+.shop-card .success, .success { background: #eef6f1; color: #1a6541; }
+.type-line { margin: 6px 0 0 !important; color: #1a6541 !important; font-size: 13px !important; font-weight: 700; }
+.shop-summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  margin-bottom: 22px; padding: 22px 24px; border: 1px solid #dedbd1; border-radius: 16px; background: white;
+}
+.shop-summary h2 { margin: 8px 0 6px; font: 500 24px Georgia, serif; }
+.shop-summary > div > p { margin: 0; color: #667069; font-size: 14px; }
+.type-chip {
+  display: inline-block; margin: 10px 0 0; padding: 4px 10px; border-radius: 999px;
+  background: #eef3ef; color: #1a6541; font-size: 12px; font-weight: 700;
+}
+.shop-summary .ghost {
+  border: 0; border-radius: 10px; padding: 11px 16px; color: #1a6541; background: #eef3ef;
+  font-weight: 700; cursor: pointer; white-space: nowrap;
+}
 .notice-board {
   margin-bottom: 22px; padding: 26px 24px; border: 1px solid #dedbd1; border-radius: 16px; background: white;
 }
@@ -123,5 +139,7 @@ h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; 
   .hero { display: block; }
   .pulse { margin-top: 25px; }
   h1 { font-size: 32px; }
-  header, .notice-head, .notice-actions { align-items: start; flex-direction: column; }
+  header, .notice-head, .notice-actions, .shop-summary, .shop-actions {
+    align-items: start; flex-direction: column;
+  }
 }

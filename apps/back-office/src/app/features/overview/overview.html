@@ -5,6 +5,9 @@
       @if (shop(); as shop) {
         <h1>Hey, {{ shop.name }} at this Junction.</h1>
         <p class="place">{{ shop.locality }} · {{ shop.city }}</p>
+        @if (shopTypeLabelText()) {
+          <p class="type-line">{{ shopTypeLabelText() }}</p>
+        }
       }
     } @else {
       <h1>Hello, {{ greetingName() }}.</h1>
@@ -25,9 +28,9 @@
   <section class="shop-card" [formGroup]="shopForm">
     <div>
       <p class="eyebrow">SHOP PROFILE</p>
-      <h2>Shop name, city & locality</h2>
+      <h2>Shop name, type & location</h2>
       <p class="shop-sub">
-        Enter these once. Orders, metrics, and the counter stay hidden until your shop is saved.
+        Save name, shop type, city, and locality. Overview unlocks after a successful save.
       </p>
     </div>
 
@@ -39,6 +42,16 @@
       <label>
         Shop name
         <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
+      </label>
+
+      <label>
+        Shop type
+        <select formControlName="shop_type">
+          <option value="">Select type</option>
+          @for (type of shopTypeOptions; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
       </label>
 
       <label>
@@ -70,11 +83,34 @@
       </label>
     </div>
 
-    <button type="button" class="primary" (click)="saveShop()" [disabled]="shopSaving()">
-      {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
-    </button>
+    <div class="shop-actions">
+      @if (editingShop() && shop()) {
+        <button type="button" class="ghost" (click)="cancelShopEditor()">Cancel</button>
+      }
+      <button type="button" class="primary" (click)="saveShop()" [disabled]="shopSaving()">
+        {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
+      </button>
+    </div>
   </section>
-}   @else {
+} @else {
+  @if (shop(); as shop) {
+    <section class="shop-summary">
+      <div>
+        <p class="eyebrow">YOUR SHOP</p>
+        <h2>{{ shop.name }}</h2>
+        <p>{{ shop.locality }} · {{ shop.city }}</p>
+        @if (shopTypeLabelText()) {
+          <p class="type-chip">{{ shopTypeLabelText() }}</p>
+        }
+      </div>
+      <button type="button" class="ghost" (click)="openShopEditor()">Edit shop</button>
+    </section>
+  }
+
+  @if (shopSuccess()) {
+    <p class="success" role="status">{{ shopSuccess() }}</p>
+  }
+
   @if (countdown(); as plan) {
     <section class="plan-counter" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
       <div>

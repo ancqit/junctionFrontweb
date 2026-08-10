@@ -25,6 +25,7 @@ export class App implements OnInit {
   readonly profile = signal<UserProfile | null>(null);
   readonly shop = signal<Shop | null>(null);
   readonly profileModalOpen = signal(false);
+  readonly menuOpen = signal(false);
   readonly saving = signal(false);
   readonly connectingDigiLocker = signal(false);
   readonly error = signal('');
@@ -82,9 +83,21 @@ export class App implements OnInit {
     if (this.profileModalOpen()) {
       this.closeProfileModal();
     }
+    if (this.menuOpen()) {
+      this.closeMenu();
+    }
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
   }
 
   openProfileModal(): void {
+    this.closeMenu();
     const profile = this.profile();
     this.profileForm.patchValue({
       display_name: profile?.display_name ?? '',
