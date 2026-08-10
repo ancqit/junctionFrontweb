@@ -14,9 +14,8 @@
       <small>Login ID · {{ adminId || '—' }}</small>
     </p>
     <nav>
-      <button type="button" [class.active]="tab() === 'workings'" (click)="setTab('workings')">Current workings</button>
-      <button type="button" [class.active]="tab() === 'viewers'" (click)="setTab('viewers')">Viewers</button>
-      <button type="button" [class.active]="tab() === 'add'" (click)="setTab('add')">Add shops</button>
+      <button type="button" [class.active]="tab() === 'shops'" (click)="setTab('shops')">Shops</button>
+      <button type="button" [class.active]="tab() === 'waitlist'" (click)="setTab('waitlist')">Waitlist</button>
       <a routerLink="/back-office" (click)="closeMenu()">Full application</a>
     </nav>
     <button type="button" class="ghost logout" (click)="logout()">Log out</button>
@@ -26,48 +25,34 @@
     <header>
       <div>
         <p class="eyebrow">PLATFORM</p>
-        @if (tab() === 'workings') {
-          <h1>Current workings</h1>
+        @if (tab() === 'shops') {
+          <h1>Shops</h1>
           <p class="sub">
-            Live shops — deactivate is for <strong>viewers only</strong>.
-            Admins never change role. Deactivated shop owners show
-            <strong>Reactivate shop</strong> here after you sign in as admin.
-          </p>
-        } @else if (tab() === 'viewers') {
-          <h1>Viewers</h1>
-          <p class="sub">
-            Place to <strong>reactivate</strong> deactivated accounts
-            (<code>POST /admin/users/{'{id}'}/reactivate</code>).
-            Only viewers can be deactivated. Admins are never listed or demoted.
+            All shops on Junction — <code>GET /shops</code>. Admins do not create shops here.
           </p>
         } @else {
-          <h1>Add shops</h1>
+          <h1>Waitlist</h1>
           <p class="sub">
-            Create a shop with <code>POST /shops</code> — name, city, and locality.
+            Viewers who applied for a plan — <code>GET /admin/waitlist</code>.
+            Approve with <code>POST /admin/users/{'{id}'}/activate</code>.
+            Owners choose plans themselves via <code>POST /plans/select</code>.
           </p>
         }
       </div>
       <div class="header-actions">
         <button type="button" class="primary" (click)="goApp()">Open application</button>
-        <button
-          type="button"
-          class="ghost"
-          (click)="tab() === 'viewers' ? reloadViewers() : reload()"
-        >
-          Refresh
-        </button>
+        <button type="button" class="ghost" (click)="reload()">Refresh</button>
       </div>
     </header>
 
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" [attr.aria-selected]="tab() === 'workings'" [class.active]="tab() === 'workings'" (click)="setTab('workings')">
-        Current workings
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'shops'" [class.active]="tab() === 'shops'" (click)="setTab('shops')">
+        Shops
+        <span class="tab-count">{{ shopCount() }}</span>
       </button>
-      <button type="button" role="tab" [attr.aria-selected]="tab() === 'viewers'" [class.active]="tab() === 'viewers'" (click)="setTab('viewers')">
-        Viewers
-      </button>
-      <button type="button" role="tab" [attr.aria-selected]="tab() === 'add'" [class.active]="tab() === 'add'" (click)="setTab('add')">
-        Add shops
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'waitlist'" [class.active]="tab() === 'waitlist'" (click)="setTab('waitlist')">
+        Waitlist
+        <span class="tab-count">{{ pendingCount() }}</span>
       </button>
     </div>
 
@@ -77,16 +62,6 @@
     @if (success()) {
       <p class="success" role="status">{{ success() }}</p>
     }
-    @if (restoredActivities().length) {
-      <section class="restored" aria-label="Restored activities">
-        <p class="eyebrow">RESTORED ACTIVITIES</p>
-        <ul>
-          @for (activity of restoredActivities(); track activity) {
-            <li>{{ activityLabel(activity) }}</li>
-          }
-        </ul>
-      </section>
-    }
 
     @if (forbidden()) {
       <section class="empty">
@@ -94,122 +69,75 @@
         <p>Your login role must be <code>admin</code> (admin registry / <code>ADMIN_PHONE</code> on junctionBack).</p>
         <button type="button" class="primary" (click)="logout()">Log out</button>
       </section>
-    } @else if (tab() === 'add') {
-      <section class="panel" [formGroup]="createForm">
-        <p class="eyebrow">NEW SHOP</p>
-        <h2>Shop name & location</h2>
-        <p class="panel-sub">Phone is taken from your admin login and cannot be changed later.</p>
-
-        <div class="create-grid">
-          <label>
-            Shop name
-            <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
-          </label>
-          <label>
-            City
-            <input formControlName="city" placeholder="e.g. Ranchi" />
-          </label>
-          <label>
-            Locality
-            <input formControlName="locality" placeholder="e.g. Main Road" />
-          </label>
-        </div>
-
-        <div class="actions">
-          <button type="button" class="ghost" (click)="setTab('workings')">Cancel</button>
-          <button type="button" class="primary" (click)="createShop()" [disabled]="creating()">
-            {{ creating() ? 'Creating…' : 'Create shop' }}
-          </button>
-        </div>
-      </section>
-    } @else if (tab() === 'viewers') {
+    } @else if (tab() === 'waitlist') {
       <section class="stats">
         <article>
-          <p>Viewers</p>
-          <strong>{{ viewerCount() }}</strong>
+          <p>Pending applications</p>
+          <strong>{{ pendingCount() }}</strong>
         </article>
         <article>
-          <p>Admin-deactivated</p>
-          <strong>{{ deactivatedViewerCount() }}</strong>
-        </article>
-        <article>
-          <p>Can reactivate</p>
-          <strong>{{ viewerCount() }}</strong>
+          <p>All waitlist rows</p>
+          <strong>{{ waitlistTotal() }}</strong>
         </article>
       </section>
 
       <section class="table-wrap">
-        @if (viewersLoading()) {
-          <p class="muted">Loading viewers…</p>
-        } @else if (viewers().length === 0) {
+        @if (waitlistLoading()) {
+          <p class="muted">Loading waitlist…</p>
+        } @else if (pendingWaitlist().length === 0) {
           <div class="empty">
-            <strong>No viewers</strong>
-            <p>Deactivated or post-grace accounts appear here from <code>GET /admin/viewers</code>.</p>
+            <strong>No pending waitlist applications</strong>
+            <p>
+              Viewers join via <code>POST /waitlist</code>. Owners select a plan directly —
+              they do not appear here for admin approval.
+            </p>
           </div>
         } @else {
           <table>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Plan</th>
-                <th>Account</th>
-                <th>Joined</th>
-                <th>Actions</th>
+                <th>Applicant</th>
+                <th>Shop</th>
+                <th>Location</th>
+                <th>Requested plan</th>
+                <th>Status</th>
+                <th>Applied</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              @for (viewer of viewers(); track viewer.id) {
-                <tr [class.disabled-row]="viewer.account_status === 'deactivated'">
+              @for (entry of pendingWaitlist(); track entry.id) {
+                <tr>
                   <td>
-                    <strong>{{ viewer.display_name || 'Viewer' }}</strong>
-                    <small>{{ viewer.phone_number || viewer.email || '—' }}</small>
-                    <small>User ID · {{ viewer.id }}</small>
+                    <strong>{{ entry.identity.display_name || 'Viewer' }}</strong>
+                    <small>{{ entry.identity.phone_number || entry.identity.email || '—' }}</small>
+                    <small>User ID · {{ entry.user_id }}</small>
                   </td>
                   <td>
-                    <strong>{{ viewer.plan_type | titlecase }}</strong>
-                    <small>{{ viewer.plan_status | titlecase }}</small>
+                    <strong>{{ entry.shop_name }}</strong>
+                    <small>Shop ID · {{ entry.shop_id }}</small>
                   </td>
                   <td>
-                    <span class="badge" [attr.data-status]="viewer.account_status === 'active' ? 'active' : 'expired'">
-                      {{ viewer.account_status | titlecase }}
-                    </span>
+                    <strong>{{ entry.location.locality }}</strong>
+                    <small>{{ entry.location.city }}</small>
                   </td>
-                  <td>{{ viewer.created_at ? (viewer.created_at | date:'mediumDate') : '—' }}</td>
                   <td>
-                    <div class="row-actions">
-                      <button
-                        type="button"
-                        class="primary"
-                        [disabled]="savingId() === viewer.id"
-                        (click)="reactivateViewer(viewer)"
-                      >
-                        {{
-                          savingId() === viewer.id
-                            ? 'Working…'
-                            : viewer.account_status === 'deactivated'
-                              ? 'Reactivate'
-                              : 'Activate'
-                        }}
-                      </button>
-                      @if (viewer.account_status !== 'deactivated') {
-                        <button
-                          type="button"
-                          class="ghost"
-                          [disabled]="savingId() === viewer.id"
-                          (click)="deactivateViewer(viewer)"
-                        >
-                          Deactivate
-                        </button>
-                      }
-                      <button
-                        type="button"
-                        class="ghost danger"
-                        [disabled]="savingId() === viewer.id"
-                        (click)="deleteViewer(viewer)"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <strong>{{ entry.requested_plan_type | titlecase }}</strong>
+                    <small>{{ entry.switch_message }}</small>
+                  </td>
+                  <td>
+                    <span class="badge" data-status="pending">{{ entry.status | titlecase }}</span>
+                  </td>
+                  <td>{{ entry.created_at ? (entry.created_at | date:'mediumDate') : '—' }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="primary"
+                      [disabled]="approvingId() === entry.id"
+                      (click)="approveWaitlist(entry)"
+                    >
+                      {{ approvingId() === entry.id ? 'Approving…' : 'Approve' }}
+                    </button>
                   </td>
                 </tr>
               }
@@ -224,23 +152,19 @@
           <strong>{{ shopCount() }}</strong>
         </article>
         <article>
-          <p>Active owners</p>
-          <strong>{{ activeCount() }}</strong>
-        </article>
-        <article>
-          <p>Needs reactivate</p>
-          <strong>{{ needsReactivateCount() }}</strong>
-        </article>
-        <article>
           <p>Products</p>
           <strong>{{ productTotal() }}</strong>
+        </article>
+        <article>
+          <p>Pending waitlist</p>
+          <strong>{{ pendingCount() }}</strong>
         </article>
       </section>
 
       <section class="toolbar" [formGroup]="search">
         <label>
           Search shops
-          <input formControlName="q" placeholder="Shop, owner, or phone" (input)="applyFilter()" (keydown.enter)="$event.preventDefault(); applyFilter()" />
+          <input formControlName="q" placeholder="Shop, owner, city, or phone" (input)="applyFilter()" (keydown.enter)="$event.preventDefault(); applyFilter()" />
         </label>
         <button type="button" class="primary" (click)="applyFilter()">Search</button>
       </section>
@@ -251,8 +175,7 @@
         } @else if (filtered().length === 0) {
           <div class="empty">
             <strong>No shops found</strong>
-            <p>Use the <strong>Add shops</strong> tab or create via <code>POST /shops</code>.</p>
-            <button type="button" class="primary" (click)="setTab('add')">Add a shop</button>
+            <p>Shops are created by owners in the back office — admins cannot add shops.</p>
           </div>
         } @else {
           <table>
@@ -260,16 +183,15 @@
               <tr>
                 <th>Shop</th>
                 <th>Owner</th>
+                <th>Place</th>
                 <th>Products</th>
                 <th>Plan</th>
-                <th>Status</th>
                 <th>Joined</th>
-                <th>Account</th>
               </tr>
             </thead>
             <tbody>
               @for (shop of filtered(); track shop.id) {
-                <tr [class.disabled-row]="!shop.is_active">
+                <tr>
                   <td>
                     <strong>{{ shop.name }}</strong>
                     <small>{{ shop.phone_number }}</small>
@@ -281,43 +203,16 @@
                     <small>Owner ID · {{ shop.owner_user_id }}</small>
                   </td>
                   <td>
+                    <strong>{{ shop.locality }}</strong>
+                    <small>{{ shop.city }}</small>
+                  </td>
+                  <td>
                     <span class="count">{{ shop.products_count }}</span>
                   </td>
                   <td>
                     <strong>{{ shop.plan_name }}</strong>
                   </td>
-                  <td>
-                    <span class="badge" [attr.data-status]="shop.is_active ? 'active' : 'expired'">
-                      {{ shop.account_status | titlecase }}
-                    </span>
-                  </td>
                   <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>
-                  <td>
-                    @if (isAdminOwner(shop)) {
-                      <span class="owner-lock" title="Admin role is permanent — never deactivated">
-                        Admin · protected
-                      </span>
-                    } @else if (shop.is_active) {
-                      <span class="owner-lock" title="Owners cannot be deactivated from here">
-                        Owner · active
-                      </span>
-                    } @else {
-                      <button
-                        type="button"
-                        class="primary"
-                        [disabled]="savingId() === shop.id"
-                        (click)="reactivateShopOwner(shop)"
-                      >
-                        {{
-                          savingId() === shop.id
-                            ? 'Working…'
-                            : shop.account_status === 'deactivated'
-                              ? 'Reactivate shop'
-                              : 'Activate shop'
-                        }}
-                      </button>
-                    }
-                  </td>
                 </tr>
               }
             </tbody>

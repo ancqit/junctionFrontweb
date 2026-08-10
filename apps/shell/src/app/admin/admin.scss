@@ -33,8 +33,14 @@ header { display: flex; justify-content: space-between; align-items: end; gap: 1
 .tabs button {
   border: 0; border-radius: 9px; padding: 10px 14px; font: inherit; font-weight: 700;
   color: #556057; background: transparent; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
 }
 .tabs button.active { color: white; background: #1a6541; }
+.tab-count {
+  display: inline-flex; min-width: 1.5rem; justify-content: center; padding: 2px 7px;
+  border-radius: 999px; background: #dfe6e1; color: #1a6541; font-size: 12px;
+}
+.tabs button.active .tab-count { background: rgba(255,255,255,.22); color: white; }
 .stats {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;
 }
@@ -90,6 +96,7 @@ td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
 }
 .badge[data-status='expired'], .badge[data-status='cancelled'] { background: #f3eeee; color: #7a3b3b; }
 .badge[data-status='active'] { background: #eef3ef; color: #1a6541; }
+.badge[data-status='pending'] { background: #fff6e8; color: #8a5a12; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .count {
   display: inline-flex; min-width: 2.5rem; justify-content: center; padding: 6px 10px;
