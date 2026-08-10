@@ -34,6 +34,11 @@ export const APP_ROUTES: Routes = [
         loadComponent: () => import('./features/orders/orders').then((m) => m.OrdersPage),
       },
       {
+        path: 'profile',
+        canActivate: [planActiveGuard],
+        loadComponent: () => import('./features/profile/profile').then((m) => m.ProfilePage),
+      },
+      {
         path: 'activate',
         loadComponent: () => import('./features/activate/activate').then((m) => m.ActivatePage),
       },
