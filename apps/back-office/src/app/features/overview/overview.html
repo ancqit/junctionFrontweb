@@ -9,6 +9,9 @@
           <p class="type-line">{{ shopTypeLabelText() }}</p>
         }
       }
+    } @else if (shopConfigured()) {
+      <h1>Edit shop details</h1>
+      <p class="place">Save to return to Overview, metrics, and + New bill.</p>
     } @else {
       <h1>Hello, {{ greetingName() }}.</h1>
       <p class="place">Add your shop to unlock Overview.</p>
