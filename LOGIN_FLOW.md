@@ -36,11 +36,11 @@ Guards: `authGuard`, `authorGuard(...)`, and back-office `planActiveGuard`.
 
 1. Login ID shown in the admin sidebar.
 2. Lands on **`/admin`** (shops + product counts).
-3. Current workings checkbox:
-   - Off → `/admin/users/{id}/deactivate` (owner becomes viewer; can still log in)
-   - On when deactivated → `/admin/users/{id}/reactivate` (restores role, plan, activities)
-   - On otherwise → `/admin/users/{id}/activate`
-4. **Viewers** tab lists `GET /admin/viewers` with Reactivate / Activate / Deactivate / Delete.
+3. Current workings:
+   - Active owners cannot be deactivated (owners are protected in the UI)
+   - Inactive / deactivated shop accounts → `/admin/users/{id}/reactivate` or `/activate`
+4. **Viewers** tab (`GET /admin/viewers`): only viewers can be deactivated
+   via `/admin/users/{id}/deactivate`; also Reactivate / Activate / Delete.
 5. Can also open the full back office.
 
 ### Owner

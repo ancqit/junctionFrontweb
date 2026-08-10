@@ -185,37 +185,19 @@ export class AdminPage implements OnInit {
   }
 
   /**
-   * Shop Active checkbox — mirrors junctionBack:
-   * - Off → POST /admin/users/{id}/deactivate (role becomes viewer)
-   * - On + deactivated → POST /admin/users/{id}/reactivate (restores role/plan/activities)
-   * - On otherwise → POST /admin/users/{id}/activate
+   * Reactivate / activate a shop account that is not active.
+   * Owners are never deactivated from this table — use Viewers tab for deactivate.
    */
-  onActiveChange(shop: AdminShopRow, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const nextActive = input.checked;
+  reactivateShopOwner(shop: AdminShopRow): void {
+    if (shop.is_active) {
+      this.error.set('Owners cannot be deactivated. Only viewers can be deactivated.');
+      return;
+    }
+
     this.savingId.set(shop.id);
     this.error.set('');
     this.success.set('');
     this.restoredActivities.set([]);
-
-    if (!nextActive) {
-      this.api
-        .deactivateUser(shop.owner_user_id)
-        .pipe(finalize(() => this.savingId.set(null)))
-        .subscribe({
-          next: (owner) => {
-            this.patchShopOwner(shop.id, owner);
-            this.success.set(
-              `${shop.name} owner deactivated. They can still sign in as a viewer.`,
-            );
-          },
-          error: (err: unknown) => {
-            input.checked = shop.is_active;
-            this.error.set(this.readError(err, 'Could not deactivate shop owner.'));
-          },
-        });
-      return;
-    }
 
     const request$: Observable<AdminUserRecord | ReactivateUserResponse> =
       shop.account_status === 'deactivated'
@@ -236,7 +218,6 @@ export class AdminPage implements OnInit {
         }
       },
       error: (err: unknown) => {
-        input.checked = shop.is_active;
         this.error.set(
           this.readError(
             err,
@@ -288,7 +269,13 @@ export class AdminPage implements OnInit {
     });
   }
 
+  /** Deactivate is viewers-only — never call this for owners. */
   deactivateViewer(viewer: ViewerRecord): void {
+    if (viewer.account_status === 'deactivated') {
+      this.error.set('This viewer is already deactivated.');
+      return;
+    }
+
     this.savingId.set(viewer.id);
     this.error.set('');
     this.success.set('');
@@ -299,7 +286,7 @@ export class AdminPage implements OnInit {
       .subscribe({
         next: () => {
           this.success.set(
-            `${viewer.display_name || 'User'} deactivated. Login remains available as viewer.`,
+            `${viewer.display_name || 'Viewer'} deactivated. Login remains available as viewer.`,
           );
           this.reloadViewers();
           this.reload();

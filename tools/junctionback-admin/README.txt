@@ -39,10 +39,11 @@ Admin:
   }
 
   Shell admin:
-  - Current workings checkbox Off → deactivate
-  - Checkbox On when account_status=deactivated → reactivate (show restored activities)
-  - Checkbox On otherwise → activate
-  - Viewers tab: list + Reactivate/Activate + Deactivate + Delete
+  - Current workings: owners are never deactivated here (status + Reactivate/Activate only)
+  - Viewers tab only: Deactivate for current viewers who are not already deactivated
+  - Reactivate when account_status=deactivated (shows restored activities)
+  - Activate otherwise
+  - Viewers tab also: Activate/Reactivate + Delete (viewers only)
 
 Products (for counts):
   GET /products?store_id={shop.id}

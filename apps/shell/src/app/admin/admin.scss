@@ -102,6 +102,10 @@ td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
   width: 18px; height: 18px; accent-color: #1a6541; cursor: pointer;
 }
 .toggle input:disabled { cursor: wait; }
+.owner-lock {
+  display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px;
+  background: #eef3ef; color: #1a6541; font-size: 12px; font-weight: 700;
+}
 .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ghost.danger { color: #7a2a2a; background: #f3eeee; }
 .restored {

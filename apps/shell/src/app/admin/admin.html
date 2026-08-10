@@ -29,13 +29,14 @@
         @if (tab() === 'workings') {
           <h1>Current workings</h1>
           <p class="sub">
-            Live shops and owner <strong>activate / deactivate / reactivate</strong> —
-            junctionBack <code>POST /admin/users/{'{id}'}/activate|deactivate|reactivate</code>.
+            Live shops and owner <strong>activate / reactivate</strong> —
+            junctionBack <code>POST /admin/users/{'{id}'}/activate|reactivate</code>.
+            Deactivate is for <strong>viewers only</strong> (see Viewers tab).
           </p>
         } @else if (tab() === 'viewers') {
           <h1>Viewers</h1>
           <p class="sub">
-            Deactivated and plan-ended accounts sign in as viewers.
+            Only current viewers can be deactivated.
             Reactivate restores role, plan, and activities via
             <code>POST /admin/users/{'{id}'}/reactivate</code>.
           </p>
@@ -259,7 +260,7 @@
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined</th>
-                <th>Active</th>
+                <th>Account</th>
               </tr>
             </thead>
             <tbody>
@@ -288,25 +289,24 @@
                   </td>
                   <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>
                   <td>
-                    <label class="toggle">
-                      <input
-                        type="checkbox"
-                        [checked]="shop.is_active"
+                    @if (shop.is_active) {
+                      <span class="owner-lock" title="Owners cannot be deactivated">Owner · active</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="primary"
                         [disabled]="savingId() === shop.id"
-                        (change)="onActiveChange(shop, $event)"
-                      />
-                      <span>
-                        @if (savingId() === shop.id) {
-                          …
-                        } @else if (shop.is_active) {
-                          On
-                        } @else if (shop.account_status === 'deactivated') {
-                          Reactivate
-                        } @else {
-                          Off
-                        }
-                      </span>
-                    </label>
+                        (click)="reactivateShopOwner(shop)"
+                      >
+                        {{
+                          savingId() === shop.id
+                            ? 'Working…'
+                            : shop.account_status === 'deactivated'
+                              ? 'Reactivate'
+                              : 'Activate'
+                        }}
+                      </button>
+                    }
                   </td>
                 </tr>
               }
