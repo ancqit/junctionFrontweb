@@ -1,0 +1,176 @@
+diff --git a/app/admin.py b/app/admin.py
+index c25e648..0a8e288 100644
+--- a/app/admin.py
++++ b/app/admin.py
+@@ -8,6 +8,7 @@ from pymongo import ReturnDocument
+ from .admin_registry import (
+     ADMIN_LIST_PATH,
+     get_admin_registry_loaded_at,
++    is_admin_user,
+     load_admin_registry,
+     refresh_admin_registry,
+ )
+@@ -191,6 +192,25 @@ def update_user_role(
+     if str(current_admin["_id"]) == user_id and payload.role != UserRole.admin:
+         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot remove your own admin role")
+ 
++    existing = users.find_one({"_id": object_id})
++    if existing is None:
++        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
++
++    # Admins are immutable — never upgrade/downgrade via this endpoint.
++    if get_user_role(existing) == UserRole.admin or is_admin_user(
++        email=existing.get("email"),
++        phone_number=existing.get("phone_number"),
++    ):
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="Administrators cannot be upgraded or downgraded. Admin role is permanent.",
++        )
++    if payload.role == UserRole.admin:
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="Admin roles are managed via ADMIN_LIST_JSON / admin.json, not role updates.",
++        )
++
+     user = users.find_one_and_update(
+         {"_id": object_id},
+         {"$set": {"role": payload.role.value, "updated_at": datetime.now(timezone.utc)}},
+diff --git a/app/login.py b/app/login.py
+index 7016070..b3a6d00 100644
+--- a/app/login.py
++++ b/app/login.py
+@@ -15,6 +15,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
+ from pymongo import ReturnDocument
+ from pymongo.errors import DuplicateKeyError
+ 
++from .admin_registry import is_admin_user
+ from .database import otp_requests, users
+ from .plan_service import PlanSummary, build_plan_summary, initialize_user_plan, resolve_login_plan_string, restore_persisted_plan
+ from .role_keeper import resolve_role_from_keeper
+@@ -146,6 +147,9 @@ def resolve_role_for_user(email: str | None = None, phone_number: str | None = N
+ 
+ 
+ def downgrade_deactivated_user_to_viewer(user: dict) -> dict:
++    # Platform admins are immutable — never demote them to viewer.
++    if is_admin_user(email=user.get("email"), phone_number=user.get("phone_number")):
++        return ensure_admin_role(user)
+     if user.get("role") == UserRole.viewer.value:
+         return user
+     updated = users.find_one_and_update(
+@@ -156,7 +160,39 @@ def downgrade_deactivated_user_to_viewer(user: dict) -> dict:
+     return updated or user
+ 
+ 
++def ensure_admin_role(user: dict) -> dict:
++    """Admins never upgrade/downgrade — always role=admin and account_status=active."""
++    needs_heal = (
++        user.get("role") != UserRole.admin.value
++        or user.get("account_status") != "active"
++        or bool(user.get("pre_deactivation_role"))
++    )
++    if not needs_heal:
++        return user
++    updated = users.find_one_and_update(
++        {"_id": user["_id"]},
++        {
++            "$set": {
++                "role": UserRole.admin.value,
++                "account_status": "active",
++                "updated_at": datetime.now(timezone.utc),
++            },
++            "$unset": {
++                "pre_deactivation_role": "",
++                "plan.deactivated_at": "",
++                "plan.deactivated_by": "",
++            },
++        },
++        return_document=ReturnDocument.AFTER,
++    )
++    return updated or user
++
++
+ def sync_role_from_keeper(user: dict) -> dict:
++    # First rule: registry admins stay admin forever (even if DB was wrongly deactivated).
++    if is_admin_user(email=user.get("email"), phone_number=user.get("phone_number")):
++        return ensure_admin_role(user)
++
+     if user.get("account_status") == "deactivated":
+         return downgrade_deactivated_user_to_viewer(user)
+ 
+@@ -172,6 +208,8 @@ def sync_role_from_keeper(user: dict) -> dict:
+         return user
+ 
+     role = resolve_role_for_user(email=user.get("email"), phone_number=user.get("phone_number"))
++    if role == UserRole.admin.value:
++        return ensure_admin_role(user)
+     if user.get("role") == role:
+         return user
+     updated = users.find_one_and_update(
+diff --git a/app/plan_service.py b/app/plan_service.py
+index ec4425d..4e972ed 100644
+--- a/app/plan_service.py
++++ b/app/plan_service.py
+@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
+ from pydantic import BaseModel
+ from pymongo import ReturnDocument
+ 
++from .admin_registry import is_admin_user
+ from .database import products, users
+ from .role_keeper import resolve_role_from_keeper
+ from .roles import UserRole, get_user_role
+@@ -213,6 +214,11 @@ def restore_persisted_plan(user: dict) -> dict:
+ 
+ def downgrade_owner_to_viewer(user: dict) -> dict:
+     """Move an owner to viewer after trial or grace period ends."""
++    # Platform admins never downgrade.
++    if is_admin_user(email=user.get("email"), phone_number=user.get("phone_number")):
++        return user
++    if get_user_role(user) == UserRole.admin:
++        return user
+     now = utc_now()
+     updated = users.find_one_and_update(
+         {"_id": user["_id"]},
+@@ -481,7 +487,18 @@ def admin_deactivate_user_plan(user_id: ObjectId) -> PlanSummary:
+     if user is None:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+ 
++    # Admins can never be deactivated or demoted.
++    if get_user_role(user) == UserRole.admin or is_admin_user(
++        email=user.get("email"),
++        phone_number=user.get("phone_number"),
++    ):
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="Administrators cannot be deactivated. Admin role is permanent.",
++        )
++
+     current_role = get_user_role(user)
++
+     pre_deactivation_role = user.get("pre_deactivation_role")
+     if current_role != UserRole.viewer:
+         pre_deactivation_role = current_role.value
+diff --git a/inan.md b/inan.md
+index fa861a5..8939d01 100644
+--- a/inan.md
++++ b/inan.md
+@@ -255,8 +255,8 @@ All endpoints require **admin** role.
+ | `GET` | `/admin/users` | List all users with role, plan status, account status. |
+ | `POST` | `/admin/users/{user_id}/activate` | Reactivate a deactivated user and restore their plan (alias). |
+ | `POST` | `/admin/users/{user_id}/reactivate` | Reactivate a deactivated user, restore their previous role, active plan, and list restored activities (e.g. `create_products`, `manage_shops`). |
+-| `POST` | `/admin/users/{user_id}/deactivate` | Deactivate a user account (login allowed as `viewer`). |
+-| `PATCH` | `/admin/users/{user_id}/role` | Change user role (`owner` / `viewer`). Body: `{ "role": "viewer" }`. Admins are not set here — use admin list. |
++| `POST` | `/admin/users/{user_id}/deactivate` | Deactivate a **non-admin** user (login allowed as `viewer`). **Administrators cannot be deactivated.** |
++| `PATCH` | `/admin/users/{user_id}/role` | Change user role (`owner` / `viewer`). **Admins cannot be upgraded or downgraded** — admin role is permanent via `ADMIN_LIST_JSON` / `admin.json`. |
+ | `GET` | `/admin/role-keeper` | Read MongoDB role keeper (owner/viewer phone → role map). |
+ | `PUT` | `/admin/role-keeper` | Update role keeper mappings. Admins cannot be added here. |
+ | `GET` | `/admin/admins` | View loaded admin list (from env vars + `admin.json`). |
+@@ -267,6 +267,8 @@ All endpoints require **admin** role.
+ | `GET` | `/admin/plan-applications` | List all plan applications (shop name, identity, location, requested plan, switch status). |
+ | `GET` | `/admin/waitlist` | Alias for `/admin/plan-applications`. |
+ 
++**Admin role is immutable:** registry admins (`ADMIN_LIST_JSON` / `ADMIN_PHONE` / `admin.json`) always stay `admin` on login/refresh. They are never demoted to viewer by plan expiry or deactivate. If an admin manages shops and a shop owner is deactivated, the admin still logs in as admin and can reactivate that shop from the admin console.
++
+ **Admin access in production (Render):**
+ ```
+ ADMIN_LIST_JSON={"+918340300635":"admin","admin@example.com":"admin"}
