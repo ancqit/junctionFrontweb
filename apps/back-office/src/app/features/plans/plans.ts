@@ -1,10 +1,13 @@
 import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { FREE_TRIAL_DAYS, PlanOption, PlanSummary, PlanType } from '../../core/models';
 import { PlanApplication, planDisplayName, PlansApi } from '../../core/plans.api';
 import { Shop, ShopsApi } from '../../core/shops.api';
+
+export type PlansViewMode = 'plans' | 'waitlist';
 
 @Component({
   selector: 'app-plans',
@@ -26,53 +29,104 @@ export class PlansPage implements OnInit {
   readonly success = signal('');
   readonly trialDays = FREE_TRIAL_DAYS;
 
+  /** Toggle: browse plans vs your waitlist status. */
+  readonly viewMode = signal<PlansViewMode>('plans');
+  /** Plan the user is confirming before joining the waitlist. */
+  readonly confirmPlanType = signal<PlanType | null>(null);
+
   readonly shopReady = computed(() => {
     const shop = this.shop();
     return !!shop?.id && !!shop.name?.trim() && !!shop.city?.trim() && !!shop.locality?.trim();
+  });
+
+  readonly onWaitlist = computed(() => {
+    const app = this.application();
+    return !!app && String(app.status).toLowerCase() === 'pending';
+  });
+
+  readonly confirmPlan = computed(() => {
+    const type = this.confirmPlanType();
+    if (!type) {
+      return null;
+    }
+    return this.plans().find((plan) => plan.type === type) ?? null;
   });
 
   ngOnInit(): void {
     this.reload();
   }
 
+  setViewMode(mode: PlansViewMode): void {
+    this.viewMode.set(mode);
+    this.error.set('');
+    this.success.set('');
+    this.confirmPlanType.set(null);
+  }
+
   reload(): void {
     this.loading.set(true);
     this.error.set('');
-    this.api.list().subscribe({
-      next: (plans) => this.plans.set(plans),
-      error: () => this.plans.set([]),
-    });
-    this.api.myApplication().subscribe({
-      next: (app) => this.application.set(app),
-    });
-    this.shopsApi.list().subscribe({
-      next: (shops) => this.shop.set(shops[0] ?? null),
-      error: () => this.shop.set(null),
-    });
-    this.api
-      .me()
+    this.confirmPlanType.set(null);
+
+    forkJoin({
+      plans: this.api.list().pipe(catchError(() => of([] as PlanOption[]))),
+      application: this.api.myApplication().pipe(catchError(() => of(null))),
+      shops: this.shopsApi.list().pipe(catchError(() => of([] as Shop[]))),
+      current: this.api.me().pipe(catchError(() => of(null as PlanSummary | null))),
+    })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (state) => this.current.set(state),
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not load your plan.')),
+        next: ({ plans, application, shops, current }) => {
+          this.plans.set(plans.length ? plans : []);
+          this.application.set(application);
+          this.shop.set(shops[0] ?? null);
+          this.current.set(current);
+          // Always check waitlist — if pending, land on waitlist view.
+          this.viewMode.set(application?.status === 'pending' ? 'waitlist' : 'plans');
+        },
+        error: (err: unknown) => this.error.set(this.readError(err, 'Could not load plans.')),
       });
   }
 
-  /** Join waitlist for this plan; backend stores shop name + city + locality from the shop. */
-  selectPlan(planType: PlanType): void {
+  /**
+   * First step: tell the user they will be added to the waitlist.
+   * Confirm → `joinWaitlist()` posts to `/waitlist`.
+   */
+  requestJoinWaitlist(planType: PlanType): void {
     if (planType === 'free_trial') {
       this.error.set('Free trial starts automatically when you create an account.');
+      return;
+    }
+    const plan = this.plans().find((row) => row.type === planType);
+    if (!plan || !this.canSelect(plan)) {
+      return;
+    }
+    this.error.set('');
+    this.success.set('');
+    this.confirmPlanType.set(planType);
+  }
+
+  cancelConfirm(): void {
+    this.confirmPlanType.set(null);
+  }
+
+  /** User approved the waitlist message — join via API and toggle to waitlist view. */
+  joinWaitlist(): void {
+    const planType = this.confirmPlanType();
+    if (!planType || planType === 'free_trial') {
       return;
     }
     const shop = this.shop();
     if (!shop?.id) {
       this.error.set('Add your shop name, city, and locality on Overview before joining a plan waitlist.');
+      this.confirmPlanType.set(null);
       return;
     }
     if (!shop.city?.trim() || !shop.locality?.trim()) {
       this.error.set(
         'Your shop needs a city and locality before you can join the waitlist. Update them on Overview.',
       );
+      this.confirmPlanType.set(null);
       return;
     }
 
@@ -85,14 +139,12 @@ export class PlansPage implements OnInit {
       .subscribe({
         next: (app) => {
           this.application.set(app);
+          this.confirmPlanType.set(null);
+          this.viewMode.set('waitlist');
           const name = this.requestedPlanName(app);
           this.success.set(
-            `You’re on the waitlist for ${name}. Application forwarded with ${app.shop_name} · ${app.location.locality}, ${app.location.city}.`,
+            `You’re on the waitlist for ${name}. Shop forwarded: ${app.shop_name} · ${app.location.locality}, ${app.location.city}.`,
           );
-          // Refresh catalog + current plan from API after selection/application.
-          this.api.list().subscribe({
-            next: (plans) => this.plans.set(plans),
-          });
           this.api.me().subscribe({
             next: (state) => this.current.set(state),
             error: () => undefined,
@@ -132,11 +184,11 @@ export class PlansPage implements OnInit {
     return !!current && current.is_active && current.type === planType;
   }
 
-  canSelect(plan: PlanOption): boolean {
-    if (plan.type === 'free_trial') {
+  canSelect(plan: PlanOption | undefined): boolean {
+    if (!plan || plan.type === 'free_trial') {
       return false;
     }
-    if (this.application()?.status === 'pending') {
+    if (this.onWaitlist()) {
       return false;
     }
     if (!this.shopReady()) {
