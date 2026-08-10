@@ -4,10 +4,19 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 import { Shop, ShopsApi } from './shops.api';
 
 const SHOP_TYPE_STORAGE_KEY = 'junction.shopTypeById';
+const SHOP_PLACE_STORAGE_KEY = 'junction.shopPlaceById';
+
+export interface ShopPlaceOverlay {
+  city: string;
+  locality: string;
+}
 
 /**
  * Resolves the logged-in owner's primary shop and its `store_id`
  * (junctionBack: products/orders/employees use shop `id` as `store_id`).
+ *
+ * Shop type (and place, when the live API omits city/locality) are kept in
+ * localStorage so Overview can unlock after save even on older Render builds.
  */
 @Injectable({ providedIn: 'root' })
 export class CurrentShopService {
@@ -21,7 +30,7 @@ export class CurrentShopService {
   ensureShop(): Observable<Shop | null> {
     if (!this.load$) {
       this.load$ = this.shopsApi.list().pipe(
-        map((shops) => shops[0] ?? null),
+        map((shops) => this.applyPlaceOverlay(shops[0] ?? null)),
         tap((shop) => {
           this.shop.set(shop);
           this.storeId.set(shop?.id ?? null);
@@ -44,9 +53,26 @@ export class CurrentShopService {
   }
 
   setShop(shop: Shop | null): void {
-    this.shop.set(shop);
-    this.storeId.set(shop?.id ?? null);
-    this.load$ = of(shop).pipe(shareReplay(1));
+    const merged = this.applyPlaceOverlay(shop);
+    this.shop.set(merged);
+    this.storeId.set(merged?.id ?? null);
+    this.load$ = of(merged).pipe(shareReplay(1));
+  }
+
+  /** Fill missing city/locality from the client overlay written on Overview save. */
+  applyPlaceOverlay(shop: Shop | null): Shop | null {
+    if (!shop?.id) {
+      return shop;
+    }
+    const place = this.readShopPlace(shop.id);
+    if (!place) {
+      return shop;
+    }
+    return {
+      ...shop,
+      city: shop.city?.trim() || place.city,
+      locality: shop.locality?.trim() || place.locality,
+    };
   }
 
   readShopType(shopId: string | null | undefined): string | null {
@@ -71,6 +97,42 @@ export class CurrentShopService {
       const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
       map[shopId] = shopType.trim();
       localStorage.setItem(SHOP_TYPE_STORAGE_KEY, JSON.stringify(map));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  readShopPlace(shopId: string | null | undefined): ShopPlaceOverlay | null {
+    if (!shopId) {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(SHOP_PLACE_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+      const map = JSON.parse(raw) as Record<string, ShopPlaceOverlay>;
+      const row = map[shopId];
+      const city = row?.city?.trim() ?? '';
+      const locality = row?.locality?.trim() ?? '';
+      if (!city || !locality) {
+        return null;
+      }
+      return { city, locality };
+    } catch {
+      return null;
+    }
+  }
+
+  writeShopPlace(shopId: string, place: ShopPlaceOverlay): void {
+    try {
+      const raw = localStorage.getItem(SHOP_PLACE_STORAGE_KEY);
+      const map = raw ? (JSON.parse(raw) as Record<string, ShopPlaceOverlay>) : {};
+      map[shopId] = {
+        city: place.city.trim(),
+        locality: place.locality.trim(),
+      };
+      localStorage.setItem(SHOP_PLACE_STORAGE_KEY, JSON.stringify(map));
     } catch {
       // ignore storage failures
     }

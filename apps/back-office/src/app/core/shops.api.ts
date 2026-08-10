@@ -37,7 +37,7 @@ export class ShopsApi {
     return this.api.get<Shop[]>('/shops').pipe(catchError(() => of([])));
   }
 
-  create(payload: ShopWrite): Observable<Shop> {
+  create(payload: Partial<ShopWrite> & Pick<ShopWrite, 'name'>): Observable<Shop> {
     return this.api.post<Shop>('/shops', payload);
   }
 

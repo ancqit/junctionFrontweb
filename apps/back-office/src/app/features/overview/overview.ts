@@ -68,21 +68,23 @@ export class OverviewPage implements OnInit {
   readonly useLocalityDropdown = computed(() => this.localities().length > 0);
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
 
-  /**
-   * Overview unlocks after a successful shop save (name/city/locality)
-   * plus a selected shop type (catalog from junctionBack GET /shops/types).
-   */
-  readonly shopReady = computed(() => {
+  /** Shop has been saved with name, place, and type. */
+  readonly shopConfigured = computed(() => {
     const shop = this.shop();
     return (
       !!shop?.id &&
       !!shop.name?.trim() &&
       !!shop.city?.trim() &&
       !!shop.locality?.trim() &&
-      !!this.shopType()?.trim() &&
-      !this.editingShop()
+      !!this.shopType()?.trim()
     );
   });
+
+  /**
+   * Dashboard (metrics, notices, + New bill) shows when the shop is configured
+   * and the user is not currently editing shop details.
+   */
+  readonly shopReady = computed(() => this.shopConfigured() && !this.editingShop());
 
   ngOnInit(): void {
     this.profileApi.me().subscribe({
@@ -118,7 +120,10 @@ export class OverviewPage implements OnInit {
   }
 
   cancelShopEditor(): void {
-    this.editingShop.set(false);
+    // Only leave the editor when the shop is already configured; otherwise stay on setup.
+    if (this.shopConfigured()) {
+      this.editingShop.set(false);
+    }
     this.shopError.set('');
   }
 
@@ -134,32 +139,88 @@ export class OverviewPage implements OnInit {
       locality: raw.locality.trim(),
     };
     const shopType = raw.shop_type.trim();
+    if (!shopType) {
+      this.shopForm.controls.shop_type.markAsTouched();
+      this.shopError.set('Select a shop type before saving.');
+      return;
+    }
+
     this.shopSaving.set(true);
     this.shopError.set('');
     this.shopSuccess.set('');
 
     const existing = this.shop();
-    const request$ = existing
+    const full$ = existing
       ? this.shopsApi.update(existing.id, payload)
       : this.shopsApi.create(payload);
 
-    request$.pipe(finalize(() => this.shopSaving.set(false))).subscribe({
+    full$.subscribe({
       next: (shop) => {
-        this.currentShop.writeShopType(shop.id, shopType);
-        this.shopType.set(shopType);
-        this.shop.set(shop);
-        this.currentShop.setShop(shop);
-        this.editingShop.set(false);
-        this.shopSuccess.set('Shop details saved.');
-        this.loadDashboard();
+        this.shopSaving.set(false);
+        this.applySavedShop(shop, payload, shopType);
       },
       error: (err: unknown) => {
-        const detail = (err as { error?: { detail?: string } })?.error?.detail;
-        this.shopError.set(
-          typeof detail === 'string' && detail.trim() ? detail : 'Could not save shop details.',
-        );
+        // Older Render builds may only accept { name }. Persist name remotely,
+        // keep city/locality/type on the client so Overview can unlock.
+        if (!this.isUnprocessable(err)) {
+          this.shopSaving.set(false);
+          this.shopError.set(this.describeShopError(err));
+          return;
+        }
+        const nameOnly$ = existing
+          ? this.shopsApi.update(existing.id, { name: payload.name })
+          : this.shopsApi.create({ name: payload.name });
+        nameOnly$.pipe(finalize(() => this.shopSaving.set(false))).subscribe({
+          next: (shop) => this.applySavedShop(shop, payload, shopType),
+          error: (fallbackErr: unknown) => {
+            this.shopError.set(this.describeShopError(fallbackErr));
+          },
+        });
       },
     });
+  }
+
+  /** After a successful create/update, unlock the dashboard with form values. */
+  private applySavedShop(
+    shop: Shop,
+    payload: { name: string; city: string; locality: string },
+    shopType: string,
+  ): void {
+    const existing = this.shop();
+    const merged: Shop = {
+      ...shop,
+      id: shop.id || existing?.id || '',
+      name: payload.name || shop.name,
+      city: payload.city || shop.city || '',
+      locality: payload.locality || shop.locality || '',
+    };
+    this.currentShop.writeShopType(merged.id, shopType);
+    this.currentShop.writeShopPlace(merged.id, {
+      city: merged.city,
+      locality: merged.locality,
+    });
+    this.shopType.set(shopType);
+    this.shop.set(merged);
+    this.currentShop.setShop(merged);
+    this.editingShop.set(false);
+    this.shopSuccess.set('Shop details saved. Overview is ready.');
+    this.loadDashboard();
+  }
+
+  private isUnprocessable(err: unknown): boolean {
+    return (
+      !!err &&
+      typeof err === 'object' &&
+      'status' in err &&
+      (err as { status?: number }).status === 422
+    );
+  }
+
+  private describeShopError(err: unknown): string {
+    const detail = (err as { error?: { detail?: string } })?.error?.detail;
+    return typeof detail === 'string' && detail.trim()
+      ? detail
+      : 'Could not save shop details.';
   }
 
   todayLabel(): string {
@@ -190,7 +251,8 @@ export class OverviewPage implements OnInit {
     });
     this.shopsApi.list().subscribe({
       next: (shops) => {
-        const shop = shops[0] ?? null;
+        // Overlay client-saved city/locality when the API response omits them.
+        const shop = this.currentShop.applyPlaceOverlay(shops[0] ?? null);
         this.shop.set(shop);
         this.currentShop.setShop(shop);
         this.shopLoaded.set(true);
@@ -206,9 +268,15 @@ export class OverviewPage implements OnInit {
           if (shop.city) {
             this.loadLocalities(shop.city, shop.locality ?? '');
           }
-          if (!storedType) {
-            this.editingShop.set(true);
-          }
+          // Incomplete shop (missing place or type) stays on the setup form.
+          const complete =
+            !!shop.name?.trim() &&
+            !!shop.city?.trim() &&
+            !!shop.locality?.trim() &&
+            !!storedType;
+          this.editingShop.set(!complete);
+        } else {
+          this.editingShop.set(false);
         }
         if (this.shopReady()) {
           this.loadDashboard();
