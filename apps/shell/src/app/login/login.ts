@@ -242,6 +242,9 @@ export class Login implements OnInit {
     if (plan.type === 'free_trial') {
       return `Up to ${plan.max_products} products · ${plan.duration_days ?? this.trialDays} days`;
     }
+    if (plan.type === 'starter') {
+      return `Profile and up to ${plan.max_products} products`;
+    }
     return `Up to ${plan.max_products} products`;
   }
 

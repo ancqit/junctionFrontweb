@@ -201,9 +201,9 @@ export const PLAN_CATALOG: PlanOption[] = [
     type: 'starter',
     name: 'Starter',
     price_inr: 0,
-    max_products: 0,
-    profile_only: true,
-    description: 'Profile only · billed yearly',
+    max_products: 10,
+    profile_only: false,
+    description: 'Profile and up to 10 products · billed yearly',
     duration_days: PAID_PLAN_DAYS,
   },
   {

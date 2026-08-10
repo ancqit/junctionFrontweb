@@ -55,9 +55,9 @@ export const PLAN_CATALOG: PlanOption[] = [
     type: 'starter',
     name: 'Starter',
     price_inr: 0,
-    max_products: 0,
-    profile_only: true,
-    description: 'Profile only · billed yearly',
+    max_products: 10,
+    profile_only: false,
+    description: 'Profile and up to 10 products · billed yearly',
     duration_days: PAID_PLAN_DAYS,
   },
   {
@@ -80,6 +80,25 @@ export const PLAN_CATALOG: PlanOption[] = [
   },
 ];
 
+/** Align Starter with junctionBack: profile + 10 products (overrides stale API payloads). */
+export function alignPlanCatalog(plans: PlanOption[]): PlanOption[] {
+  const starter = PLAN_CATALOG.find((plan) => plan.type === 'starter');
+  if (!starter) {
+    return plans;
+  }
+  return plans.map((plan) =>
+    plan.type === 'starter'
+      ? {
+          ...plan,
+          max_products: starter.max_products,
+          profile_only: starter.profile_only,
+          description: starter.description,
+          duration_days: plan.duration_days ?? starter.duration_days,
+        }
+      : plan,
+  );
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlansService {
   private readonly api = inject(ApiService);
@@ -87,7 +106,7 @@ export class PlansService {
   /** Public `GET /plans` → `{ plans: PlanOption[] }`. */
   list(): Observable<PlanOption[]> {
     return this.api.get<PlansListResponse | PlanOption[]>('/plans').pipe(
-      map((res) => (Array.isArray(res) ? res : (res?.plans ?? PLAN_CATALOG))),
+      map((res) => alignPlanCatalog(Array.isArray(res) ? res : (res?.plans ?? PLAN_CATALOG))),
       catchError(() => of(PLAN_CATALOG)),
     );
   }
