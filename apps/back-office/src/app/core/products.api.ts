@@ -1,19 +1,24 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
+import { CurrentShopService } from './current-shop.service';
 import { Product, ProductCreate, ProductUpdate } from './models';
-import { DEFAULT_STORE_ID } from './store.config';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsApi {
   private readonly api = inject(BackOfficeApiService);
+  private readonly currentShop = inject(CurrentShopService);
 
   list(): Observable<Product[]> {
-    return this.api.get<Product[]>('/products', { store_id: DEFAULT_STORE_ID });
+    return this.withStoreId((storeId) =>
+      this.api.get<Product[]>('/products', { store_id: storeId }),
+    );
   }
 
-  create(payload: ProductCreate): Observable<Product> {
-    return this.api.post<Product>('/products', payload);
+  create(payload: Omit<ProductCreate, 'store_id'> & { store_id?: string }): Observable<Product> {
+    return this.withStoreId((storeId) =>
+      this.api.post<Product>('/products', { ...payload, store_id: payload.store_id || storeId }),
+    );
   }
 
   update(id: string, payload: ProductUpdate): Observable<Product> {
@@ -31,5 +36,17 @@ export class ProductsApi {
 
   setImageCdn(productId: string, cdn: string): Observable<Product> {
     return this.api.post<Product>(`/products/${productId}/image/cdn`, { cdn });
+  }
+
+  private withStoreId<T>(fn: (storeId: string) => Observable<T>): Observable<T> {
+    return this.currentShop.ensureShop().pipe(
+      switchMap((shop) => {
+        const storeId = shop?.id?.trim();
+        if (!storeId) {
+          return of([] as unknown as T);
+        }
+        return fn(storeId);
+      }),
+    );
   }
 }

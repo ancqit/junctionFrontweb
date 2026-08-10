@@ -1,12 +1,14 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { AdminApi, AdminShopRow } from '../core/admin.api';
+import { AdminApi, AdminShopRow, Shop } from '../core/admin.api';
 import { AuthService } from '../core/auth.service';
 import { SessionService } from '../core/session.service';
+
+export type AdminTab = 'workings' | 'add';
 
 @Component({
   selector: 'app-admin',
@@ -21,13 +23,16 @@ export class AdminPage implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
+  readonly tab = signal<AdminTab>('workings');
   readonly shops = signal<AdminShopRow[]>([]);
   readonly filtered = signal<AdminShopRow[]>([]);
   readonly loading = signal(true);
   readonly savingId = signal<string | null>(null);
+  readonly creating = signal(false);
   readonly error = signal('');
   readonly success = signal('');
   readonly forbidden = signal(false);
+  readonly menuOpen = signal(false);
 
   readonly adminId = this.session.user?.id ?? '';
   readonly adminName = this.session.user?.display_name ?? 'Admin';
@@ -36,8 +41,35 @@ export class AdminPage implements OnInit {
     q: [''],
   });
 
+  readonly createForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(160)]],
+    city: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    locality: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+  });
+
+  readonly shopCount = computed(() => this.shops().length);
+  readonly activeCount = computed(() => this.shops().filter((shop) => shop.is_active).length);
+  readonly productTotal = computed(() =>
+    this.shops().reduce((sum, shop) => sum + (shop.products_count || 0), 0),
+  );
+
   ngOnInit(): void {
     this.reload();
+  }
+
+  setTab(tab: AdminTab): void {
+    this.tab.set(tab);
+    this.error.set('');
+    this.success.set('');
+    this.menuOpen.set(false);
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
   }
 
   reload(): void {
@@ -83,6 +115,35 @@ export class AdminPage implements OnInit {
           .includes(q),
       ),
     );
+  }
+
+  createShop(): void {
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
+    const raw = this.createForm.getRawValue();
+    const payload = {
+      name: raw.name.trim(),
+      city: raw.city.trim(),
+      locality: raw.locality.trim(),
+    };
+    this.creating.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.api
+      .createShop(payload)
+      .pipe(finalize(() => this.creating.set(false)))
+      .subscribe({
+        next: (shop: Shop) => {
+          this.success.set(`Shop “${shop.name}” created.`);
+          this.createForm.reset({ name: '', city: '', locality: '' });
+          this.setTab('workings');
+          this.reload();
+        },
+        error: (err: unknown) =>
+          this.error.set(this.readError(err, 'Could not create shop via POST /shops.')),
+      });
   }
 
   onActiveChange(shop: AdminShopRow, event: Event): void {

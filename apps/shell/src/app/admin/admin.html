@@ -1,31 +1,57 @@
-<div class="admin">
-  <aside>
+<div class="admin" [class.menu-open]="menuOpen()">
+  <button type="button" class="menu-toggle" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-controls="admin-nav">
+    <span class="menu-bars" aria-hidden="true"></span>
+    Menu
+  </button>
+  @if (menuOpen()) {
+    <div class="menu-backdrop" (click)="closeMenu()" role="presentation"></div>
+  }
+
+  <aside id="admin-nav">
     <div class="brand"><span>J</span> Junction Admin</div>
     <p class="admin-id">
       <span>{{ adminName }}</span>
       <small>Login ID · {{ adminId || '—' }}</small>
     </p>
     <nav>
-      <a routerLink="/admin" class="active">Shops</a>
-      <a routerLink="/back-office">Full application</a>
+      <button type="button" [class.active]="tab() === 'workings'" (click)="setTab('workings')">Current workings</button>
+      <button type="button" [class.active]="tab() === 'add'" (click)="setTab('add')">Add shops</button>
+      <a routerLink="/back-office" (click)="closeMenu()">Full application</a>
     </nav>
-    <button type="button" class="ghost" (click)="logout()">Log out</button>
+    <button type="button" class="ghost logout" (click)="logout()">Log out</button>
   </aside>
 
   <main>
     <header>
       <div>
         <p class="eyebrow">PLATFORM</p>
-        <h1>Shops</h1>
-        <p class="sub">
-          List of shops with product counts. Use the checkbox to activate or deactivate the shop owner account.
-        </p>
+        @if (tab() === 'workings') {
+          <h1>Current workings</h1>
+          <p class="sub">
+            Live shops, product counts, and owner activation — from junctionBack
+            <code>GET /shops</code> + <code>GET /admin/users</code>.
+          </p>
+        } @else {
+          <h1>Add shops</h1>
+          <p class="sub">
+            Create a shop with <code>POST /shops</code> — name, city, and locality.
+          </p>
+        }
       </div>
       <div class="header-actions">
         <button type="button" class="primary" (click)="goApp()">Open application</button>
         <button type="button" class="ghost" (click)="reload()">Refresh</button>
       </div>
     </header>
+
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'workings'" [class.active]="tab() === 'workings'" (click)="setTab('workings')">
+        Current workings
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'add'" [class.active]="tab() === 'add'" (click)="setTab('add')">
+        Add shops
+      </button>
+    </div>
 
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
@@ -40,7 +66,50 @@
         <p>Your login role must be <code>admin</code> (admin registry / <code>ADMIN_PHONE</code> on junctionBack).</p>
         <button type="button" class="primary" (click)="logout()">Log out</button>
       </section>
+    } @else if (tab() === 'add') {
+      <section class="panel" [formGroup]="createForm">
+        <p class="eyebrow">NEW SHOP</p>
+        <h2>Shop name & location</h2>
+        <p class="panel-sub">Phone is taken from your admin login and cannot be changed later.</p>
+
+        <div class="create-grid">
+          <label>
+            Shop name
+            <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
+          </label>
+          <label>
+            City
+            <input formControlName="city" placeholder="e.g. Ranchi" />
+          </label>
+          <label>
+            Locality
+            <input formControlName="locality" placeholder="e.g. Main Road" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="ghost" (click)="setTab('workings')">Cancel</button>
+          <button type="button" class="primary" (click)="createShop()" [disabled]="creating()">
+            {{ creating() ? 'Creating…' : 'Create shop' }}
+          </button>
+        </div>
+      </section>
     } @else {
+      <section class="stats">
+        <article>
+          <p>Shops</p>
+          <strong>{{ shopCount() }}</strong>
+        </article>
+        <article>
+          <p>Active owners</p>
+          <strong>{{ activeCount() }}</strong>
+        </article>
+        <article>
+          <p>Products</p>
+          <strong>{{ productTotal() }}</strong>
+        </article>
+      </section>
+
       <section class="toolbar" [formGroup]="search">
         <label>
           Search shops
@@ -55,7 +124,8 @@
         } @else if (filtered().length === 0) {
           <div class="empty">
             <strong>No shops found</strong>
-            <p>Shops are created via <code>POST /shops</code>. Merge junctionBack PR #10 if this API is missing.</p>
+            <p>Use the <strong>Add shops</strong> tab or create via <code>POST /shops</code>.</p>
+            <button type="button" class="primary" (click)="setTab('add')">Add a shop</button>
           </div>
         } @else {
           <table>

@@ -19,7 +19,6 @@
   <section class="panel">
     <div class="panel-head">
       <h2>New product</h2>
-      <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
     </div>
     <form [formGroup]="form" (ngSubmit)="create()" class="grid-form">
       <label>Name<input formControlName="name" placeholder="Organic rice 5kg" /></label>
@@ -112,6 +111,7 @@
       </section>
 
       <div class="actions full">
+        <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
         <button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save product' }}</button>
       </div>
     </form>

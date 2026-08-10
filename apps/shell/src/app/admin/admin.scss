@@ -15,14 +15,47 @@ aside {
 }
 .admin-id small { color: #8fa597; font-size: 11px; font-weight: 600; word-break: break-all; }
 nav { display: grid; gap: 8px; margin-top: 18px; }
-nav a {
-  padding: 11px 12px; border-radius: 9px; color: #b9cabf; font-size: 14px; text-decoration: none;
+nav a, nav button {
+  padding: 11px 12px; border-radius: 9px; border: 0; color: #b9cabf; background: transparent;
+  font: inherit; font-size: 14px; text-decoration: none; text-align: left; cursor: pointer;
 }
 nav .active { color: white; background: rgba(255,255,255,.11); }
-aside .ghost { margin-top: auto; }
+aside .ghost, aside .logout { margin-top: auto; }
+.menu-toggle { display: none; }
+.menu-backdrop { display: none; }
 main { padding: 42px clamp(24px, 4vw, 64px); min-width: 0; }
-header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
+header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px; }
 .header-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.tabs {
+  display: inline-flex; gap: 6px; margin-bottom: 20px; padding: 4px;
+  border-radius: 12px; background: #e8ebe6;
+}
+.tabs button {
+  border: 0; border-radius: 9px; padding: 10px 14px; font: inherit; font-weight: 700;
+  color: #556057; background: transparent; cursor: pointer;
+}
+.tabs button.active { color: white; background: #1a6541; }
+.stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;
+}
+.stats article {
+  padding: 18px 20px; border: 1px solid #dedbd1; border-radius: 14px; background: white;
+}
+.stats p { margin: 0; color: #707971; font-size: 12px; font-weight: 700; }
+.stats strong { display: block; margin-top: 10px; font: 500 30px Georgia, serif; }
+.panel {
+  margin-bottom: 22px; padding: 24px; border: 1px solid #dedbd1; border-radius: 16px; background: white;
+}
+.panel h2 { margin: 8px 0; font: 500 24px Georgia, serif; }
+.panel-sub { margin: 0 0 16px; color: #667069; font-size: 14px; }
+.create-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px;
+}
+.create-grid label { display: grid; gap: 6px; font-size: 12px; color: #667069; font-weight: 700; }
+.create-grid input {
+  border: 1px solid #d8d4c8; border-radius: 10px; padding: 10px 12px; font: inherit; background: white;
+}
+.panel .actions { display: flex; justify-content: flex-end; gap: 10px; }
 .eyebrow { margin: 0; color: #b7922f; font-size: 11px; font-weight: 800; letter-spacing: .13em; }
 h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .sub { margin: 0; color: #778078; font-size: 14px; }
@@ -76,8 +109,24 @@ code { font-size: 12px; background: #eef3ef; padding: 1px 5px; border-radius: 4p
 .empty .primary { margin-top: 14px; }
 @media (max-width: 900px) {
   .admin { grid-template-columns: 1fr; }
-  aside { position: static; height: auto; }
-  nav { margin-top: 12px; grid-template-columns: 1fr 1fr; }
-  aside .ghost { margin-top: 8px; }
+  .menu-toggle {
+    display: inline-flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 30;
+    margin: 12px 12px 0; border: 0; border-radius: 10px; padding: 11px 14px;
+    color: white; background: #0f2f22; font: inherit; font-weight: 700; cursor: pointer;
+  }
+  .menu-bars {
+    width: 18px; height: 2px; background: white; box-shadow: 0 6px 0 white, 0 -6px 0 white;
+  }
+  .menu-backdrop {
+    display: block; position: fixed; inset: 0; z-index: 35; background: rgba(10, 20, 16, .45);
+  }
+  aside {
+    position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
+    height: 100vh; transform: translateX(-105%); transition: transform .2s ease;
+  }
+  .admin.menu-open aside { transform: translateX(0); }
+  nav { margin-top: 12px; grid-template-columns: 1fr; }
+  aside .ghost, aside .logout { margin-top: auto; }
   header { flex-direction: column; align-items: start; }
+  .stats, .create-grid { grid-template-columns: 1fr; }
 }

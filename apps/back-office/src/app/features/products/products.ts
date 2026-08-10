@@ -5,7 +5,6 @@ import { finalize } from 'rxjs';
 import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
 import { ProductsApi } from '../../core/products.api';
 import { QueriesApi } from '../../core/queries.api';
-import { DEFAULT_STORE_ID } from '../../core/store.config';
 
 const MAX_PRODUCT_IMAGES = 3;
 
@@ -169,7 +168,6 @@ export class ProductsPage implements OnInit {
     this.error.set('');
     this.api
       .create({
-        store_id: DEFAULT_STORE_ID,
         // Backend still requires sku; generated server-side-style so users never enter an ID.
         sku: this.generateSku(value.name),
         name: value.name.trim(),

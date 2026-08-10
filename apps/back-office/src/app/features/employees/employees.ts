@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { EmployeesApi } from '../../core/employees.api';
 import { Employee, EmploymentStatus, EmploymentType } from '../../core/models';
-import { DEFAULT_STORE_ID } from '../../core/store.config';
 
 @Component({
   selector: 'app-employees',
@@ -93,7 +92,6 @@ export class EmployeesPage implements OnInit {
     this.error.set('');
     this.api
       .create({
-        store_id: DEFAULT_STORE_ID,
         employee_code: value.employee_code.trim(),
         first_name: value.first_name.trim(),
         last_name: value.last_name.trim(),

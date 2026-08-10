@@ -1,23 +1,37 @@
-<div class="office" [class.locked]="access.locked()">
-  <aside>
+<div class="office" [class.locked]="access.locked()" [class.menu-open]="menuOpen()">
+  <button
+    type="button"
+    class="menu-toggle"
+    (click)="toggleMenu()"
+    [attr.aria-expanded]="menuOpen()"
+    aria-controls="office-nav"
+  >
+    <span class="menu-bars" aria-hidden="true"></span>
+    Menu
+  </button>
+  @if (menuOpen()) {
+    <div class="menu-backdrop" (click)="closeMenu()" role="presentation"></div>
+  }
+
+  <aside id="office-nav">
     <div class="brand"><span>J</span> Junction</div>
     @if (access.locked()) {
       <nav>
-        <a routerLink="/back-office/activate" routerLinkActive="active">Deactivated</a>
-        <a routerLink="/back-office/plans" routerLinkActive="active">Plans</a>
+        <a routerLink="/back-office/activate" routerLinkActive="active" (click)="closeMenu()">Deactivated</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">Plans</a>
       </nav>
       <p class="lock-note">
         Viewer mode — plan and grace period ended. Activate a plan to become an owner again.
       </p>
     } @else {
       <nav>
-        <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview</a>
-        <a routerLink="/back-office/profile" routerLinkActive="active">Profile</a>
-        <a routerLink="/back-office/employees" routerLinkActive="active">Employees</a>
-        <a routerLink="/back-office/products" routerLinkActive="active">Products</a>
-        <a routerLink="/back-office/billing" routerLinkActive="active">Billing</a>
-        <a routerLink="/back-office/orders" routerLinkActive="active">Orders</a>
-        <a routerLink="/back-office/plans" routerLinkActive="active">Plans</a>
+        <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Overview</a>
+        <a routerLink="/back-office/profile" routerLinkActive="active" (click)="closeMenu()">Profile</a>
+        <a routerLink="/back-office/employees" routerLinkActive="active" (click)="closeMenu()">Employees</a>
+        <a routerLink="/back-office/products" routerLinkActive="active" (click)="closeMenu()">Products</a>
+        <a routerLink="/back-office/billing" routerLinkActive="active" (click)="closeMenu()">Billing</a>
+        <a routerLink="/back-office/orders" routerLinkActive="active" (click)="closeMenu()">Orders</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">Plans</a>
       </nav>
     }
     <div class="aside-footer">
