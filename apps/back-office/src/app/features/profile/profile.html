@@ -111,6 +111,22 @@
       <input formControlName="display_name" autocomplete="name" />
     </label>
     <label>
+      Shop type
+      <select formControlName="shop_type">
+        <option value="">Select the type of shop</option>
+        @for (type of shopTypeOptions; track type.value) {
+          <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </label>
+    @if (reviewForm.controls.shop_type.value; as shopTypeValue) {
+      @for (type of shopTypeOptions; track type.value) {
+        @if (type.value === shopTypeValue) {
+          <p class="type-hint">{{ type.description }}</p>
+        }
+      }
+    }
+    <label>
       Bio
       <textarea formControlName="bio" rows="5" maxlength="500"></textarea>
     </label>
@@ -172,6 +188,9 @@
         }
         <div>
           <strong>{{ current.display_name }}</strong>
+          @if (selectedShopTypeLabel()) {
+            <p class="type-chip">{{ selectedShopTypeLabel() }}</p>
+          }
           <p>{{ current.bio || 'No bio saved.' }}</p>
           @if (current.phone_number) {
             <small>Phone · {{ current.phone_number }}</small>

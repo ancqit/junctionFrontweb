@@ -65,6 +65,42 @@ h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; 
 }
 .shop-card .error { background: #f8eaea; color: #7a2a2a; }
 .shop-card .success { background: #eef6f1; color: #1a6541; }
+.notice-board {
+  margin-bottom: 22px; padding: 26px 24px; border: 1px solid #dedbd1; border-radius: 16px; background: white;
+}
+.notice-head {
+  display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 16px;
+}
+.notice-head h2 { margin: 8px 0 8px; font: 500 26px Georgia, serif; }
+.notice-sub { margin: 0; color: #667069; font-size: 14px; max-width: 560px; line-height: 1.5; }
+.notice-date {
+  flex-shrink: 0; padding: 8px 12px; border-radius: 999px; background: #f3f1eb;
+  color: #5f6a63; font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.notice-preview {
+  margin: 0 0 16px; padding: 14px 16px; border-radius: 12px; border: 1px solid #cfe0d6; background: #f4faf6;
+}
+.notice-preview p:last-of-type {
+  margin: 8px 0 8px; color: #1a281f; font-size: 15px; line-height: 1.5; white-space: pre-wrap;
+}
+.notice-preview small { color: #667069; font-size: 12px; }
+.notice-preview code {
+  font-size: 11px; color: #1a6541; background: #eef3ef; padding: 1px 5px; border-radius: 5px;
+}
+.notice-board label {
+  display: grid; gap: 7px; margin-bottom: 14px; color: #36453b; font-size: 12px; font-weight: 700;
+}
+.notice-board textarea {
+  width: 100%; box-sizing: border-box; border: 1px solid #d8d4c8; border-radius: 10px;
+  padding: 11px 12px; font: inherit; background: #fff; color: #17251c; resize: vertical;
+}
+.notice-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.notice-actions .primary, .notice-actions .ghost {
+  border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 700; cursor: pointer;
+}
+.notice-actions .primary { color: white; background: #1a6541; }
+.notice-actions .ghost { color: #1a6541; background: #eef3ef; }
+.notice-actions .primary:disabled, .notice-actions .ghost:disabled { opacity: .55; cursor: not-allowed; }
 .next { margin-top: 42px; }
 .next h2 { margin: 8px 0 18px; font: 500 28px Georgia, serif; }
 .next ol {
@@ -87,5 +123,5 @@ h1 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; 
   .hero { display: block; }
   .pulse { margin-top: 25px; }
   h1 { font-size: 32px; }
-  header { align-items: start; flex-direction: column; gap: 16px; }
+  header, .notice-head, .notice-actions { align-items: start; flex-direction: column; }
 }
