@@ -2,10 +2,37 @@
   <div>
     <p class="eyebrow">SUBSCRIPTION</p>
     <h1>Plans</h1>
-    <p class="sub">Choose a plan to join the waitlist. We forward your shop name, city, and locality with the application.</p>
+    <p class="sub">
+      Choose a plan to join the waitlist, or check whether you’re already on it.
+      Toggle between catalog and waitlist status anytime.
+    </p>
   </div>
   <button type="button" class="ghost" (click)="reload()">Refresh</button>
 </header>
+
+<div class="view-toggle" role="tablist" aria-label="Plans or waitlist">
+  <button
+    type="button"
+    role="tab"
+    [attr.aria-selected]="viewMode() === 'plans'"
+    [class.active]="viewMode() === 'plans'"
+    (click)="setViewMode('plans')"
+  >
+    Plans
+  </button>
+  <button
+    type="button"
+    role="tab"
+    [attr.aria-selected]="viewMode() === 'waitlist'"
+    [class.active]="viewMode() === 'waitlist'"
+    (click)="setViewMode('waitlist')"
+  >
+    Waitlist
+    @if (onWaitlist()) {
+      <span class="toggle-dot" aria-hidden="true"></span>
+    }
+  </button>
+</div>
 
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
@@ -16,41 +43,61 @@
 
 @if (loading()) {
   <p class="muted">Loading plans…</p>
-} @else if (application(); as app) {
-  <section class="forwarded" role="status">
-    <p class="eyebrow">WAITLIST · APPLICATION FORWARDED</p>
-    <h2>You’re on the list for {{ requestedPlanName(app) }}.</h2>
-    <p>
-      {{ app.switch_message }}
-      Your application has been forwarded with shop details for review. We’ll activate access once it is approved.
-    </p>
-    <dl>
-      <div>
-        <dt>Plan</dt>
-        <dd>{{ requestedPlanName(app) }}</dd>
+} @else if (viewMode() === 'waitlist') {
+  @if (application(); as app) {
+    <section class="forwarded" role="status">
+      <p class="eyebrow">YOUR WAITLIST STATUS</p>
+      <h2>
+        @if (app.status === 'pending') {
+          You’re on the waitlist for {{ requestedPlanName(app) }}.
+        } @else {
+          Waitlist application · {{ app.status | titlecase }}
+        }
+      </h2>
+      <p>
+        {{ app.switch_message }}
+        @if (app.status === 'pending') {
+          An admin will approve your application. You can still browse plans with the toggle above.
+        }
+      </p>
+      <dl>
+        <div>
+          <dt>Plan</dt>
+          <dd>{{ requestedPlanName(app) }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>{{ app.status | titlecase }}</dd>
+        </div>
+        <div>
+          <dt>Submitted</dt>
+          <dd>{{ app.created_at | date:'medium' }}</dd>
+        </div>
+        <div>
+          <dt>Shop</dt>
+          <dd>{{ app.shop_name }}</dd>
+        </div>
+        <div>
+          <dt>City</dt>
+          <dd>{{ app.location.city }}</dd>
+        </div>
+        <div>
+          <dt>Locality</dt>
+          <dd>{{ app.location.locality }}</dd>
+        </div>
+      </dl>
+      <div class="forwarded-actions">
+        <button type="button" class="ghost" (click)="setViewMode('plans')">Browse plans</button>
       </div>
-      <div>
-        <dt>Status</dt>
-        <dd>{{ app.status | titlecase }}</dd>
-      </div>
-      <div>
-        <dt>Submitted</dt>
-        <dd>{{ app.created_at | date:'medium' }}</dd>
-      </div>
-      <div>
-        <dt>Shop</dt>
-        <dd>{{ app.shop_name }}</dd>
-      </div>
-      <div>
-        <dt>City</dt>
-        <dd>{{ app.location.city }}</dd>
-      </div>
-      <div>
-        <dt>Locality</dt>
-        <dd>{{ app.location.locality }}</dd>
-      </div>
-    </dl>
-  </section>
+    </section>
+  } @else {
+    <section class="empty-waitlist" role="status">
+      <p class="eyebrow">WAITLIST</p>
+      <h2>You’re not on the waitlist yet.</h2>
+      <p>Pick a plan, confirm, and we’ll add you to the waitlist for that plan.</p>
+      <button type="button" class="primary" (click)="setViewMode('plans')">View plans</button>
+    </section>
+  }
 } @else {
   @if (!shopReady()) {
     <section class="shop-needed" role="status">
@@ -86,6 +133,9 @@
           }
         </p>
       </div>
+      @if (onWaitlist()) {
+        <button type="button" class="ghost" (click)="setViewMode('waitlist')">View waitlist</button>
+      }
     </section>
   }
 
@@ -96,6 +146,23 @@
         · {{ shop.locality }}, {{ shop.city }}
       </p>
     }
+  }
+
+  @if (confirmPlan(); as pending) {
+    <section class="confirm" role="dialog" aria-labelledby="waitlist-confirm-title">
+      <p class="eyebrow">CONFIRM WAITLIST</p>
+      <h2 id="waitlist-confirm-title">You’ll be added to the waitlist for {{ pending.name }}.</h2>
+      <p>
+        Approving sends your shop details for admin review. You won’t get the plan until an admin
+        approves your waitlist application.
+      </p>
+      <div class="confirm-actions">
+        <button type="button" class="ghost" (click)="cancelConfirm()" [disabled]="saving()">Cancel</button>
+        <button type="button" class="primary" (click)="joinWaitlist()" [disabled]="saving()">
+          {{ saving() ? 'Joining…' : 'Approve · join waitlist' }}
+        </button>
+      </div>
+    </section>
   }
 
   <section class="plan-grid">
@@ -122,19 +189,21 @@
             {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
           </button>
         } @else {
-          <p class="note">Joins the waitlist and forwards shop name, city, and locality for review.</p>
+          <p class="note">Selecting this plan adds you to the waitlist for admin approval.</p>
           <button
             type="button"
             class="primary"
-            (click)="selectPlan(plan.type)"
-            [disabled]="saving() || !canSelect(plan)"
+            (click)="requestJoinWaitlist(plan.type)"
+            [disabled]="saving() || !!confirmPlanType() || !canSelect(plan)"
           >
             @if (isCurrent(plan.type)) {
               Current plan
+            } @else if (onWaitlist()) {
+              Already on waitlist
             } @else if (!shopReady()) {
               Set shop details first
             } @else {
-              Join {{ plan.name }} waitlist
+              Select {{ plan.name }}
             }
           </button>
         }
