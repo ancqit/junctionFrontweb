@@ -7,6 +7,7 @@ import { DescriptionsApi } from '../../core/descriptions.api';
 import { ImageSearchResult, UserProfile } from '../../core/models';
 import { ProfileApi } from '../../core/profile.api';
 import { QueriesApi } from '../../core/queries.api';
+import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 
 export type ProfileWizardStep = 'keyword' | 'prompts' | 'review' | 'done';
 
@@ -27,6 +28,7 @@ export class ProfilePage implements OnInit {
   private readonly queriesApi = inject(QueriesApi);
   private readonly fb = inject(FormBuilder);
 
+  readonly shopTypeOptions = SHOP_TYPE_OPTIONS;
   readonly step = signal<ProfileWizardStep>('keyword');
   readonly profile = signal<UserProfile | null>(null);
   readonly loading = signal(true);
@@ -37,6 +39,7 @@ export class ProfilePage implements OnInit {
   readonly success = signal('');
 
   readonly keyword = signal('');
+  readonly selectedShopType = signal<string | null>(null);
   readonly enhancedPrompts = signal<EnhancedPrompt[]>([]);
   readonly imageResults = signal<ImageSearchResult[]>([]);
   readonly selectedAvatarUrl = signal<string | null>(null);
@@ -54,7 +57,10 @@ export class ProfilePage implements OnInit {
   readonly reviewForm = this.fb.nonNullable.group({
     display_name: ['', [Validators.required, Validators.maxLength(100)]],
     bio: ['', [Validators.maxLength(500)]],
+    shop_type: ['', [Validators.required]],
   });
+
+  readonly selectedShopTypeLabel = computed(() => shopTypeLabel(this.selectedShopType()));
 
   readonly stepIndex = computed(() => {
     switch (this.step()) {
@@ -148,6 +154,7 @@ export class ProfilePage implements OnInit {
               .filter(Boolean)
               .join('\n\n')
               .slice(0, 500),
+            shop_type: this.selectedShopType() ?? this.guessShopTypeFromKeyword() ?? '',
           });
           this.selectedAvatarUrl.set(this.profile()?.avatar_url ?? null);
           this.step.set('review');
@@ -196,11 +203,15 @@ export class ProfilePage implements OnInit {
     const raw = this.reviewForm.getRawValue();
     const displayName = raw.display_name.trim();
     const bio = raw.bio.trim();
+    const shopType = raw.shop_type.trim();
     const avatarUrl = this.selectedAvatarUrl()?.trim() || undefined;
 
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
+
+    // Shop type is kept locally for now — will sync with GET /shops/types + shop/profile APIs later.
+    this.selectedShopType.set(shopType || null);
 
     this.profileApi
       .update({
@@ -223,13 +234,28 @@ export class ProfilePage implements OnInit {
   startOver(): void {
     this.keywordForm.reset({ keyword: this.keyword() });
     this.promptsForm.reset({ prompt1: '', prompt2: '', prompt3: '' });
-    this.reviewForm.reset({ display_name: '', bio: '' });
+    this.reviewForm.reset({ display_name: '', bio: '', shop_type: '' });
     this.enhancedPrompts.set([]);
     this.imageResults.set([]);
     this.selectedAvatarUrl.set(null);
+    this.selectedShopType.set(null);
     this.success.set('');
     this.error.set('');
     this.step.set('keyword');
+  }
+
+  private guessShopTypeFromKeyword(): string | null {
+    const keyword = this.keyword().trim().toLowerCase();
+    if (!keyword) {
+      return null;
+    }
+    const match = this.shopTypeOptions.find(
+      (row) =>
+        row.label.toLowerCase().includes(keyword) ||
+        row.description.toLowerCase().includes(keyword) ||
+        row.value.replace(/_/g, ' ').includes(keyword),
+    );
+    return match?.value ?? null;
   }
 
   private buildEnhanceInput(prompt: string): string {

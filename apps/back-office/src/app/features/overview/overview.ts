@@ -48,6 +48,12 @@ export class OverviewPage implements OnInit {
     locality: ['', [Validators.required, Validators.minLength(2)]],
   });
 
+  /** Local draft only — backend `POST /notices` wiring comes later. */
+  readonly noticeForm = this.fb.nonNullable.group({
+    message: ['', [Validators.maxLength(1000)]],
+  });
+  readonly noticeDraft = signal<string | null>(null);
+
   readonly greetingName = computed(() => this.profile()?.display_name?.trim() || 'there');
   readonly userId = computed(() => this.profile()?.id ?? '');
   readonly useCityDropdown = computed(() => this.cities().length > 0);
@@ -111,6 +117,21 @@ export class OverviewPage implements OnInit {
       day: 'numeric',
       month: 'long',
     }).format(new Date());
+  }
+
+  saveNoticeDraft(): void {
+    const message = this.noticeForm.controls.message.value.trim();
+    if (!message) {
+      this.noticeForm.controls.message.markAsTouched();
+      return;
+    }
+    // UI place only — will call POST /notices { store_id, message } when wired.
+    this.noticeDraft.set(message);
+  }
+
+  clearNoticeDraft(): void {
+    this.noticeForm.reset({ message: '' });
+    this.noticeDraft.set(null);
   }
 
   private loadShopForm(): void {

@@ -74,7 +74,7 @@
       {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
     </button>
   </section>
-} @else {
+}   @else {
   @if (countdown(); as plan) {
     <section class="plan-counter" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
       <div>
@@ -102,6 +102,46 @@
       }
     </section>
   }
+
+  <section class="notice-board" [formGroup]="noticeForm">
+    <div class="notice-head">
+      <div>
+        <p class="eyebrow">TODAY’S NOTICE</p>
+        <h2>Share something with your customers</h2>
+        <p class="notice-sub">
+          Post today’s offer, delay, or update. One notice per day for this shop.
+        </p>
+      </div>
+      <span class="notice-date">{{ todayLabel() }}</span>
+    </div>
+
+    @if (noticeDraft(); as draft) {
+      <div class="notice-preview" role="status">
+        <p class="eyebrow">DRAFT ON OVERVIEW</p>
+        <p>{{ draft }}</p>
+        <small>UI only for now — will publish with <code>POST /notices</code> when wired.</small>
+      </div>
+    }
+
+    <label>
+      Notice for today
+      <textarea
+        formControlName="message"
+        rows="3"
+        maxlength="1000"
+        placeholder="e.g. Fresh stock of rice arrived · 10% off till evening"
+      ></textarea>
+    </label>
+
+    <div class="notice-actions">
+      <button type="button" class="ghost" (click)="clearNoticeDraft()" [disabled]="!noticeForm.controls.message.value.trim() && !noticeDraft()">
+        Clear
+      </button>
+      <button type="button" class="primary" (click)="saveNoticeDraft()">
+        Save notice draft
+      </button>
+    </div>
+  </section>
 
   <section class="hero">
     <div>
