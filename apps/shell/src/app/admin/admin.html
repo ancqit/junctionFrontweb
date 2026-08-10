@@ -29,16 +29,16 @@
         @if (tab() === 'workings') {
           <h1>Current workings</h1>
           <p class="sub">
-            Live shops and owner <strong>activate / reactivate</strong> —
-            junctionBack <code>POST /admin/users/{'{id}'}/activate|reactivate</code>.
-            Deactivate is for <strong>viewers only</strong> (see Viewers tab).
+            Live shops — deactivate is for <strong>viewers only</strong>.
+            Admins never change role. Deactivated shop owners show
+            <strong>Reactivate shop</strong> here after you sign in as admin.
           </p>
         } @else if (tab() === 'viewers') {
           <h1>Viewers</h1>
           <p class="sub">
-            Only current viewers can be deactivated.
-            Reactivate restores role, plan, and activities via
-            <code>POST /admin/users/{'{id}'}/reactivate</code>.
+            Place to <strong>reactivate</strong> deactivated accounts
+            (<code>POST /admin/users/{'{id}'}/reactivate</code>).
+            Only viewers can be deactivated. Admins are never listed or demoted.
           </p>
         } @else {
           <h1>Add shops</h1>
@@ -228,6 +228,10 @@
           <strong>{{ activeCount() }}</strong>
         </article>
         <article>
+          <p>Needs reactivate</p>
+          <strong>{{ needsReactivateCount() }}</strong>
+        </article>
+        <article>
           <p>Products</p>
           <strong>{{ productTotal() }}</strong>
         </article>
@@ -289,8 +293,14 @@
                   </td>
                   <td>{{ shop.created_at ? (shop.created_at | date:'mediumDate') : '—' }}</td>
                   <td>
-                    @if (shop.is_active) {
-                      <span class="owner-lock" title="Owners cannot be deactivated">Owner · active</span>
+                    @if (isAdminOwner(shop)) {
+                      <span class="owner-lock" title="Admin role is permanent — never deactivated">
+                        Admin · protected
+                      </span>
+                    } @else if (shop.is_active) {
+                      <span class="owner-lock" title="Owners cannot be deactivated from here">
+                        Owner · active
+                      </span>
                     } @else {
                       <button
                         type="button"
@@ -302,8 +312,8 @@
                           savingId() === shop.id
                             ? 'Working…'
                             : shop.account_status === 'deactivated'
-                              ? 'Reactivate'
-                              : 'Activate'
+                              ? 'Reactivate shop'
+                              : 'Activate shop'
                         }}
                       </button>
                     }
