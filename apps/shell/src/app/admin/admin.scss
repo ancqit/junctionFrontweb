@@ -36,7 +36,7 @@ header { display: flex; justify-content: space-between; align-items: end; gap: 1
 }
 .tabs button.active { color: white; background: #1a6541; }
 .stats {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;
 }
 .stats article {
   padding: 18px 20px; border: 1px solid #dedbd1; border-radius: 14px; background: white;

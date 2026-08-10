@@ -59,6 +59,9 @@ export class AdminPage implements OnInit {
 
   readonly shopCount = computed(() => this.shops().length);
   readonly activeCount = computed(() => this.shops().filter((shop) => shop.is_active).length);
+  readonly needsReactivateCount = computed(
+    () => this.shops().filter((shop) => !shop.is_active && !this.isAdminOwner(shop)).length,
+  );
   readonly productTotal = computed(() =>
     this.shops().reduce((sum, shop) => sum + (shop.products_count || 0), 0),
   );
@@ -186,11 +189,16 @@ export class AdminPage implements OnInit {
 
   /**
    * Reactivate / activate a shop account that is not active.
+   * Admins are never deactivated or demoted — skip admin-owned rows.
    * Owners are never deactivated from this table — use Viewers tab for deactivate.
    */
   reactivateShopOwner(shop: AdminShopRow): void {
+    if (this.isAdminOwner(shop)) {
+      this.error.set('Administrators cannot be deactivated or demoted. Admin role is permanent.');
+      return;
+    }
     if (shop.is_active) {
-      this.error.set('Owners cannot be deactivated. Only viewers can be deactivated.');
+      this.error.set('This shop owner is already active. Only viewers can be deactivated.');
       return;
     }
 
@@ -211,10 +219,10 @@ export class AdminPage implements OnInit {
         if (this.isReactivateResponse(result)) {
           this.restoredActivities.set(result.restored_activities ?? []);
           this.success.set(
-            `${shop.name} owner reactivated as ${result.restored_role}. Plan: ${result.restored_plan?.name ?? owner.plan_name}.`,
+            `${shop.name} reactivated as ${result.restored_role}. Plan: ${result.restored_plan?.name ?? owner.plan_name}.`,
           );
         } else {
-          this.success.set(`${shop.name} owner activated.`);
+          this.success.set(`${shop.name} activated.`);
         }
       },
       error: (err: unknown) => {
@@ -222,12 +230,16 @@ export class AdminPage implements OnInit {
           this.readError(
             err,
             shop.account_status === 'deactivated'
-              ? 'Could not reactivate shop owner.'
-              : 'Could not activate shop owner.',
+              ? 'Could not reactivate shop.'
+              : 'Could not activate shop.',
           ),
         );
       },
     });
+  }
+
+  isAdminOwner(shop: AdminShopRow): boolean {
+    return String(shop.owner_role ?? '').toLowerCase() === 'admin';
   }
 
   reactivateViewer(viewer: ViewerRecord): void {
