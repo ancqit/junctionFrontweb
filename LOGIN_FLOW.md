@@ -37,10 +37,10 @@ Guards: `authGuard`, `authorGuard(...)`, and back-office `planActiveGuard`.
 1. Login ID shown in the admin sidebar.
 2. Lands on **`/admin`** (shops + product counts).
 3. Current workings:
-   - Active owners cannot be deactivated (owners are protected in the UI)
-   - Inactive / deactivated shop accounts → `/admin/users/{id}/reactivate` or `/activate`
-4. **Viewers** tab (`GET /admin/viewers`): only viewers can be deactivated
-   via `/admin/users/{id}/deactivate`; also Reactivate / Activate / Delete.
+   - **Admins never upgrade/downgrade** — admin-owned shops show “Admin · protected”
+   - Inactive / deactivated shop owners → **Reactivate shop** via `/admin/users/{id}/reactivate`
+4. **Viewers** tab: place to reactivate deactivated accounts; only viewers can be deactivated.
+   Admins are never demoted and never appear here for deactivation.
 5. Can also open the full back office.
 
 ### Owner

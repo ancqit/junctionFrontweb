@@ -100,9 +100,20 @@ export function homePathForRole(role: UserRole): string {
   return '/back-office';
 }
 
+/** Platform admin plan from junctionBack `admin_plan_summary()`. */
+export function isAdminPlan(plan?: PlanSummary | null): boolean {
+  if (!plan) {
+    return false;
+  }
+  if (plan.name === 'Admin') {
+    return true;
+  }
+  return (plan.description ?? '').toLowerCase().includes('administrator');
+}
+
 /** True when Premium/trial ended and grace is over — user should be treated as a viewer. */
 export function isPostGraceViewerPlan(plan?: PlanSummary | null): boolean {
-  if (!plan) {
+  if (!plan || isAdminPlan(plan)) {
     return false;
   }
   if (plan.in_grace_period || plan.status === 'grace_period') {
@@ -114,4 +125,20 @@ export function isPostGraceViewerPlan(plan?: PlanSummary | null): boolean {
     plan.status === 'cancelled' ||
     plan.is_active === false
   );
+}
+
+/** Prefer TokenResponse.role; admins are never remapped to viewer. */
+export function resolveLoginRole(
+  user?: AuthUser | null,
+  explicitRole?: UserRole | string | null,
+  plan?: PlanSummary | null,
+): UserRole {
+  const role = normalizeUserRole(user ?? null, explicitRole);
+  if (role === 'admin' || isAdminPlan(plan)) {
+    return 'admin';
+  }
+  if (role === 'viewer' || isPostGraceViewerPlan(plan)) {
+    return 'viewer';
+  }
+  return 'owner';
 }
