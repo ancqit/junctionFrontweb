@@ -14,7 +14,7 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 }
 .toolbar { display: flex; gap: 12px; align-items: end; margin-bottom: 18px; }
 .toolbar label { display: grid; gap: 6px; font-size: 12px; color: #667069; font-weight: 700; }
-.toolbar app-inline-select, .grid-form input, .grid-form app-inline-select, .grid-form textarea {
+.grid-form input, .grid-form textarea {
   border: 1px solid #d8d4c8; border-radius: 10px; padding: 10px 12px; font: inherit; background: white;
 }
 .panel {

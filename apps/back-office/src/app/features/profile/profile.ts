@@ -155,7 +155,7 @@ export class ProfilePage implements OnInit {
     }
     this.searchingImages.set(true);
     this.queriesApi
-      .searchImages(query, 1, 6)
+      .searchImages(query, 1, 10)
       .pipe(finalize(() => this.searchingImages.set(false)))
       .subscribe({
         next: (response) => this.imageResults.set(response.images),
