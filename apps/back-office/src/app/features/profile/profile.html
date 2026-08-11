@@ -159,7 +159,6 @@
     <div class="actions">
       @if (step() === 'edit') {
         <button type="button" class="ghost" (click)="cancelEdit()">Cancel</button>
-        <button type="button" class="ghost" (click)="startOver()">Start over</button>
         <button type="button" class="primary" (click)="updateProfile()" [disabled]="saving()">
           {{ saving() ? 'Saving…' : 'Save changes' }}
         </button>

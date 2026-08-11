@@ -119,21 +119,7 @@ export class ProfilePage implements OnInit {
       });
   }
 
-  startOver(): void {
-    this.promptsForm.patchValue({
-      display_name: this.defaultShopName(),
-      prompt1: '',
-      prompt2: '',
-      prompt3: '',
-    });
-    this.imageResults.set([]);
-    this.selectedAvatarUrl.set(this.profile()?.avatar_url ?? null);
-    this.success.set('');
-    this.error.set('');
-    this.step.set('compose');
-  }
-
-  loadAvatarOptions(): void {
+  deleteProfile(): void {
     const query =
       this.promptsForm.controls.prompt1.value.trim() ||
       this.promptsForm.controls.display_name.value.trim();
