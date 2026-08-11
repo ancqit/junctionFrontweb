@@ -5,12 +5,19 @@ import { finalize } from 'rxjs';
 import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
 import { ProductsApi } from '../../core/products.api';
 import { QueriesApi } from '../../core/queries.api';
+import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'discontinued', label: 'Discontinued' },
+];
 
 const MAX_PRODUCT_IMAGES = 3;
 
 @Component({
   selector: 'app-products',
-  imports: [ReactiveFormsModule, CurrencyPipe, TitleCasePipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, TitleCasePipe, InlineSelectComponent],
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
@@ -20,6 +27,7 @@ export class ProductsPage implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly maxImages = MAX_PRODUCT_IMAGES;
+  readonly productStatusOptions = PRODUCT_STATUS_OPTIONS;
   readonly products = signal<Product[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);

@@ -5,10 +5,19 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { Order, OrderStatus } from '../../core/models';
 import { OrdersApi } from '../../core/orders.api';
+import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const ORDER_STATUS_OPTIONS: InlineSelectOption[] = [
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
 @Component({
   selector: 'app-orders',
-  imports: [ReactiveFormsModule, RouterLink, CurrencyPipe, DatePipe, TitleCasePipe],
+  imports: [ReactiveFormsModule, RouterLink, CurrencyPipe, DatePipe, TitleCasePipe, InlineSelectComponent],
   templateUrl: './orders.html',
   styleUrl: './orders.scss',
 })
@@ -20,6 +29,7 @@ export class OrdersPage implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly expandedId = signal<string | null>(null);
+  readonly orderStatusOptions = ORDER_STATUS_OPTIONS;
 
   readonly filters = this.fb.nonNullable.group({
     customer_name: [''],

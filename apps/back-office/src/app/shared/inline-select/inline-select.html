@@ -1,0 +1,28 @@
+<div class="inline-select" [class.open]="open()" [class.disabled]="isDisabled()">
+  <button
+    type="button"
+    class="trigger"
+    (click)="toggle()"
+    [disabled]="isDisabled()"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="open()"
+  >
+    <span class="trigger-label" [class.placeholder]="!selectedValue()">{{ displayLabel() }}</span>
+    <span class="chevron" aria-hidden="true"></span>
+  </button>
+
+  @if (open()) {
+    <ul class="menu" role="listbox">
+      @for (option of options; track option.value) {
+        <li
+          role="option"
+          [class.selected]="isSelected(option.value)"
+          [attr.aria-selected]="isSelected(option.value)"
+          (click)="select(option.value)"
+        >
+          {{ option.label }}
+        </li>
+      }
+    </ul>
+  }
+</div>

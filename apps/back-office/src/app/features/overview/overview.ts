@@ -14,10 +14,16 @@ import { ProfileApi } from '../../core/profile.api';
 import { LocationsApi, Shop, ShopsApi } from '../../core/shops.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 import { UserProfile } from '../../core/models';
+import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
+  { value: '', label: 'Select type' },
+  ...SHOP_TYPE_OPTIONS.map((row) => ({ value: row.value, label: row.label })),
+];
 
 @Component({
   selector: 'app-overview',
-  imports: [RouterLink, DatePipe, ReactiveFormsModule],
+  imports: [RouterLink, DatePipe, ReactiveFormsModule, InlineSelectComponent],
   templateUrl: './overview.html',
   styleUrl: './overview.scss',
 })
@@ -34,6 +40,7 @@ export class OverviewPage implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly shopTypeOptions = SHOP_TYPE_OPTIONS;
+  readonly shopTypeSelectOptions = SHOP_TYPE_SELECT_OPTIONS;
   readonly productCount = signal(0);
   readonly employeeCount = signal(0);
   readonly orderCount = signal(0);
@@ -81,6 +88,14 @@ export class OverviewPage implements OnInit {
   readonly userId = computed(() => this.profile()?.id ?? '');
   readonly useCityDropdown = computed(() => this.cities().length > 0);
   readonly useLocalityDropdown = computed(() => this.localities().length > 0);
+  readonly citySelectOptions = computed<InlineSelectOption[]>(() => [
+    { value: '', label: 'Select city' },
+    ...this.cities().map((city) => ({ value: city, label: city })),
+  ]);
+  readonly localitySelectOptions = computed<InlineSelectOption[]>(() => [
+    { value: '', label: 'Select locality' },
+    ...this.localities().map((locality) => ({ value: locality, label: locality })),
+  ]);
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
   readonly shopStatusLabel = computed(() => (this.shopOpen() ? 'Open now' : 'Closed'));
 

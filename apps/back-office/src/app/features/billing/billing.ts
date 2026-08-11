@@ -7,6 +7,15 @@ import { CurrentShopService } from '../../core/current-shop.service';
 import { OrderLineItem, PaymentMethod, Product } from '../../core/models';
 import { OrdersApi } from '../../core/orders.api';
 import { ProductsApi } from '../../core/products.api';
+import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const PAYMENT_METHOD_OPTIONS: InlineSelectOption[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'card', label: 'Card' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'other', label: 'Other' },
+];
 
 interface BillLine {
   product: Product;
@@ -17,7 +26,7 @@ interface BillLine {
 
 @Component({
   selector: 'app-billing',
-  imports: [ReactiveFormsModule, CurrencyPipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, InlineSelectComponent],
   templateUrl: './billing.html',
   styleUrl: './billing.scss',
 })
@@ -34,6 +43,7 @@ export class BillingPage implements OnInit {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
+  readonly paymentMethodOptions = PAYMENT_METHOD_OPTIONS;
 
   readonly filteredProducts = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();

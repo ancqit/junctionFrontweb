@@ -114,12 +114,11 @@
     </label>
     <label>
       Shop type
-      <select formControlName="shop_type">
-        <option value="">Select the type of shop</option>
-        @for (type of shopTypeOptions; track type.value) {
-          <option [value]="type.value">{{ type.label }}</option>
-        }
-      </select>
+      <app-inline-select
+        formControlName="shop_type"
+        [options]="shopTypeSelectOptions"
+        placeholder="Select the type of shop"
+      />
     </label>
     @if (reviewForm.controls.shop_type.value; as shopTypeValue) {
       @for (type of shopTypeOptions; track type.value) {

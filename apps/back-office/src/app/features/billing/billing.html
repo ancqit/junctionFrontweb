@@ -102,13 +102,7 @@
         <label>Phone<input formControlName="customer_phone" placeholder="+919876543210" /></label>
         <label>Email<input formControlName="customer_email" type="email" placeholder="optional" /></label>
         <label>Payment
-          <select formControlName="payment_method">
-            <option value="cash">Cash</option>
-            <option value="upi">UPI</option>
-            <option value="card">Card</option>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="other">Other</option>
-          </select>
+          <app-inline-select formControlName="payment_method" [options]="paymentMethodOptions" />
         </label>
         <label class="full">Notes<textarea formControlName="notes" rows="2" placeholder="optional"></textarea></label>
       </div>

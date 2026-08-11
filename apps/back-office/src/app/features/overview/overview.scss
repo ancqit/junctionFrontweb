@@ -289,8 +289,8 @@ h2 {
 
 .hours-row input,
 .field-grid input,
-.field-grid select,
-.notice-card textarea {
+.notice-card textarea,
+.field-grid app-inline-select {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #d8d4c8;

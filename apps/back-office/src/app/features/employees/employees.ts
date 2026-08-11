@@ -4,10 +4,33 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { EmployeesApi } from '../../core/employees.api';
 import { Employee, EmploymentStatus, EmploymentType } from '../../core/models';
+import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const STATUS_FILTER_OPTIONS: InlineSelectOption[] = [
+  { value: '', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'on_leave', label: 'On leave' },
+  { value: 'terminated', label: 'Terminated' },
+];
+
+const EMPLOYMENT_TYPE_OPTIONS: InlineSelectOption[] = [
+  { value: 'full_time', label: 'Full time' },
+  { value: 'part_time', label: 'Part time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'temporary', label: 'Temporary' },
+];
+
+const EMPLOYEE_STATUS_OPTIONS: InlineSelectOption[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'on_leave', label: 'On leave' },
+  { value: 'terminated', label: 'Terminated' },
+];
 
 @Component({
   selector: 'app-employees',
-  imports: [ReactiveFormsModule, DatePipe, TitleCasePipe],
+  imports: [ReactiveFormsModule, DatePipe, TitleCasePipe, InlineSelectComponent],
   templateUrl: './employees.html',
   styleUrl: './employees.scss',
 })
@@ -21,6 +44,10 @@ export class EmployeesPage implements OnInit {
   readonly error = signal('');
   readonly showForm = signal(false);
   readonly statusFilter = signal<EmploymentStatus | ''>('');
+
+  readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
+  readonly employmentTypeOptions = EMPLOYMENT_TYPE_OPTIONS;
+  readonly employeeStatusOptions = EMPLOYEE_STATUS_OPTIONS;
 
   readonly form = this.fb.nonNullable.group({
     employee_code: ['', [Validators.required, Validators.maxLength(40)]],
