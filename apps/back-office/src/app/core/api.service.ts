@@ -21,6 +21,10 @@ export class BackOfficeApiService {
     return this.http.post<T>(this.url(path), body, { headers: this.authHeaders() });
   }
 
+  postFormData<T>(path: string, formData: FormData): Observable<T> {
+    return this.http.post<T>(this.url(path), formData, { headers: this.authHeaders() });
+  }
+
   put<T>(path: string, body: unknown): Observable<T> {
     return this.http.put<T>(this.url(path), body, { headers: this.authHeaders() });
   }
