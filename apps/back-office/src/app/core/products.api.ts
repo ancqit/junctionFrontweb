@@ -29,7 +29,7 @@ export class ProductsApi {
     return this.api.delete(`/products/${id}`);
   }
 
-  /** Pexels suggestions for a product name — POST /products/images/suggest */
+  /** Product Pexels suggestions — POST /products/images/suggest { product_name } */
   suggestImages(productName: string): Observable<ProductImageSuggestResponse> {
     return this.api.post<ProductImageSuggestResponse>('/products/images/suggest', {
       product_name: productName.trim(),
