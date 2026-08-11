@@ -18,7 +18,7 @@
         }
         <button type="button" class="ghost compact edit-btn" (click)="openShopEditor()">Edit shop</button>
       }
-    } @else if (shopConfigured()) {
+    } @else if (shopCreated()) {
       <h1>Edit shop details</h1>
       <p class="meta">Save to return to Overview.</p>
     } @else {
@@ -49,8 +49,10 @@
   <section class="card shop-card" [formGroup]="shopForm">
     <div class="card-head">
       <p class="eyebrow">SHOP PROFILE</p>
-      <h2>Shop name, type & location</h2>
-      <p class="sub">Save name, hours, and location to unlock Overview.</p>
+      <h2>{{ shopCreated() ? 'Update shop details' : 'Create your shop' }}</h2>
+      <p class="sub">
+        {{ shopCreated() ? 'Save changes to return to Overview.' : 'Save name, hours, and location to unlock Overview.' }}
+      </p>
     </div>
 
     @if (shopError()) {
@@ -106,7 +108,7 @@
     </div>
 
     <div class="actions">
-      @if (editingShop() && shop()) {
+      @if (editingShop() && shopCreated()) {
         <button type="button" class="ghost compact" (click)="cancelShopEditor()">Cancel</button>
       }
       <button type="button" class="primary compact" (click)="saveShop()" [disabled]="shopSaving()">
@@ -140,6 +142,7 @@
         <div>
           <p class="eyebrow">TODAY’S NOTICE</p>
           <h2>Share an update</h2>
+          <p class="sub">Posted notices appear above your orders.</p>
         </div>
         <span class="date-chip">{{ todayLabel() }}</span>
       </div>
@@ -178,6 +181,52 @@
           {{ noticeSaving() ? 'Posting…' : 'Post notice' }}
         </button>
       </div>
+    </section>
+
+    <section class="card orders-card">
+      <div class="card-head inline">
+        <div>
+          <p class="eyebrow">RECENT ORDERS</p>
+          <h2>Latest bills</h2>
+        </div>
+        <a routerLink="/back-office/orders" class="ghost compact">View all</a>
+      </div>
+
+      @if (todayNotice(); as notice) {
+        <aside class="notice-banner" aria-label="Today’s notice">
+          <p class="eyebrow">NOTICE</p>
+          <p class="notice-message">{{ notice.message }}</p>
+        </aside>
+      }
+
+      @if (loading()) {
+        <p class="muted small">Loading orders…</p>
+      } @else if (recentOrders().length === 0) {
+        <div class="orders-empty">
+          <strong>No orders yet</strong>
+          <p>Create your first bill from Billing. Notices you post stay pinned above this list.</p>
+          <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
+        </div>
+      } @else {
+        <ul class="orders-list">
+          @for (order of recentOrders(); track order.id) {
+            <li>
+              <div>
+                <strong>{{ order.order_number }}</strong>
+                <span>{{ order.customer_name }}</span>
+                <small>{{ itemCount(order) }} items · {{ order.status | titlecase }}</small>
+              </div>
+              <div class="order-meta">
+                <strong>{{
+                  order.billing.total_amount
+                    | currency: order.billing.currency:'symbol-narrow':'1.0-2'
+                }}</strong>
+                <small>{{ order.created_at | date:'short' }}</small>
+              </div>
+            </li>
+          }
+        </ul>
+      }
     </section>
 
     <section class="card next-card">

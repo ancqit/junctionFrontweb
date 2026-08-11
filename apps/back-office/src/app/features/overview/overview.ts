@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -6,7 +6,7 @@ import { finalize } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
 import { EmployeesApi } from '../../core/employees.api';
 import { buildPlanCountdown, PlanCountdown } from '../../core/plan-countdown';
-import { NoticesApi } from '../../core/notices.api';
+import { Notice, NoticesApi } from '../../core/notices.api';
 import { OrdersApi } from '../../core/orders.api';
 import { PlansApi } from '../../core/plans.api';
 import { ProductsApi } from '../../core/products.api';
@@ -20,8 +20,10 @@ import {
   ShopsApi,
 } from '../../core/shops.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
-import { UserProfile } from '../../core/models';
+import { Order, UserProfile } from '../../core/models';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const RECENT_ORDERS_LIMIT = 8;
 
 const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
   { value: '', label: 'Select type' },
@@ -30,7 +32,7 @@ const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
 
 @Component({
   selector: 'app-overview',
-  imports: [RouterLink, DatePipe, ReactiveFormsModule, InlineSelectComponent],
+  imports: [RouterLink, CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule, InlineSelectComponent],
   templateUrl: './overview.html',
   styleUrl: './overview.scss',
 })
@@ -50,6 +52,7 @@ export class OverviewPage implements OnInit {
   readonly productCount = signal(0);
   readonly employeeCount = signal(0);
   readonly orderCount = signal(0);
+  readonly recentOrders = signal<Order[]>([]);
   readonly loading = signal(true);
   readonly profile = signal<UserProfile | null>(null);
   readonly countdown = signal<PlanCountdown | null>(null);
@@ -67,6 +70,7 @@ export class OverviewPage implements OnInit {
   readonly shopOpen = signal(false);
   readonly statusError = signal('');
 
+  readonly todayNotice = signal<Notice | null>(null);
   readonly noticeLoading = signal(false);
   readonly noticeSaving = signal(false);
   readonly noticeError = signal('');
@@ -99,18 +103,11 @@ export class OverviewPage implements OnInit {
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
   readonly shopStatusLabel = computed(() => (this.shopOpen() ? 'Open now' : 'Closed'));
 
-  readonly shopConfigured = computed(() => {
-    const shop = this.shop();
-    return (
-      !!shop?.id &&
-      !!shop.name?.trim() &&
-      !!shop.city?.trim() &&
-      !!shop.locality?.trim() &&
-      !!this.shopType()?.trim()
-    );
-  });
+  /** Shop exists in junctionBack (`GET /shops` returned a record). */
+  readonly shopCreated = computed(() => !!this.shop()?.id?.trim());
 
-  readonly shopReady = computed(() => this.shopConfigured() && !this.editingShop());
+  /** Overview when shop is created; otherwise the create/edit shop form. */
+  readonly shopReady = computed(() => this.shopCreated() && !this.editingShop());
 
   ngOnInit(): void {
     this.profileApi.me().subscribe({
@@ -148,7 +145,7 @@ export class OverviewPage implements OnInit {
   }
 
   cancelShopEditor(): void {
-    if (this.shopConfigured()) {
+    if (this.shopCreated()) {
       this.editingShop.set(false);
     }
     this.shopError.set('');
@@ -276,8 +273,10 @@ export class OverviewPage implements OnInit {
       .postToday({ store_id: shop.id, message })
       .pipe(finalize(() => this.noticeSaving.set(false)))
       .subscribe({
-        next: () => {
-          this.noticeSuccess.set('Today’s notice posted.');
+        next: (notice) => {
+          this.todayNotice.set(notice);
+          this.noticeForm.patchValue({ message: notice.message });
+          this.noticeSuccess.set('Today’s notice posted above orders.');
         },
         error: (err: unknown) => {
           this.noticeError.set(this.describeApiError(err, 'Could not post notice.'));
@@ -289,6 +288,10 @@ export class OverviewPage implements OnInit {
     this.noticeForm.reset({ message: '' });
     this.noticeError.set('');
     this.noticeSuccess.set('');
+  }
+
+  itemCount(order: Order): number {
+    return order.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
   }
 
   private applySavedShop(
@@ -363,13 +366,14 @@ export class OverviewPage implements OnInit {
     this.locationsApi.cities().subscribe({
       next: (cities) => this.cities.set(cities),
     });
+    // junctionBack `GET /shops` — if a shop exists, show overview; otherwise create form.
     this.shopsApi.list().subscribe({
       next: (shops) => {
         const shop = this.currentShop.applyPlaceOverlay(shops[0] ?? null);
         this.shop.set(shop);
         this.currentShop.setShop(shop);
         this.shopLoaded.set(true);
-        if (shop) {
+        if (shop?.id) {
           const storedType = this.currentShop.readShopType(shop.id);
           this.shopType.set(storedType);
           this.shopForm.patchValue({
@@ -384,18 +388,10 @@ export class OverviewPage implements OnInit {
             this.loadLocalities(shop.city, shop.locality ?? '');
           }
           this.syncShopFromApi(shop);
-          const complete =
-            !!shop.name?.trim() &&
-            !!shop.city?.trim() &&
-            !!shop.locality?.trim() &&
-            !!storedType;
-          this.editingShop.set(!complete);
-        } else {
           this.editingShop.set(false);
-        }
-        if (this.shopReady()) {
           this.loadDashboard();
         } else {
+          this.editingShop.set(false);
           this.loading.set(false);
         }
       },
@@ -427,14 +423,24 @@ export class OverviewPage implements OnInit {
       .list()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (orders) => this.orderCount.set(orders.length),
-        error: () => undefined,
+        next: (orders) => {
+          const sorted = [...orders].sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+          );
+          this.orderCount.set(sorted.length);
+          this.recentOrders.set(sorted.slice(0, RECENT_ORDERS_LIMIT));
+        },
+        error: () => {
+          this.orderCount.set(0);
+          this.recentOrders.set([]);
+        },
       });
   }
 
   private loadTodayNotice(): void {
     const shop = this.shop();
     if (!shop?.id) {
+      this.todayNotice.set(null);
       return;
     }
     this.noticeLoading.set(true);
@@ -443,9 +449,12 @@ export class OverviewPage implements OnInit {
       .pipe(finalize(() => this.noticeLoading.set(false)))
       .subscribe({
         next: (notice) => {
+          this.todayNotice.set(notice);
           this.noticeForm.patchValue({ message: notice?.message ?? '' });
         },
-        error: () => undefined,
+        error: () => {
+          this.todayNotice.set(null);
+        },
       });
   }
 
