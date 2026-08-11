@@ -29,7 +29,7 @@
     <div class="card-head">
       <p class="eyebrow">SHOP PROFILE</p>
       <h2>Shop name, type & location</h2>
-      <p class="sub">Save to unlock Overview.</p>
+      <p class="sub">Save name, hours, and location to unlock Overview.</p>
     </div>
 
     @if (shopError()) {
@@ -73,6 +73,14 @@
         } @else {
           <input formControlName="locality" placeholder="Enter locality" />
         }
+      </label>
+      <label>
+        Entry time
+        <input type="time" formControlName="open_time" />
+      </label>
+      <label>
+        Closing time
+        <input type="time" formControlName="closed_time" />
       </label>
     </div>
 
@@ -137,12 +145,12 @@
 
       <div class="hours-row">
         <label>
-          Opens
-          <input type="time" formControlName="opening_time" />
+          Entry time
+          <input type="time" formControlName="open_time" />
         </label>
         <label>
-          Closes
-          <input type="time" formControlName="closing_time" />
+          Closing time
+          <input type="time" formControlName="closed_time" />
         </label>
         <button type="button" class="primary compact" (click)="saveShopHours()" [disabled]="hoursSaving()">
           {{ hoursSaving() ? 'Saving…' : 'Save hours' }}

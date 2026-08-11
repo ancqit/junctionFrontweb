@@ -11,7 +11,7 @@ import { OrdersApi } from '../../core/orders.api';
 import { PlansApi } from '../../core/plans.api';
 import { ProductsApi } from '../../core/products.api';
 import { ProfileApi } from '../../core/profile.api';
-import { LocationsApi, Shop, ShopsApi } from '../../core/shops.api';
+import { LocationsApi, Shop, ShopsApi, normalizeShopTime, DEFAULT_OPEN_TIME, DEFAULT_CLOSED_TIME } from '../../core/shops.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 import { UserProfile } from '../../core/models';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
@@ -73,11 +73,13 @@ export class OverviewPage implements OnInit {
     city: ['', [Validators.required, Validators.minLength(2)]],
     locality: ['', [Validators.required, Validators.minLength(2)]],
     shop_type: ['', [Validators.required]],
+    open_time: [DEFAULT_OPEN_TIME, [Validators.required]],
+    closed_time: [DEFAULT_CLOSED_TIME, [Validators.required]],
   });
 
   readonly hoursForm = this.fb.nonNullable.group({
-    opening_time: ['09:00', [Validators.required]],
-    closing_time: ['21:00', [Validators.required]],
+    open_time: [DEFAULT_OPEN_TIME, [Validators.required]],
+    closed_time: [DEFAULT_CLOSED_TIME, [Validators.required]],
   });
 
   readonly noticeForm = this.fb.nonNullable.group({
@@ -136,6 +138,8 @@ export class OverviewPage implements OnInit {
       city: shop.city ?? '',
       locality: shop.locality ?? '',
       shop_type: this.shopType() ?? '',
+      open_time: normalizeShopTime(shop.open_time) ?? DEFAULT_OPEN_TIME,
+      closed_time: normalizeShopTime(shop.closed_time) ?? DEFAULT_CLOSED_TIME,
     });
     if (shop.city) {
       this.loadLocalities(shop.city, shop.locality ?? '');
@@ -162,6 +166,9 @@ export class OverviewPage implements OnInit {
       name: raw.name.trim(),
       city: raw.city.trim(),
       locality: raw.locality.trim(),
+      open_time: normalizeShopTime(raw.open_time) ?? DEFAULT_OPEN_TIME,
+      closed_time: normalizeShopTime(raw.closed_time) ?? DEFAULT_CLOSED_TIME,
+      is_open: false,
     };
     const shopType = raw.shop_type.trim();
     if (!shopType) {
@@ -190,13 +197,34 @@ export class OverviewPage implements OnInit {
           this.shopError.set(this.describeShopError(err));
           return;
         }
-        const nameOnly$ = existing
-          ? this.shopsApi.update(existing.id, { name: payload.name })
-          : this.shopsApi.create({ name: payload.name });
-        nameOnly$.pipe(finalize(() => this.shopSaving.set(false))).subscribe({
-          next: (shop) => this.applySavedShop(shop, payload, shopType),
-          error: (fallbackErr: unknown) => {
-            this.shopError.set(this.describeShopError(fallbackErr));
+        const placePayload = {
+          name: payload.name,
+          city: payload.city,
+          locality: payload.locality,
+        };
+        const placeOnly$ = existing
+          ? this.shopsApi.update(existing.id, placePayload)
+          : this.shopsApi.create(placePayload);
+        placeOnly$.subscribe({
+          next: (shop) => {
+            this.shopSaving.set(false);
+            this.applySavedShop(shop, placePayload, shopType);
+          },
+          error: (placeErr: unknown) => {
+            if (!this.isUnprocessable(placeErr)) {
+              this.shopSaving.set(false);
+              this.shopError.set(this.describeShopError(placeErr));
+              return;
+            }
+            const nameOnly$ = existing
+              ? this.shopsApi.update(existing.id, { name: payload.name })
+              : this.shopsApi.create({ name: payload.name });
+            nameOnly$.pipe(finalize(() => this.shopSaving.set(false))).subscribe({
+              next: (shop) => this.applySavedShop(shop, placePayload, shopType),
+              error: (fallbackErr: unknown) => {
+                this.shopError.set(this.describeShopError(fallbackErr));
+              },
+            });
           },
         });
       },
@@ -205,12 +233,30 @@ export class OverviewPage implements OnInit {
 
   toggleShopOpen(): void {
     const shop = this.shop();
-    if (!shop?.id) {
+    if (!shop?.id || !shop.name?.trim()) {
       return;
     }
     const next = !this.shopOpen();
+    const previous = this.shopOpen();
     this.shopOpen.set(next);
-    this.persistShopHours(shop.id);
+    this.hoursError.set('');
+    this.shopsApi.updateOpenStatus({ name: shop.name.trim(), is_open: next }).subscribe({
+      next: (updated) => this.applyShopRecord(updated),
+      error: (err: unknown) => {
+        if (this.isUnprocessable(err)) {
+          this.shopsApi.update(shop.id, { is_open: next }).subscribe({
+            next: (updated) => this.applyShopRecord(updated),
+            error: (fallbackErr: unknown) => {
+              this.shopOpen.set(previous);
+              this.hoursError.set(this.describeApiError(fallbackErr, 'Could not update shop status.'));
+            },
+          });
+          return;
+        }
+        this.shopOpen.set(previous);
+        this.hoursError.set(this.describeApiError(err, 'Could not update shop status.'));
+      },
+    });
   }
 
   saveShopHours(): void {
@@ -222,12 +268,26 @@ export class OverviewPage implements OnInit {
       this.hoursForm.markAllAsTouched();
       return;
     }
+    const raw = this.hoursForm.getRawValue();
+    const openTime = normalizeShopTime(raw.open_time) ?? DEFAULT_OPEN_TIME;
+    const closedTime = normalizeShopTime(raw.closed_time) ?? DEFAULT_CLOSED_TIME;
+
     this.hoursSaving.set(true);
     this.hoursError.set('');
     this.hoursSuccess.set('');
-    this.persistShopHours(shop.id);
-    this.hoursSaving.set(false);
-    this.hoursSuccess.set('Opening hours saved.');
+
+    this.shopsApi
+      .update(shop.id, { open_time: openTime, closed_time: closedTime })
+      .pipe(finalize(() => this.hoursSaving.set(false)))
+      .subscribe({
+        next: (updated) => {
+          this.applyShopRecord(updated);
+          this.hoursSuccess.set('Opening hours saved.');
+        },
+        error: (err: unknown) => {
+          this.hoursError.set(this.describeApiError(err, 'Could not save opening hours.'));
+        },
+      });
   }
 
   saveNotice(): void {
@@ -283,30 +343,32 @@ export class OverviewPage implements OnInit {
       locality: merged.locality,
     });
     this.shopType.set(shopType);
-    this.shop.set(merged);
-    this.currentShop.setShop(merged);
+    this.applyShopRecord(merged);
     this.editingShop.set(false);
     this.shopSuccess.set('Shop details saved. Overview is ready.');
-    this.loadShopHours(merged.id);
     this.loadDashboard();
   }
 
-  private persistShopHours(shopId: string): void {
-    const raw = this.hoursForm.getRawValue();
-    this.currentShop.writeShopHours(shopId, {
-      opening_time: raw.opening_time,
-      closing_time: raw.closing_time,
-      is_open: this.shopOpen(),
-    });
+  private applyShopRecord(shop: Shop): void {
+    const overlay = this.currentShop.applyPlaceOverlay(shop);
+    this.shop.set(overlay);
+    this.currentShop.setShop(overlay);
+    this.syncHoursFromShop(overlay);
   }
 
-  private loadShopHours(shopId: string): void {
-    const hours = this.currentShop.readShopHours(shopId);
-    this.hoursForm.patchValue({
-      opening_time: hours.opening_time,
-      closing_time: hours.closing_time,
-    });
-    this.shopOpen.set(hours.is_open);
+  private syncHoursFromShop(shop: Shop | null): void {
+    const openTime =
+      normalizeShopTime(shop?.open_time) ??
+      normalizeShopTime(this.shopForm.controls.open_time.value) ??
+      normalizeShopTime(this.hoursForm.controls.open_time.value) ??
+      DEFAULT_OPEN_TIME;
+    const closedTime =
+      normalizeShopTime(shop?.closed_time) ??
+      normalizeShopTime(this.shopForm.controls.closed_time.value) ??
+      normalizeShopTime(this.hoursForm.controls.closed_time.value) ??
+      DEFAULT_CLOSED_TIME;
+    this.hoursForm.patchValue({ open_time: openTime, closed_time: closedTime });
+    this.shopOpen.set(shop?.is_open === true);
   }
 
   private isUnprocessable(err: unknown): boolean {
@@ -353,11 +415,13 @@ export class OverviewPage implements OnInit {
             city: shop.city ?? '',
             locality: shop.locality ?? '',
             shop_type: storedType ?? '',
+            open_time: normalizeShopTime(shop.open_time) ?? DEFAULT_OPEN_TIME,
+            closed_time: normalizeShopTime(shop.closed_time) ?? DEFAULT_CLOSED_TIME,
           });
           if (shop.city) {
             this.loadLocalities(shop.city, shop.locality ?? '');
           }
-          this.loadShopHours(shop.id);
+          this.syncHoursFromShop(shop);
           const complete =
             !!shop.name?.trim() &&
             !!shop.city?.trim() &&

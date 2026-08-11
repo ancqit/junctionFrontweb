@@ -12,6 +12,9 @@ export interface Shop {
   owner_user_id: string;
   city?: string;
   locality?: string;
+  open_time?: string | null;
+  closed_time?: string | null;
+  is_open?: boolean;
   created_at: string;
   updated_at: string;
 }
