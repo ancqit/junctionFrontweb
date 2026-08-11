@@ -34,6 +34,7 @@ export class ProfilePage implements OnInit {
 
   readonly imageResults = signal<ImageSearchResult[]>([]);
   readonly selectedAvatarUrl = signal<string | null>(null);
+  readonly imageError = signal('');
 
   readonly promptsForm = this.fb.nonNullable.group({
     display_name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -119,7 +120,7 @@ export class ProfilePage implements OnInit {
       });
   }
 
-  deleteProfile(): void {
+  loadAvatarOptions(): void {
     const query =
       this.promptsForm.controls.prompt1.value.trim() ||
       this.promptsForm.controls.display_name.value.trim();
@@ -174,8 +175,6 @@ export class ProfilePage implements OnInit {
   hasParagraphPreview(): boolean {
     return this.paragraphsPreview().length > 0;
   }
-
-  readonly imageError = signal('');
 
   private persistProfile(targetStep: ProfileStep, successMessage: string): void {
     if (this.promptsForm.invalid) {
