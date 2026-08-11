@@ -87,6 +87,12 @@ h3 {
   max-width: 220px;
 }
 
+.panel input[readonly],
+.panel textarea[readonly] {
+  background: #f7f6f2;
+  color: #5f6a63;
+}
+
 .steps {
   display: flex;
   flex-wrap: wrap;
@@ -221,6 +227,34 @@ h3 {
 
 .error { background: #f8eaea; color: #7a2a2a; }
 .success { background: #eef6f1; color: #1a6541; }
+
+.bio-preview {
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #cfe0d6;
+  background: #f4faf6;
+}
+
+.preview-label {
+  margin: 0 0 10px;
+  color: #808780;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bio-preview p:last-child {
+  margin-bottom: 0;
+}
+
+.bio-preview p {
+  margin: 0 0 10px;
+  color: #1a281f;
+  font-size: 14px;
+  line-height: 1.55;
+}
 
 .enhance-list {
   display: grid;
