@@ -14,13 +14,12 @@
 <section class="toolbar">
   <label>
     Status
-    <select [value]="statusFilter()" (change)="onFilterChange($any($event.target).value)">
-      <option value="">All</option>
-      <option value="active">Active</option>
-      <option value="inactive">Inactive</option>
-      <option value="on_leave">On leave</option>
-      <option value="terminated">Terminated</option>
-    </select>
+    <app-inline-select
+      [options]="statusFilterOptions"
+      [value]="statusFilter()"
+      placeholder="All"
+      (valueChange)="onFilterChange($event)"
+    />
   </label>
   <button type="button" class="ghost" (click)="reload()">Refresh</button>
 </section>
@@ -40,20 +39,10 @@
       <label>Role<input formControlName="role" placeholder="Cashier" /></label>
       <label>Department<input formControlName="department" placeholder="Front desk" /></label>
       <label>Type
-        <select formControlName="employment_type">
-          <option value="full_time">Full time</option>
-          <option value="part_time">Part time</option>
-          <option value="contract">Contract</option>
-          <option value="temporary">Temporary</option>
-        </select>
+        <app-inline-select formControlName="employment_type" [options]="employmentTypeOptions" />
       </label>
       <label>Status
-        <select formControlName="status">
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="on_leave">On leave</option>
-          <option value="terminated">Terminated</option>
-        </select>
+        <app-inline-select formControlName="status" [options]="employeeStatusOptions" />
       </label>
       <label>Hire date<input formControlName="hire_date" type="date" /></label>
       <label>Salary<input formControlName="salary" type="number" min="0" step="0.01" placeholder="optional" /></label>

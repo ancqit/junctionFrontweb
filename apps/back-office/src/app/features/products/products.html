@@ -28,11 +28,7 @@
       <label>Stock<input formControlName="stock_quantity" type="number" min="0" step="1" /></label>
       <label>Unit<input formControlName="unit" placeholder="piece" /></label>
       <label>Status
-        <select formControlName="status">
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="discontinued">Discontinued</option>
-        </select>
+        <app-inline-select formControlName="status" [options]="productStatusOptions" />
       </label>
       <label>Barcode<input formControlName="barcode" placeholder="optional" /></label>
       <label>Tax %<input formControlName="tax_rate" type="number" min="0" max="100" step="0.01" placeholder="optional" /></label>

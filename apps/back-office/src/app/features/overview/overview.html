@@ -1,236 +1,245 @@
-<header>
+<header class="page-head">
   <div>
-    <p>{{ todayLabel() }}</p>
+    <p class="date-line">{{ todayLabel() }}</p>
     @if (shopReady()) {
       @if (shop(); as shop) {
-        <h1>Hey, {{ shop.name }} at this Junction.</h1>
-        <p class="place">{{ shop.locality }} · {{ shop.city }}</p>
+        <h1>{{ shop.name }}</h1>
+        <p class="meta">{{ shop.locality }} · {{ shop.city }}</p>
         @if (shopTypeLabelText()) {
-          <p class="type-line">{{ shopTypeLabelText() }}</p>
+          <p class="meta type">{{ shopTypeLabelText() }}</p>
         }
       }
     } @else if (shopConfigured()) {
       <h1>Edit shop details</h1>
-      <p class="place">Save to return to Overview, metrics, and + New bill.</p>
+      <p class="meta">Save to return to Overview.</p>
     } @else {
       <h1>Hello, {{ greetingName() }}.</h1>
-      <p class="place">Add your shop to unlock Overview.</p>
-    }
-    @if (userId()) {
-      <p class="user-id">User ID · {{ userId() }}</p>
+      <p class="meta">Add your shop to unlock Overview.</p>
     }
   </div>
   @if (shopReady()) {
-    <a routerLink="/back-office/billing" class="primary">+ New bill</a>
+    <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
   }
 </header>
 
 @if (!shopLoaded()) {
   <p class="muted">Loading shop…</p>
 } @else if (!shopReady()) {
-  <section class="shop-card" [formGroup]="shopForm">
-    <div>
+  <section class="card shop-card" [formGroup]="shopForm">
+    <div class="card-head">
       <p class="eyebrow">SHOP PROFILE</p>
       <h2>Shop name, type & location</h2>
-      <p class="shop-sub">
-        Save name, shop type, city, and locality. Overview unlocks after a successful save.
-      </p>
+      <p class="sub">Save to unlock Overview.</p>
     </div>
 
     @if (shopError()) {
       <p class="error" role="alert">{{ shopError() }}</p>
     }
 
-    <div class="shop-fields">
+    <div class="field-grid two">
       <label>
         Shop name
         <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
       </label>
-
       <label>
         Shop type
-        <select formControlName="shop_type">
-          <option value="">Select type</option>
-          @for (type of shopTypeOptions; track type.value) {
-            <option [value]="type.value">{{ type.label }}</option>
-          }
-        </select>
+        <app-inline-select
+          formControlName="shop_type"
+          [options]="shopTypeSelectOptions"
+          placeholder="Select type"
+        />
       </label>
-
       <label>
         City
         @if (useCityDropdown()) {
-          <select formControlName="city" (change)="onCityChange()">
-            <option value="">Select city</option>
-            @for (city of cities(); track city) {
-              <option [value]="city">{{ city }}</option>
-            }
-          </select>
+          <app-inline-select
+            formControlName="city"
+            [options]="citySelectOptions()"
+            placeholder="Select city"
+            (valueChange)="onCityChange()"
+          />
         } @else {
           <input formControlName="city" placeholder="Enter city" (change)="onCityChange()" />
         }
       </label>
-
       <label>
         Locality
         @if (useLocalityDropdown()) {
-          <select formControlName="locality">
-            <option value="">Select locality</option>
-            @for (locality of localities(); track locality) {
-              <option [value]="locality">{{ locality }}</option>
-            }
-          </select>
+          <app-inline-select
+            formControlName="locality"
+            [options]="localitySelectOptions()"
+            placeholder="Select locality"
+          />
         } @else {
           <input formControlName="locality" placeholder="Enter locality" />
         }
       </label>
     </div>
 
-    <div class="shop-actions">
+    <div class="actions">
       @if (editingShop() && shop()) {
-        <button type="button" class="ghost" (click)="cancelShopEditor()">Cancel</button>
+        <button type="button" class="ghost compact" (click)="cancelShopEditor()">Cancel</button>
       }
-      <button type="button" class="primary" (click)="saveShop()" [disabled]="shopSaving()">
+      <button type="button" class="primary compact" (click)="saveShop()" [disabled]="shopSaving()">
         {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
       </button>
     </div>
   </section>
 } @else {
-  @if (shop(); as shop) {
-    <section class="shop-summary">
-      <div>
-        <p class="eyebrow">YOUR SHOP</p>
-        <h2>{{ shop.name }}</h2>
-        <p>{{ shop.locality }} · {{ shop.city }}</p>
-        @if (shopTypeLabelText()) {
-          <p class="type-chip">{{ shopTypeLabelText() }}</p>
-        }
-      </div>
-      <button type="button" class="ghost" (click)="openShopEditor()">Edit shop</button>
-    </section>
-  }
-
   @if (shopSuccess()) {
     <p class="success" role="status">{{ shopSuccess() }}</p>
   }
 
-  @if (countdown(); as plan) {
-    <section class="plan-counter" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
-      <div>
-        <p class="eyebrow">{{ plan.isTrial ? 'FREE TRIAL COUNTER' : 'YEARLY PLAN COUNTER' }}</p>
-        <h2>{{ plan.message }}</h2>
-        <p>
-          {{ plan.planName }}
-          @if (plan.isTrial) {
-            · 15-day free trial
-          } @else {
-            · yearly {{ plan.planName }} plan
-          }
+  <div class="dashboard-grid">
+    @if (countdown(); as plan) {
+      <section class="card plan-card" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
+        <div class="card-head inline">
+          <div>
+            <p class="eyebrow">{{ plan.isTrial ? 'FREE TRIAL' : 'YEARLY PLAN' }}</p>
+            <h2>{{ plan.message }}</h2>
+            <p class="sub">
+              {{ plan.planName }}
+              @if (plan.isTrial) {
+                · 15-day trial
+              } @else {
+                · yearly
+              }
+            </p>
+          </div>
           @if (plan.endsAt) {
-            · ends {{ plan.endsAt | date:'mediumDate' }}
+            <div class="expiry-chip">
+              <span>Expires</span>
+              <strong>{{ plan.endsAt | date:'mediumDate' }}</strong>
+            </div>
           }
-        </p>
-      </div>
-      <div class="counter-box">
-        <strong>{{ plan.daysRemaining ?? '—' }}</strong>
-        <span>days remaining</span>
-        <small>of {{ plan.totalDays }}</small>
-      </div>
-      @if (plan.isExpired || plan.isTrial) {
-        <a routerLink="/back-office/plans" class="ghost">View plans →</a>
-      }
-    </section>
-  }
-
-  <section class="notice-board" [formGroup]="noticeForm">
-    <div class="notice-head">
-      <div>
-        <p class="eyebrow">TODAY’S NOTICE</p>
-        <h2>Share something with your customers</h2>
-        <p class="notice-sub">
-          Post today’s offer, delay, or update. One notice per day for this shop.
-        </p>
-      </div>
-      <span class="notice-date">{{ todayLabel() }}</span>
-    </div>
-
-    @if (noticeDraft(); as draft) {
-      <div class="notice-preview" role="status">
-        <p class="eyebrow">DRAFT ON OVERVIEW</p>
-        <p>{{ draft }}</p>
-        <small>UI only for now — will publish with <code>POST /notices</code> when wired.</small>
-      </div>
+        </div>
+        @if (plan.isExpired || plan.isTrial) {
+          <a routerLink="/back-office/plans" class="ghost compact link-inline">View plans →</a>
+        }
+      </section>
     }
 
-    <label>
-      Notice for today
-      <textarea
-        formControlName="message"
-        rows="3"
-        maxlength="1000"
-        placeholder="e.g. Fresh stock of rice arrived · 10% off till evening"
-      ></textarea>
-    </label>
+    <section class="card status-card" [formGroup]="hoursForm" [attr.data-open]="shopOpen()">
+      <div class="status-head">
+        <div>
+          <p class="eyebrow">SHOP STATUS</p>
+          <h2>Set opening hours</h2>
+          <p class="sub">Choose when you open and close. The slider shows if you’re open right now.</p>
+        </div>
+        <div class="open-toggle-wrap">
+          <span class="status-pill" [class.is-open]="shopOpen()">{{ shopStatusLabel() }}</span>
+          <label class="open-toggle" [attr.aria-label]="shopOpen() ? 'Mark shop closed' : 'Mark shop open'">
+            <input type="checkbox" [checked]="shopOpen()" (change)="toggleShopOpen()" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
 
-    <div class="notice-actions">
-      <button type="button" class="ghost" (click)="clearNoticeDraft()" [disabled]="!noticeForm.controls.message.value.trim() && !noticeDraft()">
-        Clear
-      </button>
-      <button type="button" class="primary" (click)="saveNoticeDraft()">
-        Save notice draft
-      </button>
-    </div>
-  </section>
+      <div class="hours-row">
+        <label>
+          Opens
+          <input type="time" formControlName="opening_time" />
+        </label>
+        <label>
+          Closes
+          <input type="time" formControlName="closing_time" />
+        </label>
+        <button type="button" class="primary compact" (click)="saveShopHours()" [disabled]="hoursSaving()">
+          {{ hoursSaving() ? 'Saving…' : 'Save hours' }}
+        </button>
+      </div>
 
-  <section class="hero">
-    <div>
-      <p class="eyebrow">TODAY AT A GLANCE</p>
-      <h2>Your store is ready for business.</h2>
-      <p>Manage catalog, staff, billing, and orders from the sidebar.</p>
-    </div>
-    <div class="pulse"><span></span> Store online</div>
-  </section>
+      @if (hoursError()) {
+        <p class="error" role="alert">{{ hoursError() }}</p>
+      }
+      @if (hoursSuccess()) {
+        <p class="success" role="status">{{ hoursSuccess() }}</p>
+      }
+    </section>
 
-  <section class="metrics">
-    <article>
-      <p>Orders</p>
-      <strong>{{ loading() ? '…' : orderCount() }}</strong>
-      <small>Bills created so far</small>
-    </article>
-    <article>
-      <p>Employees</p>
-      <strong>{{ loading() ? '…' : employeeCount() }}</strong>
-      <small>People on your team</small>
-    </article>
-    <article>
-      <p>Products</p>
-      <strong>{{ loading() ? '…' : productCount() }}</strong>
-      <small>Items in your catalog</small>
-    </article>
-  </section>
+    <section class="metrics">
+      <article>
+        <p>Orders</p>
+        <strong>{{ loading() ? '…' : orderCount() }}</strong>
+      </article>
+      <article>
+        <p>Employees</p>
+        <strong>{{ loading() ? '…' : employeeCount() }}</strong>
+      </article>
+      <article>
+        <p>Products</p>
+        <strong>{{ loading() ? '…' : productCount() }}</strong>
+      </article>
+    </section>
 
-  <section class="next">
-    <div>
+    <section class="card notice-card" [formGroup]="noticeForm">
+      <div class="card-head inline">
+        <div>
+          <p class="eyebrow">TODAY’S NOTICE</p>
+          <h2>Share an update</h2>
+        </div>
+        <span class="date-chip">{{ todayLabel() }}</span>
+      </div>
+
+      @if (noticeLoading()) {
+        <p class="muted small">Loading notice…</p>
+      }
+
+      <label>
+        Notice for today
+        <textarea
+          formControlName="message"
+          rows="2"
+          maxlength="1000"
+          placeholder="e.g. Fresh stock arrived · 10% off till evening"
+        ></textarea>
+      </label>
+
+      @if (noticeError()) {
+        <p class="error" role="alert">{{ noticeError() }}</p>
+      }
+      @if (noticeSuccess()) {
+        <p class="success" role="status">{{ noticeSuccess() }}</p>
+      }
+
+      <div class="actions">
+        <button
+          type="button"
+          class="ghost compact"
+          (click)="clearNotice()"
+          [disabled]="!noticeForm.controls.message.value.trim()"
+        >
+          Clear
+        </button>
+        <button type="button" class="primary compact" (click)="saveNotice()" [disabled]="noticeSaving()">
+          {{ noticeSaving() ? 'Posting…' : 'Post notice' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="card shop-row">
+      @if (shop(); as shop) {
+        <div>
+          <p class="eyebrow">YOUR SHOP</p>
+          <h2>{{ shop.name }}</h2>
+          <p class="sub">{{ shop.locality }} · {{ shop.city }}</p>
+        </div>
+        <button type="button" class="ghost compact" (click)="openShopEditor()">Edit shop</button>
+      }
+    </section>
+
+    <section class="card next-card">
       <p class="eyebrow">GET STARTED</p>
-      <h2>Run the counter</h2>
-    </div>
-    <ol>
-      <li>
-        <span>1</span>
-        <div>
+      <div class="next-links">
+        <a routerLink="/back-office/billing" class="next-link">
           <strong>Create a bill</strong>
-          <p>Search products, set quantities, and save the order.</p>
-        </div>
-        <a routerLink="/back-office/billing">Start →</a>
-      </li>
-      <li>
-        <span>2</span>
-        <div>
+          <span>Search products and save orders</span>
+        </a>
+        <a routerLink="/back-office/orders" class="next-link">
           <strong>Review orders</strong>
-          <p>See every bill you have created so far.</p>
-        </div>
-        <a routerLink="/back-office/orders">Open →</a>
-      </li>
-    </ol>
-  </section>
+          <span>See every bill you created</span>
+        </a>
+      </div>
+    </section>
+  </div>
 }

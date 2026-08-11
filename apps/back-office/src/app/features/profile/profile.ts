@@ -8,12 +8,18 @@ import { ImageSearchResult, UserProfile } from '../../core/models';
 import { ProfileApi } from '../../core/profile.api';
 import { QueriesApi } from '../../core/queries.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
+import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+
+const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
+  { value: '', label: 'Select the type of shop' },
+  ...SHOP_TYPE_OPTIONS.map((row) => ({ value: row.value, label: row.label })),
+];
 
 export type ProfileWizardStep = 'keyword' | 'prompts' | 'review' | 'done' | 'manage';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, InlineSelectComponent],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
@@ -24,6 +30,7 @@ export class ProfilePage implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly shopTypeOptions = SHOP_TYPE_OPTIONS;
+  readonly shopTypeSelectOptions = SHOP_TYPE_SELECT_OPTIONS;
   readonly step = signal<ProfileWizardStep>('keyword');
   readonly profile = signal<UserProfile | null>(null);
   readonly loading = signal(true);

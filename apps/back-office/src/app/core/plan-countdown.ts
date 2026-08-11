@@ -52,15 +52,15 @@ export function buildPlanCountdown(plan: PlanSummary, now = new Date()): PlanCou
 
   let message: string;
   if (isTrial && isActive) {
-    message = `Hello — these are the days remaining for your free trial: ${daysRemaining ?? 0}.`;
+    message = 'Your free trial is active.';
   } else if (isTrial && isExpired) {
     message = 'Your free trial has ended. Choose Starter, Growth, or Premium to continue.';
   } else if (isActive && isYearly) {
-    message = `You are on ${plan.name}. Time remaining on your yearly plan: ${daysRemaining ?? 0} day${(daysRemaining ?? 0) === 1 ? '' : 's'}.`;
+    message = `You are on the yearly ${plan.name} plan.`;
   } else if (isExpired) {
     message = `Your ${plan.name} plan period has ended. Renew or choose another plan.`;
   } else {
-    message = `Hello — your current plan is ${plan.name}.`;
+    message = `Your current plan is ${plan.name}.`;
   }
 
   return {

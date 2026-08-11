@@ -19,7 +19,7 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
   display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 18px;
 }
 .toolbar label { display: grid; gap: 6px; font-size: 12px; color: #667069; font-weight: 700; }
-.toolbar input, .toolbar select {
+.toolbar input, .toolbar app-inline-select {
   border: 1px solid #d8d4c8; border-radius: 10px; padding: 10px 12px; font: inherit; background: white; min-width: 180px;
 }
 .table-wrap { border: 1px solid #dedbd1; border-radius: 16px; background: white; overflow: auto; }
