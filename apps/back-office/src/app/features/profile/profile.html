@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">YOUR PROFILE</p>
     <h1>Profile</h1>
-    <p class="sub">Build your Junction profile with Gemini-enhanced prompts, then save it.</p>
+    <p class="sub">Answer three short prompts. We turn them into three bio paragraphs.</p>
   </div>
   @if (profile(); as current) {
     <div class="current-chip">
@@ -11,20 +11,11 @@
       }
       <span>
         <strong>{{ current.display_name }}</strong>
-        <small>{{ current.bio || 'No bio yet' }}</small>
+        <small>{{ current.bio ? 'Bio saved' : 'No bio yet' }}</small>
       </span>
     </div>
   }
 </header>
-
-@if (step() !== 'manage') {
-  <ol class="steps" aria-label="Profile setup steps">
-    <li [class.active]="stepIndex() === 1" [class.done]="stepIndex() > 1">1 · Keyword</li>
-    <li [class.active]="stepIndex() === 2" [class.done]="stepIndex() > 2">2 · Prompts</li>
-    <li [class.active]="stepIndex() === 3" [class.done]="stepIndex() > 3">3 · Review & save</li>
-    <li [class.active]="stepIndex() === 4" [class.done]="stepIndex() === 4">4 · Created</li>
-  </ol>
-}
 
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
@@ -35,197 +26,124 @@
 
 @if (loading()) {
   <p class="muted">Loading profile…</p>
-} @else if (step() === 'keyword') {
-  <section class="panel" [formGroup]="keywordForm">
-    <p class="eyebrow">STEP 1</p>
-    <h2>Enter your profile keyword</h2>
-    <p class="lead">
-      We use <strong>Google Gemini</strong> via junctionBack <code>POST /descriptions/generate</code>.
-      Start with one keyword that describes you or your shop.
-    </p>
-
-    <label>
-      Profile keyword
-      <input
-        formControlName="keyword"
-        placeholder="e.g. neighborhood grocery"
-        autocomplete="off"
-        (keydown.enter)="$event.preventDefault(); continueFromKeyword()"
-      />
-    </label>
-
-    <div class="actions">
-      @if (hasExistingBio()) {
-        <button type="button" class="ghost" (click)="openManageBio()">Manage existing bio</button>
-      }
-      <button type="button" class="primary" (click)="continueFromKeyword()">Continue</button>
-    </div>
-  </section>
-} @else if (step() === 'prompts') {
+} @else {
   <section class="panel" [formGroup]="promptsForm">
-    <p class="eyebrow">STEP 2 · GEMINI</p>
-    <h2>Give us a few short prompts</h2>
-    <p class="lead">
-      Keyword: <strong>{{ keyword() }}</strong>. Add up to three notes. We turn them into sentences,
-      concatenate them, and ask Gemini for one full bio (not three separate lines).
-    </p>
-
-    <label>
-      Prompt 1
-      <textarea formControlName="prompt1" rows="3" placeholder="What you sell or who you serve"></textarea>
-    </label>
-    <label>
-      Prompt 2 <span class="optional">optional</span>
-      <textarea formControlName="prompt2" rows="3" placeholder="What makes your shop special"></textarea>
-    </label>
-    <label>
-      Prompt 3 <span class="optional">optional</span>
-      <textarea formControlName="prompt3" rows="3" placeholder="Anything customers should know"></textarea>
-    </label>
-
-    <div class="actions">
-      <button type="button" class="ghost" (click)="backToKeyword()">Back</button>
-      <button type="button" class="primary" (click)="enhancePrompts()" [disabled]="enhancing()">
-        {{ enhancing() ? 'Writing bio with Gemini…' : 'Enhance into full bio' }}
-      </button>
-    </div>
-  </section>
-} @else if (step() === 'review') {
-  <section class="panel" [formGroup]="reviewForm">
-    <p class="eyebrow">STEP 3</p>
-    <h2>Review enhanced profile</h2>
-    <p class="lead">
-      Edit the Gemini bio if needed, choose a shop type, optionally pick an avatar, then save with
-      <code>PATCH /profile</code>.
-    </p>
-
-    @if (promptSentences().length > 0) {
-      <div class="enhance-list">
-        <article>
-          <p class="from">Your notes</p>
-          <p class="to">{{ promptSentences().join(' ') }}</p>
-        </article>
-      </div>
+    @if (step() === 'compose') {
+      <p class="eyebrow">CREATE PROFILE</p>
+      <h2>Tell us about your shop</h2>
+      <p class="lead">Each answer becomes its own paragraph in your bio.</p>
+    } @else if (step() === 'manage') {
+      <p class="eyebrow">YOUR PROFILE</p>
+      <h2>Edit your three prompts</h2>
+      <p class="lead">Update any box, then save. Delete clears the bio.</p>
+    } @else {
+      <p class="eyebrow">SAVED</p>
+      <h2>Your profile is ready</h2>
+      <p class="lead">Three paragraphs are saved to your bio.</p>
     }
 
     <label>
       Display name
-      <input formControlName="display_name" autocomplete="name" />
-    </label>
-    <label>
-      Shop type
-      <app-inline-select
-        formControlName="shop_type"
-        [options]="shopTypeSelectOptions"
-        placeholder="Select the type of shop"
-      />
-    </label>
-    @if (reviewForm.controls.shop_type.value; as shopTypeValue) {
-      @for (type of shopTypeOptions; track type.value) {
-        @if (type.value === shopTypeValue) {
-          <p class="type-hint">{{ type.description }}</p>
-        }
-      }
-    }
-    <label>
-      Bio
-      <textarea formControlName="bio" rows="6" maxlength="500"></textarea>
+      <input formControlName="display_name" autocomplete="name" [readonly]="step() === 'done'" />
     </label>
 
-    <div class="avatar-block">
-      <div class="avatar-head">
-        <div>
-          <h3>Avatar from keyword</h3>
-          <p>Gemini images for <strong>{{ keyword() }}</strong> via <code>GET /queries</code>.</p>
+    <label>
+      Prompt 1 — About your shop
+      <textarea
+        formControlName="prompt1"
+        rows="3"
+        placeholder="Tell us about your shop, its location, and what you offer"
+        [readonly]="step() === 'done'"
+      ></textarea>
+    </label>
+    <label>
+      Prompt 2 — Your services
+      <textarea
+        formControlName="prompt2"
+        rows="3"
+        placeholder="Tell us about the services your shop provides"
+        [readonly]="step() === 'done'"
+      ></textarea>
+    </label>
+    <label>
+      Prompt 3 — Anything else <span class="optional">optional</span>
+      <textarea
+        formControlName="prompt3"
+        rows="3"
+        placeholder="Anything customers should know"
+        [readonly]="step() === 'done'"
+      ></textarea>
+    </label>
+
+    @if (hasParagraphPreview()) {
+      <div class="bio-preview">
+        <p class="preview-label">Bio preview</p>
+        @for (paragraph of paragraphsPreview(); track $index) {
+          <p>{{ paragraph }}</p>
+        }
+      </div>
+    }
+
+    @if (step() !== 'done') {
+      <div class="avatar-block">
+        <div class="avatar-head">
+          <div>
+            <h3>Profile photo</h3>
+            <p>Optional — preview CDN results, then tap one to select before saving.</p>
+          </div>
+          <button type="button" class="ghost" (click)="loadAvatarOptions()" [disabled]="searchingImages()">
+            {{ searchingImages() ? 'Loading…' : 'Find images' }}
+          </button>
         </div>
-        <button type="button" class="ghost" (click)="loadAvatarOptions()" [disabled]="searchingImages()">
-          {{ searchingImages() ? 'Loading…' : 'Refresh images' }}
+
+        @if (selectedAvatarUrl(); as avatar) {
+          <p class="selected-avatar">
+            <img [src]="avatar" alt="Selected profile photo" />
+            <span>Selected · <a [href]="avatar" target="_blank" rel="noopener">open</a></span>
+          </p>
+        }
+
+        @if (imageResults().length > 0) {
+          <div class="image-grid" role="listbox" aria-label="Image search results">
+            @for (image of imageResults(); track image.id) {
+              <button
+                type="button"
+                class="image-card"
+                role="option"
+                [attr.aria-selected]="isAvatarSelected(image)"
+                [class.selected]="isAvatarSelected(image)"
+                (click)="selectAvatar(image)"
+              >
+                <img [src]="image.thumbnail_url || image.cdn_url" [alt]="image.alt" loading="lazy" />
+                <span class="sr-only">{{ image.alt }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="actions">
+      @if (step() === 'compose') {
+        @if (profile()?.bio?.trim()) {
+          <button type="button" class="ghost" (click)="openManage()">Edit saved profile</button>
+        }
+        <button type="button" class="primary" (click)="saveProfile()" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save profile' }}
         </button>
-      </div>
-
-      @if (selectedAvatarUrl(); as avatar) {
-        <p class="selected-avatar">Selected avatar · <a [href]="avatar" target="_blank" rel="noopener">open</a></p>
+      } @else if (step() === 'manage') {
+        <button type="button" class="ghost" (click)="startOver()">Start over</button>
+        <button type="button" class="ghost danger-text" (click)="deleteBio()" [disabled]="saving()">
+          Delete bio
+        </button>
+        <button type="button" class="primary" (click)="updateProfile()" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save changes' }}
+        </button>
+      } @else {
+        <button type="button" class="ghost" (click)="openManage()">Edit profile</button>
+        <button type="button" class="ghost" (click)="startOver()">Create again</button>
+        <a routerLink="/back-office" class="primary">Back to Overview</a>
       }
-
-      @if (imageResults().length > 0) {
-        <div class="image-grid">
-          @for (image of imageResults(); track image.id) {
-            <button
-              type="button"
-              class="image-card"
-              [class.selected]="isAvatarSelected(image)"
-              (click)="selectAvatar(image)"
-            >
-              <img [src]="image.thumbnail_url || image.cdn_url" [alt]="image.alt" loading="lazy" />
-              <span>{{ image.alt }}</span>
-            </button>
-          }
-        </div>
-      } @else if (!searchingImages()) {
-        <p class="muted">No images returned for this keyword yet.</p>
-      }
-    </div>
-
-    <div class="actions">
-      <button type="button" class="ghost" (click)="backToPrompts()">Back</button>
-      <button type="button" class="primary" (click)="saveProfile()" [disabled]="saving()">
-        {{ saving() ? 'Saving…' : 'Save profile' }}
-      </button>
-    </div>
-  </section>
-} @else if (step() === 'manage') {
-  <section class="panel" [formGroup]="manageForm">
-    <p class="eyebrow">UPDATE BIO</p>
-    <h2>Edit or delete your bio</h2>
-    <p class="lead">
-      Saved with junctionBack <code>PATCH /profile</code>. Clear the text and save, or use Delete bio.
-    </p>
-
-    <label>
-      Bio
-      <textarea formControlName="bio" rows="6" maxlength="500"></textarea>
-    </label>
-
-    <div class="actions">
-      <button type="button" class="ghost" (click)="startOver()">Create new profile</button>
-      <button type="button" class="ghost danger-text" (click)="deleteBio()" [disabled]="saving()">
-        Delete bio
-      </button>
-      <button type="button" class="primary" (click)="updateBio()" [disabled]="saving()">
-        {{ saving() ? 'Saving…' : 'Update bio' }}
-      </button>
-    </div>
-  </section>
-} @else {
-  <section class="panel done">
-    <p class="eyebrow">STEP 4</p>
-    <h2>Your profile is created</h2>
-    <p class="lead">
-      Saved with junctionBack <code>PATCH /profile</code>. You can update or delete the bio anytime.
-    </p>
-
-    @if (profile(); as current) {
-      <div class="preview">
-        @if (current.avatar_url) {
-          <img [src]="current.avatar_url" [alt]="current.display_name" />
-        }
-        <div>
-          <strong>{{ current.display_name }}</strong>
-          @if (selectedShopTypeLabel()) {
-            <p class="type-chip">{{ selectedShopTypeLabel() }}</p>
-          }
-          <p>{{ current.bio || 'No bio saved.' }}</p>
-          @if (current.phone_number) {
-            <small>Phone · {{ current.phone_number }}</small>
-          }
-        </div>
-      </div>
-    }
-
-    <div class="actions">
-      <button type="button" class="ghost" (click)="openManageBio()">Edit / delete bio</button>
-      <button type="button" class="ghost" (click)="startOver()">Create again</button>
-      <a routerLink="/back-office" class="primary">Back to Overview</a>
     </div>
   </section>
 }

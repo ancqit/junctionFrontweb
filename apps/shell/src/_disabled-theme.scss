@@ -1,0 +1,26 @@
+// Global disabled control theme — shared across shell pages.
+button:disabled,
+input[type='button']:disabled,
+input[type='submit']:disabled,
+input[type='reset']:disabled,
+.primary:disabled,
+.ghost:disabled,
+a.primary[aria-disabled='true'],
+a.ghost[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #f1f1ed;
+  color: #59645c;
+}
+
+.terms-check input:disabled {
+  opacity: 0.55;
+}

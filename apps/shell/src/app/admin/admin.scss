@@ -1,8 +1,9 @@
-:host { display: block; min-height: 100vh; color: #1a281f; background: #f3f1eb; }
-.admin { min-height: 100vh; display: grid; grid-template-columns: 240px 1fr; }
+:host { display: block; min-height: 100vh; min-height: 100dvh; color: #1a281f; background: #f3f1eb; }
+.admin { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: 240px 1fr; }
 aside {
-  position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: 28px 20px;
-  display: flex; flex-direction: column; gap: 18px; background: #0f2f22; color: white;
+  position: sticky; top: 0; height: 100vh; height: 100dvh; max-height: 100dvh; box-sizing: border-box;
+  padding: 28px 20px; display: flex; flex-direction: column; gap: 18px; background: #0f2f22; color: white;
+  overflow-y: auto; overscroll-behavior: contain;
 }
 .brand { font-size: 18px; font-weight: 800; }
 .brand span {
@@ -147,11 +148,26 @@ code { font-size: 12px; background: #eef3ef; padding: 1px 5px; border-radius: 4p
   }
   aside {
     position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
-    height: 100vh; transform: translateX(-105%); transition: transform .2s ease;
+    height: 100vh; height: 100dvh; max-height: 100dvh; transform: translateX(-105%);
+    transition: transform .2s ease; overflow-y: auto; overscroll-behavior: contain;
   }
   .admin.menu-open aside { transform: translateX(0); }
-  nav { margin-top: 12px; grid-template-columns: 1fr; }
+  nav { margin-top: 12px; grid-template-columns: 1fr; flex-shrink: 0; }
   aside .ghost, aside .logout { margin-top: auto; }
   header { flex-direction: column; align-items: start; }
   .stats, .create-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) and (max-height: 700px) {
+  aside { padding: 20px 16px; gap: 12px; }
+  nav { margin-top: 8px; gap: 4px; }
+  .brand { font-size: 16px; }
+  nav a, nav button { padding: 9px 11px; font-size: 13px; }
+}
+
+@media (max-width: 900px) and (max-height: 560px) {
+  aside { padding: 14px 12px; gap: 10px; }
+  nav { margin-top: 6px; }
+  .brand span { width: 28px; height: 28px; }
+  .admin-id { padding: 8px 10px; font-size: 12px; }
 }

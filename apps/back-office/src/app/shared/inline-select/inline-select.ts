@@ -104,6 +104,12 @@ export class InlineSelectComponent implements ControlValueAccessor {
     }
   }
 
+  onOptionClick(event: MouseEvent, value: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.select(value);
+  }
+
   select(value: string): void {
     this.selectedValue.set(value);
     this.onChange(value);
