@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
 import { EmployeesApi } from '../../core/employees.api';
 import { buildPlanCountdown, PlanCountdown } from '../../core/plan-countdown';
+import { NoticesApi } from '../../core/notices.api';
 import { OrdersApi } from '../../core/orders.api';
 import { PlansApi } from '../../core/plans.api';
 import { ProductsApi } from '../../core/products.api';
@@ -28,6 +29,7 @@ export class OverviewPage implements OnInit {
   private readonly profileApi = inject(ProfileApi);
   private readonly shopsApi = inject(ShopsApi);
   private readonly locationsApi = inject(LocationsApi);
+  private readonly noticesApi = inject(NoticesApi);
   private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
 
@@ -49,6 +51,16 @@ export class OverviewPage implements OnInit {
   readonly shopError = signal('');
   readonly shopSuccess = signal('');
 
+  readonly shopOpen = signal(false);
+  readonly hoursSaving = signal(false);
+  readonly hoursSuccess = signal('');
+  readonly hoursError = signal('');
+
+  readonly noticeLoading = signal(false);
+  readonly noticeSaving = signal(false);
+  readonly noticeError = signal('');
+  readonly noticeSuccess = signal('');
+
   readonly shopForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     city: ['', [Validators.required, Validators.minLength(2)]],
@@ -56,19 +68,22 @@ export class OverviewPage implements OnInit {
     shop_type: ['', [Validators.required]],
   });
 
-  /** Local draft only — backend `POST /notices` wiring comes later. */
-  readonly noticeForm = this.fb.nonNullable.group({
-    message: ['', [Validators.maxLength(1000)]],
+  readonly hoursForm = this.fb.nonNullable.group({
+    opening_time: ['09:00', [Validators.required]],
+    closing_time: ['21:00', [Validators.required]],
   });
-  readonly noticeDraft = signal<string | null>(null);
+
+  readonly noticeForm = this.fb.nonNullable.group({
+    message: ['', [Validators.required, Validators.maxLength(1000)]],
+  });
 
   readonly greetingName = computed(() => this.profile()?.display_name?.trim() || 'there');
   readonly userId = computed(() => this.profile()?.id ?? '');
   readonly useCityDropdown = computed(() => this.cities().length > 0);
   readonly useLocalityDropdown = computed(() => this.localities().length > 0);
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
+  readonly shopStatusLabel = computed(() => (this.shopOpen() ? 'Open now' : 'Closed'));
 
-  /** Shop has been saved with name, place, and type. */
   readonly shopConfigured = computed(() => {
     const shop = this.shop();
     return (
@@ -80,10 +95,6 @@ export class OverviewPage implements OnInit {
     );
   });
 
-  /**
-   * Dashboard (metrics, notices, + New bill) shows when the shop is configured
-   * and the user is not currently editing shop details.
-   */
   readonly shopReady = computed(() => this.shopConfigured() && !this.editingShop());
 
   ngOnInit(): void {
@@ -120,7 +131,6 @@ export class OverviewPage implements OnInit {
   }
 
   cancelShopEditor(): void {
-    // Only leave the editor when the shop is already configured; otherwise stay on setup.
     if (this.shopConfigured()) {
       this.editingShop.set(false);
     }
@@ -160,8 +170,6 @@ export class OverviewPage implements OnInit {
         this.applySavedShop(shop, payload, shopType);
       },
       error: (err: unknown) => {
-        // Older Render builds may only accept { name }. Persist name remotely,
-        // keep city/locality/type on the client so Overview can unlock.
         if (!this.isUnprocessable(err)) {
           this.shopSaving.set(false);
           this.shopError.set(this.describeShopError(err));
@@ -180,7 +188,67 @@ export class OverviewPage implements OnInit {
     });
   }
 
-  /** After a successful create/update, unlock the dashboard with form values. */
+  toggleShopOpen(): void {
+    const shop = this.shop();
+    if (!shop?.id) {
+      return;
+    }
+    const next = !this.shopOpen();
+    this.shopOpen.set(next);
+    this.persistShopHours(shop.id);
+  }
+
+  saveShopHours(): void {
+    const shop = this.shop();
+    if (!shop?.id) {
+      return;
+    }
+    if (this.hoursForm.invalid) {
+      this.hoursForm.markAllAsTouched();
+      return;
+    }
+    this.hoursSaving.set(true);
+    this.hoursError.set('');
+    this.hoursSuccess.set('');
+    this.persistShopHours(shop.id);
+    this.hoursSaving.set(false);
+    this.hoursSuccess.set('Opening hours saved.');
+  }
+
+  saveNotice(): void {
+    const shop = this.shop();
+    if (!shop?.id) {
+      return;
+    }
+    const message = this.noticeForm.controls.message.value.trim();
+    if (!message) {
+      this.noticeForm.controls.message.markAsTouched();
+      return;
+    }
+
+    this.noticeSaving.set(true);
+    this.noticeError.set('');
+    this.noticeSuccess.set('');
+
+    this.noticesApi
+      .postToday({ store_id: shop.id, message })
+      .pipe(finalize(() => this.noticeSaving.set(false)))
+      .subscribe({
+        next: () => {
+          this.noticeSuccess.set('Today’s notice posted.');
+        },
+        error: (err: unknown) => {
+          this.noticeError.set(this.describeApiError(err, 'Could not post notice.'));
+        },
+      });
+  }
+
+  clearNotice(): void {
+    this.noticeForm.reset({ message: '' });
+    this.noticeError.set('');
+    this.noticeSuccess.set('');
+  }
+
   private applySavedShop(
     shop: Shop,
     payload: { name: string; city: string; locality: string },
@@ -204,7 +272,26 @@ export class OverviewPage implements OnInit {
     this.currentShop.setShop(merged);
     this.editingShop.set(false);
     this.shopSuccess.set('Shop details saved. Overview is ready.');
+    this.loadShopHours(merged.id);
     this.loadDashboard();
+  }
+
+  private persistShopHours(shopId: string): void {
+    const raw = this.hoursForm.getRawValue();
+    this.currentShop.writeShopHours(shopId, {
+      opening_time: raw.opening_time,
+      closing_time: raw.closing_time,
+      is_open: this.shopOpen(),
+    });
+  }
+
+  private loadShopHours(shopId: string): void {
+    const hours = this.currentShop.readShopHours(shopId);
+    this.hoursForm.patchValue({
+      opening_time: hours.opening_time,
+      closing_time: hours.closing_time,
+    });
+    this.shopOpen.set(hours.is_open);
   }
 
   private isUnprocessable(err: unknown): boolean {
@@ -217,10 +304,12 @@ export class OverviewPage implements OnInit {
   }
 
   private describeShopError(err: unknown): string {
+    return this.describeApiError(err, 'Could not save shop details.');
+  }
+
+  private describeApiError(err: unknown, fallback: string): string {
     const detail = (err as { error?: { detail?: string } })?.error?.detail;
-    return typeof detail === 'string' && detail.trim()
-      ? detail
-      : 'Could not save shop details.';
+    return typeof detail === 'string' && detail.trim() ? detail : fallback;
   }
 
   todayLabel(): string {
@@ -231,27 +320,12 @@ export class OverviewPage implements OnInit {
     }).format(new Date());
   }
 
-  saveNoticeDraft(): void {
-    const message = this.noticeForm.controls.message.value.trim();
-    if (!message) {
-      this.noticeForm.controls.message.markAsTouched();
-      return;
-    }
-    this.noticeDraft.set(message);
-  }
-
-  clearNoticeDraft(): void {
-    this.noticeForm.reset({ message: '' });
-    this.noticeDraft.set(null);
-  }
-
   private loadShopForm(): void {
     this.locationsApi.cities().subscribe({
       next: (cities) => this.cities.set(cities),
     });
     this.shopsApi.list().subscribe({
       next: (shops) => {
-        // Overlay client-saved city/locality when the API response omits them.
         const shop = this.currentShop.applyPlaceOverlay(shops[0] ?? null);
         this.shop.set(shop);
         this.currentShop.setShop(shop);
@@ -268,7 +342,7 @@ export class OverviewPage implements OnInit {
           if (shop.city) {
             this.loadLocalities(shop.city, shop.locality ?? '');
           }
-          // Incomplete shop (missing place or type) stays on the setup form.
+          this.loadShopHours(shop.id);
           const complete =
             !!shop.name?.trim() &&
             !!shop.city?.trim() &&
@@ -299,6 +373,7 @@ export class OverviewPage implements OnInit {
       next: (plan) => this.countdown.set(buildPlanCountdown(plan)),
       error: () => this.countdown.set(null),
     });
+    this.loadTodayNotice();
     this.productsApi.list().subscribe({
       next: (products) => this.productCount.set(products.length),
       error: () => this.productCount.set(0),
@@ -312,6 +387,23 @@ export class OverviewPage implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (orders) => this.orderCount.set(orders.length),
+        error: () => undefined,
+      });
+  }
+
+  private loadTodayNotice(): void {
+    const shop = this.shop();
+    if (!shop?.id) {
+      return;
+    }
+    this.noticeLoading.set(true);
+    this.noticesApi
+      .getToday(shop.id)
+      .pipe(finalize(() => this.noticeLoading.set(false)))
+      .subscribe({
+        next: (notice) => {
+          this.noticeForm.patchValue({ message: notice?.message ?? '' });
+        },
         error: () => undefined,
       });
   }
