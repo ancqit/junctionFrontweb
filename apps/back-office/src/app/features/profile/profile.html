@@ -89,7 +89,7 @@
         <div class="avatar-head">
           <div>
             <h3>Profile photo</h3>
-            <p>Optional image from <code>GET /queries</code> using your first prompt.</p>
+            <p>Optional — preview CDN results, then tap one to select before saving.</p>
           </div>
           <button type="button" class="ghost" (click)="loadAvatarOptions()" [disabled]="searchingImages()">
             {{ searchingImages() ? 'Loading…' : 'Find images' }}
@@ -97,20 +97,25 @@
         </div>
 
         @if (selectedAvatarUrl(); as avatar) {
-          <p class="selected-avatar">Selected · <a [href]="avatar" target="_blank" rel="noopener">open</a></p>
+          <p class="selected-avatar">
+            <img [src]="avatar" alt="Selected profile photo" />
+            <span>Selected · <a [href]="avatar" target="_blank" rel="noopener">open</a></span>
+          </p>
         }
 
         @if (imageResults().length > 0) {
-          <div class="image-grid">
+          <div class="image-grid" role="listbox" aria-label="Image search results">
             @for (image of imageResults(); track image.id) {
               <button
                 type="button"
                 class="image-card"
+                role="option"
+                [attr.aria-selected]="isAvatarSelected(image)"
                 [class.selected]="isAvatarSelected(image)"
                 (click)="selectAvatar(image)"
               >
                 <img [src]="image.thumbnail_url || image.cdn_url" [alt]="image.alt" loading="lazy" />
-                <span>{{ image.alt }}</span>
+                <span class="sr-only">{{ image.alt }}</span>
               </button>
             }
           </div>

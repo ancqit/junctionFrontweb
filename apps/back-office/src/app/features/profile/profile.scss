@@ -303,30 +303,42 @@ h3 {
 }
 
 .selected-avatar {
-  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
   color: #1a6541;
   font-size: 13px;
   font-weight: 700;
 }
 
-.selected-avatar a { color: inherit; }
+.selected-avatar img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #1a6541;
+}
+
+.selected-avatar a { color: inherit; font-weight: 600; }
 
 .image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 420px;
 }
 
 .image-card {
-  display: grid;
-  gap: 8px;
+  display: block;
+  width: 56px;
+  height: 56px;
   padding: 0;
-  border: 2px solid transparent;
-  border-radius: 12px;
+  border: 2px solid #dedbd1;
+  border-radius: 10px;
   background: #f7f5ef;
   overflow: hidden;
   cursor: pointer;
-  text-align: left;
 }
 
 .image-card.selected {
@@ -336,16 +348,21 @@ h3 {
 
 .image-card img {
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.image-card span {
-  padding: 0 10px 10px;
-  color: #5f6a63;
-  font-size: 11px;
-  line-height: 1.35;
+.image-card .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .preview {
@@ -393,7 +410,7 @@ h3 {
   }
 
   .image-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 100%;
   }
 
   h1 { font-size: 30px; }
