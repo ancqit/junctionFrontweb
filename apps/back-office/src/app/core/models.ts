@@ -44,7 +44,7 @@ export type EmployeeCreate = Omit<Employee, 'id' | 'created_at' | 'updated_at'>;
 export type EmployeeUpdate = Partial<Omit<EmployeeCreate, 'store_id'>>;
 
 export type ProductStatus = 'active' | 'inactive' | 'discontinued';
-export type ProductImageSource = 'cdn' | 'query' | 'upload';
+export type ProductImageSource = 'cdn' | 'query' | 'upload' | 'pexels';
 
 export interface ProductImage {
   source: ProductImageSource;
@@ -52,6 +52,12 @@ export interface ProductImage {
   stored_image_id?: string | null;
   content_type?: string | null;
   filename?: string | null;
+}
+
+export interface ProductImageSuggestResponse {
+  product_name: string;
+  styles: string[];
+  images: ImageSearchResult[];
 }
 
 export interface Product {
@@ -71,6 +77,7 @@ export interface Product {
   image_cdn?: string | null;
   image?: ProductImage | null;
   image_url?: string | null;
+  images?: ProductImage[];
   barcode?: string | null;
   tax_rate?: number | null;
   low_stock_threshold?: number | null;

@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
 import { CurrentShopService } from './current-shop.service';
-import { Product, ProductCreate, ProductUpdate } from './models';
+import { Product, ProductCreate, ProductImageSuggestResponse, ProductUpdate } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsApi {
@@ -29,7 +29,26 @@ export class ProductsApi {
     return this.api.delete(`/products/${id}`);
   }
 
-  /** Persist a CDN image from /queries onto an existing product. */
+  /** Pexels suggestions for a product name — POST /products/images/suggest */
+  suggestImages(productName: string): Observable<ProductImageSuggestResponse> {
+    return this.api.post<ProductImageSuggestResponse>('/products/images/suggest', {
+      product_name: productName.trim(),
+    });
+  }
+
+  /** Attach up to 5 CDN images (replaces gallery) — POST /products/:id/images */
+  attachImagesFromCdn(productId: string, cdns: string[]): Observable<Product> {
+    return this.api.post<Product>(`/products/${productId}/images`, { cdns });
+  }
+
+  /** Upload a local image blob — POST /products/:id/image/upload (multipart) */
+  uploadImage(productId: string, file: File): Observable<Product> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.api.postFormData<Product>(`/products/${productId}/image/upload`, formData);
+  }
+
+  /** @deprecated Prefer attachImagesFromCdn */
   useImageFromCdn(productId: string, cdn: string): Observable<Product> {
     return this.api.post<Product>(`/products/${productId}/image/use`, { cdn });
   }

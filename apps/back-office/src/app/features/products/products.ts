@@ -1,10 +1,11 @@
 import { CurrencyPipe, TitleCasePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, from, Observable, of } from 'rxjs';
+import { concatMap, last, map, switchMap } from 'rxjs/operators';
 import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
 import { ProductsApi } from '../../core/products.api';
-import { QueriesApi } from '../../core/queries.api';
+import { resolveApiBaseUrl } from '../../core/store.config';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
 const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
@@ -13,7 +14,19 @@ const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
   { value: 'discontinued', label: 'Discontinued' },
 ];
 
-const MAX_PRODUCT_IMAGES = 3;
+const MAX_PRODUCT_IMAGES = 5;
+const PEXELS_RESULT_COUNT = 10;
+
+export type ProductImageDraftSource = 'pexels' | 'local';
+
+export interface ProductImageDraft {
+  id: string;
+  source: ProductImageDraftSource;
+  previewUrl: string;
+  cdnUrl?: string;
+  file?: File;
+  alt: string;
+}
 
 @Component({
   selector: 'app-products',
@@ -23,8 +36,8 @@ const MAX_PRODUCT_IMAGES = 3;
 })
 export class ProductsPage implements OnInit {
   private readonly api = inject(ProductsApi);
-  private readonly queriesApi = inject(QueriesApi);
   private readonly fb = inject(FormBuilder);
+  private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('localFileInput');
 
   readonly maxImages = MAX_PRODUCT_IMAGES;
   readonly productStatusOptions = PRODUCT_STATUS_OPTIONS;
@@ -34,11 +47,10 @@ export class ProductsPage implements OnInit {
   readonly error = signal('');
   readonly showForm = signal(false);
 
-  readonly imageResults = signal<ImageSearchResult[]>([]);
-  readonly selectedImages = signal<ImageSearchResult[]>([]);
-  readonly searchingImages = signal(false);
-  readonly imageSearchError = signal('');
-  readonly imageSearchTotal = signal(0);
+  readonly pexelsResults = signal<ImageSearchResult[]>([]);
+  readonly selectedImages = signal<ProductImageDraft[]>([]);
+  readonly searchingPexels = signal(false);
+  readonly imageError = signal('');
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(160)]],
@@ -53,10 +65,6 @@ export class ProductsPage implements OnInit {
     barcode: [''],
     tax_rate: [''],
     low_stock_threshold: [''],
-  });
-
-  readonly imageSearchForm = this.fb.nonNullable.group({
-    query: ['', [Validators.required, Validators.maxLength(200)]],
   });
 
   ngOnInit(): void {
@@ -78,7 +86,7 @@ export class ProductsPage implements OnInit {
   openForm(): void {
     this.showForm.set(true);
     this.error.set('');
-    this.resetImageSearch();
+    this.resetImagePicker();
   }
 
   closeForm(): void {
@@ -97,71 +105,109 @@ export class ProductsPage implements OnInit {
       tax_rate: '',
       low_stock_threshold: '',
     });
-    this.resetImageSearch();
+    this.resetImagePicker();
   }
 
-  searchImages(): void {
-    const query = this.imageSearchForm.controls.query.value.trim();
-    if (!query) {
-      this.imageSearchForm.controls.query.markAsTouched();
-      this.imageSearchError.set('Enter a product name to search for pictures.');
+  canAddImages(): boolean {
+    return this.selectedImages().length < MAX_PRODUCT_IMAGES;
+  }
+
+  searchPexels(): void {
+    const productName = this.form.controls.name.value.trim();
+    if (!productName) {
+      this.form.controls.name.markAsTouched();
+      this.imageError.set('Enter a product name first.');
+      return;
+    }
+    if (!this.canAddImages()) {
       return;
     }
 
-    this.searchingImages.set(true);
-    this.imageSearchError.set('');
-    this.queriesApi
-      .searchImages(query, 1, 12)
-      .pipe(finalize(() => this.searchingImages.set(false)))
+    this.searchingPexels.set(true);
+    this.imageError.set('');
+    this.api
+      .suggestImages(productName)
+      .pipe(finalize(() => this.searchingPexels.set(false)))
       .subscribe({
         next: (response) => {
-          this.imageResults.set(response.images);
-          this.imageSearchTotal.set(response.total_results);
+          this.pexelsResults.set(response.images.slice(0, PEXELS_RESULT_COUNT));
           if (response.images.length === 0) {
-            this.imageSearchError.set('No pictures found for that search.');
+            this.imageError.set('No Pexels pictures found for that name.');
           }
         },
         error: (err: unknown) =>
-          this.imageSearchError.set(this.readError(err, 'Could not search pictures.')),
+          this.imageError.set(this.readError(err, 'Could not search Pexels.')),
       });
   }
 
-  useProductNameForSearch(): void {
-    const name = this.form.controls.name.value.trim();
-    if (!name) {
+  openLocalPicker(): void {
+    if (!this.canAddImages()) {
       return;
     }
-    this.imageSearchForm.controls.query.setValue(name);
-    this.searchImages();
+    this.fileInput()?.nativeElement.click();
   }
 
-  selectImage(image: ImageSearchResult): void {
-    const cdn = String(image.cdn_url);
-    const already = this.selectedImages().some((row) => String(row.cdn_url) === cdn);
-    if (already) {
-      this.selectedImages.update((rows) => rows.filter((row) => String(row.cdn_url) !== cdn));
-      this.imageSearchError.set('');
+  onLocalFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (files.length === 0) {
       return;
     }
-    if (this.selectedImages().length >= MAX_PRODUCT_IMAGES) {
-      this.imageSearchError.set(`You can add up to ${MAX_PRODUCT_IMAGES} pictures.`);
+
+    const remaining = MAX_PRODUCT_IMAGES - this.selectedImages().length;
+    const accepted = files.slice(0, remaining);
+    if (files.length > remaining) {
+      this.imageError.set(`You can add up to ${MAX_PRODUCT_IMAGES} pictures in total.`);
+    } else {
+      this.imageError.set('');
+    }
+
+    const drafts = accepted.map((file) => this.localDraftFromFile(file));
+    this.selectedImages.update((rows) => [...rows, ...drafts]);
+  }
+
+  selectPexelsImage(image: ImageSearchResult): void {
+    const cdnUrl = String(image.cdn_url);
+    const existing = this.selectedImages().find(
+      (row) => row.source === 'pexels' && row.cdnUrl === cdnUrl,
+    );
+    if (existing) {
+      this.removeSelectedImage(existing.id);
       return;
     }
-    this.selectedImages.update((rows) => [...rows, { ...image, cdn_url: cdn }]);
-    this.imageSearchError.set('');
+    if (!this.canAddImages()) {
+      this.imageError.set(`You can add up to ${MAX_PRODUCT_IMAGES} pictures.`);
+      return;
+    }
+
+    this.selectedImages.update((rows) => [
+      ...rows,
+      {
+        id: `pexels-${image.id}`,
+        source: 'pexels',
+        previewUrl: String(image.thumbnail_url || image.cdn_url),
+        cdnUrl,
+        alt: image.alt || 'Pexels image',
+      },
+    ]);
+    this.imageError.set('');
   }
 
-  isSelected(image: ImageSearchResult): boolean {
-    const cdn = String(image.cdn_url);
-    return this.selectedImages().some((row) => String(row.cdn_url) === cdn);
+  isPexelsSelected(image: ImageSearchResult): boolean {
+    const cdnUrl = String(image.cdn_url);
+    return this.selectedImages().some(
+      (row) => row.source === 'pexels' && row.cdnUrl === cdnUrl,
+    );
   }
 
-  removeSelectedImage(cdnUrl: string): void {
-    this.selectedImages.update((rows) => rows.filter((row) => String(row.cdn_url) !== cdnUrl));
-  }
-
-  clearSelectedImages(): void {
-    this.selectedImages.set([]);
+  removeSelectedImage(id: string): void {
+    const target = this.selectedImages().find((row) => row.id === id);
+    if (target?.source === 'local' && target.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(target.previewUrl);
+    }
+    this.selectedImages.update((rows) => rows.filter((row) => row.id !== id));
+    this.imageError.set('');
   }
 
   create(): void {
@@ -169,14 +215,14 @@ export class ProductsPage implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+
     const value = this.form.getRawValue();
-    const selected = this.selectedImages();
-    const primaryCdn = selected[0] ? String(selected[0].cdn_url) : null;
+    const drafts = this.selectedImages();
     this.saving.set(true);
     this.error.set('');
+
     this.api
       .create({
-        // Backend still requires sku; generated server-side-style so users never enter an ID.
         sku: this.generateSku(value.name),
         name: value.name.trim(),
         description: value.description.trim() || null,
@@ -191,17 +237,17 @@ export class ProductsPage implements OnInit {
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        image_cdn: primaryCdn,
-        image: primaryCdn ? { source: 'query', cdn: primaryCdn } : null,
-        image_url: primaryCdn,
         barcode: value.barcode.trim() || null,
         tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
         low_stock_threshold:
           value.low_stock_threshold === '' ? null : Number(value.low_stock_threshold),
       })
+      .pipe(switchMap((created) => this.persistProductImages(created.id, drafts)))
       .subscribe({
-        next: (created) => {
-          this.attachSelectedImages(created.id, selected.map((image) => String(image.cdn_url)));
+        next: () => {
+          this.saving.set(false);
+          this.closeForm();
+          this.reload();
         },
         error: (err: unknown) => {
           this.saving.set(false);
@@ -221,35 +267,59 @@ export class ProductsPage implements OnInit {
   }
 
   productImageSrc(product: Product): string | null {
+    const gallery = product.images ?? [];
+    const hero = gallery[0] ?? product.image;
+    if (hero?.cdn) {
+      return hero.cdn;
+    }
+    if (hero?.stored_image_id) {
+      return `${resolveApiBaseUrl()}/products/images/${hero.stored_image_id}`;
+    }
     return product.image_url || product.image_cdn || product.image?.cdn || null;
   }
 
-  private attachSelectedImages(productId: string, cdnUrls: string[]): void {
-    if (cdnUrls.length === 0) {
-      this.saving.set(false);
-      this.closeForm();
-      this.reload();
-      return;
+  private persistProductImages(
+    productId: string,
+    drafts: ProductImageDraft[],
+  ): Observable<void> {
+    if (drafts.length === 0) {
+      return of(undefined);
     }
 
-    // junctionBack currently stores one product image; first selected is the main picture.
-    this.api.useImageFromCdn(productId, cdnUrls[0]).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.closeForm();
-        this.reload();
-      },
-      error: (err: unknown) => {
-        this.saving.set(false);
-        this.error.set(
-          this.readError(
-            err,
-            'Product saved, but attaching the CDN image failed. You can retry from edit later.',
-          ),
-        );
-        this.reload();
-      },
-    });
+    return from(drafts).pipe(
+      concatMap((draft) => {
+        if (draft.source === 'pexels' && draft.cdnUrl) {
+          return this.api.useImageFromCdn(productId, draft.cdnUrl);
+        }
+        if (draft.source === 'local' && draft.file) {
+          return this.api.uploadImage(productId, draft.file);
+        }
+        return of(undefined);
+      }),
+      last(),
+      map(() => undefined),
+    );
+  }
+
+  private localDraftFromFile(file: File): ProductImageDraft {
+    return {
+      id: `local-${crypto.randomUUID()}`,
+      source: 'local',
+      previewUrl: URL.createObjectURL(file),
+      file,
+      alt: file.name,
+    };
+  }
+
+  private resetImagePicker(): void {
+    for (const row of this.selectedImages()) {
+      if (row.source === 'local' && row.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(row.previewUrl);
+      }
+    }
+    this.pexelsResults.set([]);
+    this.selectedImages.set([]);
+    this.imageError.set('');
   }
 
   private generateSku(name: string): string {
@@ -261,14 +331,6 @@ export class ProductsPage implements OnInit {
       .slice(0, 24);
     const suffix = Date.now().toString(36).toUpperCase();
     return `PRD-${slug || 'ITEM'}-${suffix}`.slice(0, 64);
-  }
-
-  private resetImageSearch(): void {
-    this.imageSearchForm.reset({ query: '' });
-    this.imageResults.set([]);
-    this.selectedImages.set([]);
-    this.imageSearchError.set('');
-    this.imageSearchTotal.set(0);
   }
 
   private readError(error: unknown, fallback: string): string {

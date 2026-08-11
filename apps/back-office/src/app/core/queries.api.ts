@@ -8,7 +8,7 @@ export class QueriesApi {
   private readonly api = inject(BackOfficeApiService);
 
   /**
-   * Generate CDN pictures from a keyword via junctionBack Gemini image API.
+   * Search Pexels CDN pictures via junctionBack.
    * `GET /queries?query=…&per_page=…` (max 10 on backend).
    */
   searchImages(query: string, page = 1, perPage = 10): Observable<ImageSearchResponse> {

@@ -36,70 +36,83 @@
       <label class="full">Tags<input formControlName="tags" placeholder="organic, staple (comma separated)" /></label>
       <label class="full">Description<textarea formControlName="description" rows="3"></textarea></label>
 
-      <section class="image-search full">
-        <div class="image-search-head">
+      <section class="image-picker full">
+        <div class="image-picker-head">
           <div>
-            <h3>Search for pictures or products</h3>
-            <p>Enter a product name, then add up to {{ maxImages }} pictures from the CDN results.</p>
+            <h3>Product pictures</h3>
+            <p>Optional — pick 1 to {{ maxImages }} images from Pexels or your device.</p>
           </div>
-          <button type="button" class="ghost" (click)="useProductNameForSearch()" [disabled]="!form.controls.name.value.trim()">
-            Use product name
-          </button>
-        </div>
-
-        <div class="image-search-bar">
-          <label class="query">
-            Product name
+          <div class="picker-actions">
+            <button
+              type="button"
+              class="ghost"
+              (click)="searchPexels()"
+              [disabled]="!canAddImages() || searchingPexels() || !form.controls.name.value.trim()"
+            >
+              {{ searchingPexels() ? 'Loading…' : 'Search Pexels' }}
+            </button>
+            <button type="button" class="ghost" (click)="openLocalPicker()" [disabled]="!canAddImages()">
+              Upload from device
+            </button>
             <input
-              [formControl]="imageSearchForm.controls.query"
-              placeholder="e.g. organic rice"
-              (keydown.enter)="$event.preventDefault(); searchImages()"
+              #localFileInput
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              hidden
+              (change)="onLocalFilesSelected($event)"
             />
-          </label>
-          <button type="button" class="primary" (click)="searchImages()" [disabled]="searchingImages()">
-            {{ searchingImages() ? 'Searching…' : 'Search' }}
-          </button>
+          </div>
         </div>
 
-        @if (imageSearchError()) {
-          <p class="image-error" role="alert">{{ imageSearchError() }}</p>
+        @if (imageError()) {
+          <p class="image-error" role="alert">{{ imageError() }}</p>
         }
 
         @if (selectedImages().length > 0) {
-          <div class="selected-images">
-            <div class="selected-images-head">
-              <strong>Selected pictures ({{ selectedImages().length }}/{{ maxImages }})</strong>
-              <button type="button" class="ghost" (click)="clearSelectedImages()">Clear all</button>
-            </div>
-            <div class="selected-images-grid">
-              @for (image of selectedImages(); track image.cdn_url; let i = $index) {
-                <article>
-                  <img [src]="image.thumbnail_url || image.cdn_url" [alt]="image.alt" />
-                  <div>
-                    <span>{{ i === 0 ? 'Main' : 'Extra ' + i }}</span>
-                    <button type="button" class="danger" (click)="removeSelectedImage(image.cdn_url)">Remove</button>
-                  </div>
-                </article>
+          <div class="selected-strip">
+            <p class="selected-label">
+              Selected ({{ selectedImages().length }}/{{ maxImages }})
+              @if (selectedImages().length === 1) {
+                <span>· first image is the main picture</span>
+              }
+            </p>
+            <div class="selected-previews">
+              @for (image of selectedImages(); track image.id; let i = $index) {
+                <figure class="preview-tile" [class.main]="i === 0">
+                  <button
+                    type="button"
+                    class="remove"
+                    (click)="removeSelectedImage(image.id)"
+                    [attr.aria-label]="'Remove ' + image.alt"
+                  >
+                    ×
+                  </button>
+                  <img [src]="image.previewUrl" [alt]="image.alt" />
+                  @if (i === 0) {
+                    <span class="main-badge">Main</span>
+                  }
+                </figure>
               }
             </div>
           </div>
         }
 
-        @if (imageResults().length > 0) {
-          <p class="results-meta">
-            {{ imageSearchTotal() }} results · select up to {{ maxImages }}
-            ({{ selectedImages().length }}/{{ maxImages }} chosen)
-          </p>
-          <div class="image-grid">
-            @for (image of imageResults(); track image.id) {
+        @if (pexelsResults().length > 0) {
+          <p class="results-meta">Pexels results — tap to add ({{ selectedImages().length }}/{{ maxImages }} selected)</p>
+          <div class="pexels-grid" role="listbox" aria-label="Pexels image results">
+            @for (image of pexelsResults(); track image.id) {
               <button
                 type="button"
-                class="image-card"
-                [class.selected]="isSelected(image)"
-                (click)="selectImage(image)"
+                class="pexels-card"
+                role="option"
+                [attr.aria-selected]="isPexelsSelected(image)"
+                [class.selected]="isPexelsSelected(image)"
+                [disabled]="!canAddImages() && !isPexelsSelected(image)"
+                (click)="selectPexelsImage(image)"
               >
-                <img [src]="image.thumbnail_url" [alt]="image.alt" loading="lazy" />
-                <span>{{ image.alt }}</span>
+                <img [src]="image.thumbnail_url || image.cdn_url" [alt]="image.alt" loading="lazy" />
+                <span class="sr-only">{{ image.alt }}</span>
               </button>
             }
           </div>
