@@ -2,13 +2,15 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { CurrentShopService } from '../../core/current-shop.service';
 import { ImageSearchResult, UserProfile } from '../../core/models';
 import { ProfileApi } from '../../core/profile.api';
 import { QueriesApi } from '../../core/queries.api';
 
-export type ProfileStep = 'compose' | 'done' | 'manage';
+export type ProfileStep = 'view' | 'compose' | 'edit';
 
 const BIO_SEPARATOR = '\n\n';
+const MAX_AVATAR_OPTIONS = 10;
 
 @Component({
   selector: 'app-profile-page',
@@ -19,6 +21,7 @@ const BIO_SEPARATOR = '\n\n';
 export class ProfilePage implements OnInit {
   private readonly profileApi = inject(ProfileApi);
   private readonly queriesApi = inject(QueriesApi);
+  private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
 
   readonly step = signal<ProfileStep>('compose');
@@ -40,10 +43,11 @@ export class ProfilePage implements OnInit {
   });
 
   ngOnInit(): void {
-    this.reloadProfile(true);
+    this.currentShop.ensureShop().subscribe();
+    this.reloadProfile();
   }
 
-  reloadProfile(openManageIfBio = false): void {
+  reloadProfile(): void {
     this.loading.set(true);
     this.error.set('');
     this.profileApi
@@ -53,21 +57,127 @@ export class ProfilePage implements OnInit {
         next: (profile) => {
           this.profile.set(profile);
           this.selectedAvatarUrl.set(profile.avatar_url ?? null);
-          if (openManageIfBio && profile.bio?.trim()) {
-            this.patchPromptsFromBio(profile);
-            this.step.set('manage');
+          if (profile.bio?.trim()) {
+            this.step.set('view');
           } else {
-            this.promptsForm.patchValue({
-              display_name: profile.display_name?.trim() || '',
-            });
-            this.step.set('compose');
+            this.resetToCompose(profile);
           }
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load profile.')),
       });
   }
 
-  saveProfile(targetStep: ProfileStep = 'done'): void {
+  openEdit(): void {
+    const profile = this.profile();
+    if (profile) {
+      this.patchPromptsFromBio(profile);
+      this.selectedAvatarUrl.set(profile.avatar_url ?? null);
+    }
+    this.imageResults.set([]);
+    this.error.set('');
+    this.success.set('');
+    this.step.set('edit');
+  }
+
+  cancelEdit(): void {
+    const profile = this.profile();
+    if (profile?.bio?.trim()) {
+      this.imageResults.set([]);
+      this.error.set('');
+      this.success.set('');
+      this.step.set('view');
+      return;
+    }
+    this.resetToCompose(profile);
+  }
+
+  saveProfile(): void {
+    this.persistProfile('view', 'Profile saved.');
+  }
+
+  updateProfile(): void {
+    this.persistProfile('view', 'Profile updated.');
+  }
+
+  deleteProfile(): void {
+    if (!confirm('Delete your shop profile bio? You can create it again.')) {
+      return;
+    }
+    this.saving.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.profileApi
+      .update({ bio: null })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (profile) => {
+          this.profile.set(profile);
+          this.resetToCompose(profile);
+          this.success.set('Profile deleted.');
+        },
+        error: (err: unknown) => this.error.set(this.readError(err, 'Could not delete profile.')),
+      });
+  }
+
+  deleteProfile(): void {
+    const query =
+      this.promptsForm.controls.prompt1.value.trim() ||
+      this.promptsForm.controls.display_name.value.trim();
+    if (!query) {
+      this.imageError.set('Enter a shop name or first prompt to search images.');
+      return;
+    }
+    this.imageError.set('');
+    this.searchingImages.set(true);
+    this.queriesApi
+      .searchImages(query, 1, MAX_AVATAR_OPTIONS)
+      .pipe(finalize(() => this.searchingImages.set(false)))
+      .subscribe({
+        next: (response) => this.imageResults.set(response.images.slice(0, MAX_AVATAR_OPTIONS)),
+        error: () => this.imageResults.set([]),
+      });
+  }
+
+  selectAvatar(image: ImageSearchResult): void {
+    const url = String(image.cdn_url);
+    this.selectedAvatarUrl.update((current) => (current === url ? null : url));
+  }
+
+  isAvatarSelected(image: ImageSearchResult): boolean {
+    return this.selectedAvatarUrl() === String(image.cdn_url);
+  }
+
+  savedParagraphs(): string[] {
+    const bio = this.profile()?.bio;
+    if (!bio?.trim()) {
+      return [];
+    }
+    return bio.split(BIO_SEPARATOR).map((value) => value.trim()).filter(Boolean);
+  }
+
+  shopNameLabel(): string {
+    return this.profile()?.display_name?.trim() || this.defaultShopName() || 'Your shop';
+  }
+
+  avatarInitials(): string {
+    const name = this.shopNameLabel();
+    const parts = name.split(/\s+/).filter(Boolean).slice(0, 2);
+    return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'S';
+  }
+
+  paragraphsPreview(): string[] {
+    const raw = this.promptsForm.getRawValue();
+    const built = buildBioFromPrompts(raw.prompt1, raw.prompt2, raw.prompt3);
+    return built ? built.split(BIO_SEPARATOR).filter(Boolean) : [];
+  }
+
+  hasParagraphPreview(): boolean {
+    return this.paragraphsPreview().length > 0;
+  }
+
+  readonly imageError = signal('');
+
+  private persistProfile(targetStep: ProfileStep, successMessage: string): void {
     if (this.promptsForm.invalid) {
       this.promptsForm.markAllAsTouched();
       return;
@@ -93,99 +203,35 @@ export class ProfilePage implements OnInit {
         next: (profile) => {
           this.profile.set(profile);
           this.patchPromptsFromBio(profile);
-          this.success.set(targetStep === 'manage' ? 'Profile updated.' : 'Profile saved.');
+          this.selectedAvatarUrl.set(profile.avatar_url ?? null);
+          this.imageResults.set([]);
+          this.success.set(successMessage);
           this.step.set(targetStep);
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not save profile.')),
       });
   }
 
-  updateProfile(): void {
-    this.saveProfile('manage');
-  }
-
-  openManage(): void {
-    const profile = this.profile();
-    if (profile) {
-      this.patchPromptsFromBio(profile);
-    }
-    this.error.set('');
-    this.success.set('');
-    this.step.set('manage');
-  }
-
-  deleteBio(): void {
-    this.saving.set(true);
-    this.error.set('');
-    this.success.set('');
-    this.profileApi
-      .update({ bio: null })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: (profile) => {
-          this.profile.set(profile);
-          this.promptsForm.patchValue({ prompt1: '', prompt2: '', prompt3: '' });
-          this.success.set('Bio deleted.');
-          this.step.set('compose');
-        },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not delete bio.')),
-      });
-  }
-
-  startOver(): void {
-    this.promptsForm.reset({
-      display_name: this.profile()?.display_name?.trim() || '',
+  private resetToCompose(profile: UserProfile | null): void {
+    this.promptsForm.patchValue({
+      display_name: profile?.display_name?.trim() || this.defaultShopName(),
       prompt1: '',
       prompt2: '',
       prompt3: '',
     });
     this.imageResults.set([]);
-    this.selectedAvatarUrl.set(this.profile()?.avatar_url ?? null);
-    this.success.set('');
-    this.error.set('');
+    this.selectedAvatarUrl.set(profile?.avatar_url ?? null);
     this.step.set('compose');
   }
 
-  loadAvatarOptions(): void {
-    const query =
-      this.promptsForm.controls.prompt1.value.trim() ||
-      this.promptsForm.controls.display_name.value.trim();
-    if (!query) {
-      return;
-    }
-    this.searchingImages.set(true);
-    this.queriesApi
-      .searchImages(query, 1, 10)
-      .pipe(finalize(() => this.searchingImages.set(false)))
-      .subscribe({
-        next: (response) => this.imageResults.set(response.images),
-        error: () => this.imageResults.set([]),
-      });
-  }
-
-  selectAvatar(image: ImageSearchResult): void {
-    const url = String(image.cdn_url);
-    this.selectedAvatarUrl.update((current) => (current === url ? null : url));
-  }
-
-  isAvatarSelected(image: ImageSearchResult): boolean {
-    return this.selectedAvatarUrl() === String(image.cdn_url);
-  }
-
-  paragraphsPreview(): string[] {
-    const raw = this.promptsForm.getRawValue();
-    const built = buildBioFromPrompts(raw.prompt1, raw.prompt2, raw.prompt3);
-    return built ? built.split(BIO_SEPARATOR).filter(Boolean) : [];
-  }
-
-  hasParagraphPreview(): boolean {
-    return this.paragraphsPreview().length > 0;
+  private defaultShopName(): string {
+    return this.currentShop.shop()?.name?.trim() || this.profile()?.display_name?.trim() || '';
   }
 
   private patchPromptsFromBio(profile: UserProfile): void {
     const [prompt1, prompt2, prompt3] = parseBioParagraphs(profile.bio);
     this.promptsForm.patchValue({
-      display_name: profile.display_name?.trim() || '',
+      display_name: profile.display_name?.trim() || this.defaultShopName(),
       prompt1,
       prompt2,
       prompt3,
