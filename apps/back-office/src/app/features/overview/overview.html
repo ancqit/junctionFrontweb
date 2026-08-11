@@ -1,5 +1,5 @@
 <header class="page-head">
-  <div>
+  <div class="head-main">
     <p class="date-line">{{ todayLabel() }}</p>
     @if (shopReady()) {
       @if (shop(); as shop) {
@@ -8,6 +8,15 @@
         @if (shopTypeLabelText()) {
           <p class="meta type">{{ shopTypeLabelText() }}</p>
         }
+        @if (countdown(); as plan) {
+          <p class="plan-mini">
+            {{ plan.planName }}
+            @if (plan.endsAt) {
+              · Expires {{ plan.endsAt | date:'mediumDate' }}
+            }
+          </p>
+        }
+        <button type="button" class="ghost compact edit-btn" (click)="openShopEditor()">Edit shop</button>
       }
     } @else if (shopConfigured()) {
       <h1>Edit shop details</h1>
@@ -18,7 +27,19 @@
     }
   </div>
   @if (shopReady()) {
-    <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
+    <div class="head-actions">
+      <div class="open-toggle-wrap">
+        <span class="status-pill" [class.is-open]="shopOpen()">{{ shopStatusLabel() }}</span>
+        <label class="open-toggle" [attr.aria-label]="shopOpen() ? 'Mark shop closed' : 'Mark shop open'">
+          <input type="checkbox" [checked]="shopOpen()" (change)="toggleShopOpen()" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      @if (statusError()) {
+        <p class="error head-error" role="alert">{{ statusError() }}</p>
+      }
+      <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
+    </div>
   }
 </header>
 
@@ -29,7 +50,7 @@
     <div class="card-head">
       <p class="eyebrow">SHOP PROFILE</p>
       <h2>Shop name, type & location</h2>
-      <p class="sub">Save to unlock Overview.</p>
+      <p class="sub">Save name, hours, and location to unlock Overview.</p>
     </div>
 
     @if (shopError()) {
@@ -74,6 +95,14 @@
           <input formControlName="locality" placeholder="Enter locality" />
         }
       </label>
+      <label>
+        Entry time
+        <input type="time" formControlName="open_time" />
+      </label>
+      <label>
+        Closing time
+        <input type="time" formControlName="closed_time" />
+      </label>
     </div>
 
     <div class="actions">
@@ -91,72 +120,6 @@
   }
 
   <div class="dashboard-grid">
-    @if (countdown(); as plan) {
-      <section class="card plan-card" [attr.data-type]="plan.planType" [attr.data-expired]="plan.isExpired">
-        <div class="card-head inline">
-          <div>
-            <p class="eyebrow">{{ plan.isTrial ? 'FREE TRIAL' : 'YEARLY PLAN' }}</p>
-            <h2>{{ plan.message }}</h2>
-            <p class="sub">
-              {{ plan.planName }}
-              @if (plan.isTrial) {
-                · 15-day trial
-              } @else {
-                · yearly
-              }
-            </p>
-          </div>
-          @if (plan.endsAt) {
-            <div class="expiry-chip">
-              <span>Expires</span>
-              <strong>{{ plan.endsAt | date:'mediumDate' }}</strong>
-            </div>
-          }
-        </div>
-        @if (plan.isExpired || plan.isTrial) {
-          <a routerLink="/back-office/plans" class="ghost compact link-inline">View plans →</a>
-        }
-      </section>
-    }
-
-    <section class="card status-card" [formGroup]="hoursForm" [attr.data-open]="shopOpen()">
-      <div class="status-head">
-        <div>
-          <p class="eyebrow">SHOP STATUS</p>
-          <h2>Set opening hours</h2>
-          <p class="sub">Choose when you open and close. The slider shows if you’re open right now.</p>
-        </div>
-        <div class="open-toggle-wrap">
-          <span class="status-pill" [class.is-open]="shopOpen()">{{ shopStatusLabel() }}</span>
-          <label class="open-toggle" [attr.aria-label]="shopOpen() ? 'Mark shop closed' : 'Mark shop open'">
-            <input type="checkbox" [checked]="shopOpen()" (change)="toggleShopOpen()" />
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="hours-row">
-        <label>
-          Opens
-          <input type="time" formControlName="opening_time" />
-        </label>
-        <label>
-          Closes
-          <input type="time" formControlName="closing_time" />
-        </label>
-        <button type="button" class="primary compact" (click)="saveShopHours()" [disabled]="hoursSaving()">
-          {{ hoursSaving() ? 'Saving…' : 'Save hours' }}
-        </button>
-      </div>
-
-      @if (hoursError()) {
-        <p class="error" role="alert">{{ hoursError() }}</p>
-      }
-      @if (hoursSuccess()) {
-        <p class="success" role="status">{{ hoursSuccess() }}</p>
-      }
-    </section>
-
     <section class="metrics">
       <article>
         <p>Orders</p>
@@ -217,27 +180,20 @@
       </div>
     </section>
 
-    <section class="card shop-row">
-      @if (shop(); as shop) {
-        <div>
-          <p class="eyebrow">YOUR SHOP</p>
-          <h2>{{ shop.name }}</h2>
-          <p class="sub">{{ shop.locality }} · {{ shop.city }}</p>
-        </div>
-        <button type="button" class="ghost compact" (click)="openShopEditor()">Edit shop</button>
-      }
-    </section>
-
     <section class="card next-card">
-      <p class="eyebrow">GET STARTED</p>
-      <div class="next-links">
+      <p class="eyebrow">QUICK ACTIONS</p>
+      <div class="next-links three">
         <a routerLink="/back-office/billing" class="next-link">
-          <strong>Create a bill</strong>
+          <strong>Starter bill</strong>
           <span>Search products and save orders</span>
         </a>
         <a routerLink="/back-office/orders" class="next-link">
           <strong>Review orders</strong>
           <span>See every bill you created</span>
+        </a>
+        <a routerLink="/back-office/products" class="next-link">
+          <strong>Review products</strong>
+          <span>Browse and manage your catalog</span>
         </a>
       </div>
     </section>
