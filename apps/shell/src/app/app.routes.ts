@@ -12,8 +12,9 @@ import { Login } from './login/login';
 const redirectHome: RedirectFunction = () => {
   const tokens = inject(TokenService);
   const session = inject(SessionService);
-  if (tokens.isAuthenticated && session.role) {
-    return homePathForRole(session.role).replace(/^\//, '');
+  // Valid access JWT is enough — missing session.role must not bounce owners to /login.
+  if (tokens.isAuthenticated) {
+    return homePathForRole(session.role ?? 'owner').replace(/^\//, '');
   }
   return 'login';
 };

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, finalize, shareReplay, tap, throwError } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   homePathForRole,
@@ -21,6 +21,8 @@ export class AuthService {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private refreshTimer?: ReturnType<typeof setTimeout>;
+  /** Single-flight refresh so parallel 401s do not stampede POST /auth/refresh. */
+  private refreshInFlight$: Observable<RefreshResponse> | null = null;
   readonly authenticated$ = new BehaviorSubject(this.tokens.isAuthenticated);
 
   get role(): UserRole | null {
@@ -50,15 +52,32 @@ export class AuthService {
       .pipe(tap((value) => this.acceptSession(value)));
   }
 
+  /**
+   * junctionBack `POST /auth/refresh` — re-issues access JWT using the current Bearer token.
+   * Shared across interceptor retries so concurrent 401s do not clear a fresh login.
+   */
   refresh(): Observable<RefreshResponse> {
-    return this.api.post<RefreshResponse>('/auth/refresh', {}).pipe(
-      tap((value) => {
-        this.tokens.updateAccessToken(value.access_token);
-        this.persistUser(value);
-        this.authenticated$.next(true);
-        this.scheduleRefresh();
-      }),
-    );
+    if (!this.tokens.accessToken) {
+      return throwError(() => new Error('No access token to refresh'));
+    }
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.api.post<RefreshResponse>('/auth/refresh', {}).pipe(
+        tap((value) => {
+          if (!value?.access_token) {
+            return;
+          }
+          this.tokens.updateAccessToken(value.access_token);
+          this.persistUser(value);
+          this.authenticated$.next(true);
+          this.scheduleRefresh();
+        }),
+        finalize(() => {
+          this.refreshInFlight$ = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    }
+    return this.refreshInFlight$;
   }
 
   startSession(): void {
@@ -73,6 +92,7 @@ export class AuthService {
 
   logout(): void {
     clearTimeout(this.refreshTimer);
+    this.refreshInFlight$ = null;
     this.tokens.clear();
     this.session.clear();
     this.authenticated$.next(false);
@@ -80,6 +100,11 @@ export class AuthService {
   }
 
   private acceptSession(value: RefreshResponse): void {
+    if (!value?.access_token) {
+      return;
+    }
+    clearTimeout(this.refreshTimer);
+    this.refreshInFlight$ = null;
     this.tokens.saveAccessToken(value.access_token);
     this.persistUser(value);
     this.authenticated$.next(true);
@@ -97,9 +122,20 @@ export class AuthService {
 
   private scheduleRefresh(): void {
     clearTimeout(this.refreshTimer);
-    this.refreshTimer = setTimeout(
-      () => this.refresh().subscribe({ error: () => this.logout() }),
-      this.tokens.millisecondsUntilRefresh(),
-    );
+    if (!this.tokens.isAuthenticated) {
+      return;
+    }
+    this.refreshTimer = setTimeout(() => {
+      this.refresh().subscribe({
+        // Do not logout on transient refresh errors while the access token is still valid.
+        error: () => {
+          if (this.tokens.isExpired) {
+            this.logout();
+          } else if (this.tokens.isAuthenticated) {
+            this.scheduleRefresh();
+          }
+        },
+      });
+    }, this.tokens.millisecondsUntilRefresh());
   }
 }
