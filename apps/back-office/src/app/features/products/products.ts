@@ -1,11 +1,10 @@
 import { CurrencyPipe, TitleCasePipe } from '@angular/common';
-import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, from, Observable, of } from 'rxjs';
 import { concatMap, last, map, switchMap } from 'rxjs/operators';
 import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
 import { ProductsApi } from '../../core/products.api';
-import { resolveApiBaseUrl } from '../../core/store.config';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
 const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
@@ -34,7 +33,7 @@ export interface ProductImageDraft {
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
-export class ProductsPage implements OnInit {
+export class ProductsPage implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
   private readonly fb = inject(FormBuilder);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('localFileInput');
@@ -42,6 +41,8 @@ export class ProductsPage implements OnInit {
   readonly maxImages = MAX_PRODUCT_IMAGES;
   readonly productStatusOptions = PRODUCT_STATUS_OPTIONS;
   readonly products = signal<Product[]>([]);
+  /** Object URLs for CatalogReader-protected stored images (keyed by product id). */
+  readonly storedImageUrls = signal<Record<string, string>>({});
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
@@ -71,6 +72,10 @@ export class ProductsPage implements OnInit {
     this.reload();
   }
 
+  ngOnDestroy(): void {
+    this.revokeStoredImageUrls();
+  }
+
   reload(): void {
     this.loading.set(true);
     this.error.set('');
@@ -78,7 +83,10 @@ export class ProductsPage implements OnInit {
       .list()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (rows) => this.products.set(rows),
+        next: (rows) => {
+          this.products.set(rows);
+          this.hydrateStoredImages(rows);
+        },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load products.')),
       });
   }
@@ -267,15 +275,43 @@ export class ProductsPage implements OnInit {
   }
 
   productImageSrc(product: Product): string | null {
+    const cached = this.storedImageUrls()[product.id];
+    if (cached) {
+      return cached;
+    }
     const gallery = product.images ?? [];
     const hero = gallery[0] ?? product.image;
     if (hero?.cdn) {
       return hero.cdn;
     }
-    if (hero?.stored_image_id) {
-      return `${resolveApiBaseUrl()}/products/images/${hero.stored_image_id}`;
-    }
+    // stored_image_id requires Bearer (CatalogReader) — hydrated async into storedImageUrls
     return product.image_url || product.image_cdn || product.image?.cdn || null;
+  }
+
+  private hydrateStoredImages(products: Product[]): void {
+    this.revokeStoredImageUrls();
+    for (const product of products) {
+      const gallery = product.images ?? [];
+      const hero = gallery[0] ?? product.image;
+      if (hero?.cdn || !hero?.stored_image_id) {
+        continue;
+      }
+      const productId = product.id;
+      const imageId = hero.stored_image_id;
+      this.api.fetchStoredImage(imageId).subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          this.storedImageUrls.update((current) => ({ ...current, [productId]: objectUrl }));
+        },
+      });
+    }
+  }
+
+  private revokeStoredImageUrls(): void {
+    for (const url of Object.values(this.storedImageUrls())) {
+      URL.revokeObjectURL(url);
+    }
+    this.storedImageUrls.set({});
   }
 
   private persistProductImages(

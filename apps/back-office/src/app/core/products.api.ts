@@ -57,6 +57,14 @@ export class ProductsApi {
     return this.api.post<Product>(`/products/${productId}/image/cdn`, { cdn });
   }
 
+  /**
+   * CatalogReader image binary — must send user (or session) JWT.
+   * Browser `<img src>` cannot attach Authorization, so callers should blob+objectURL.
+   */
+  fetchStoredImage(storedImageId: string): Observable<Blob> {
+    return this.api.getBlob(`/products/images/${storedImageId}`, 'user');
+  }
+
   private withStoreId<T>(fn: (storeId: string) => Observable<T>): Observable<T> {
     return this.currentShop.ensureShop().pipe(
       switchMap((shop) => {

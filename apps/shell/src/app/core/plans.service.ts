@@ -105,7 +105,7 @@ export class PlansService {
 
   /** Public `GET /plans` → `{ plans: PlanOption[] }`. */
   list(): Observable<PlanOption[]> {
-    return this.api.get<PlansListResponse | PlanOption[]>('/plans').pipe(
+    return this.api.get<PlansListResponse | PlanOption[]>('/plans', undefined, 'none').pipe(
       map((res) => alignPlanCatalog(Array.isArray(res) ? res : (res?.plans ?? PLAN_CATALOG))),
       catchError(() => of(PLAN_CATALOG)),
     );

@@ -62,8 +62,19 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     // Prefer live TokenService — authenticated$ can be stale after remote logout.
-    if (this.tokens.isAuthenticated && this.auth.role) {
-      void this.router.navigateByUrl(this.auth.homePath());
+    if (this.tokens.isAuthenticated) {
+      if (this.auth.role) {
+        void this.router.navigateByUrl(this.auth.homePath());
+        return;
+      }
+      // Token without role (admin often hit this) — restore from GET /auth/me.
+      this.auth.ensureSessionRole().subscribe({
+        next: () => void this.router.navigateByUrl(this.auth.homePath()),
+        error: () => {
+          this.loadPlans();
+          this.loadTerms();
+        },
+      });
       return;
     }
     this.loadPlans();

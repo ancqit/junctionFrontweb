@@ -1,8 +1,10 @@
 import { loadRemoteModule } from '@angular-architects/native-federation';
 import { inject } from '@angular/core';
 import { RedirectFunction, Routes } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
+import { AuthService } from './core/auth.service';
 import { authGuard } from './core/auth.guard';
-import { homePathForRole } from './core/auth.models';
+import { homePathForRole, normalizeUserRole } from './core/auth.models';
 import { authorGuard } from './core/author.guard';
 import { SessionService } from './core/session.service';
 import { TokenService } from './core/token.service';
@@ -13,10 +15,19 @@ import { RemoteLoadErrorPage } from './remote-load-error';
 const redirectHome: RedirectFunction = () => {
   const tokens = inject(TokenService);
   const session = inject(SessionService);
-  if (tokens.isAuthenticated) {
-    return homePathForRole(session.role ?? 'owner').replace(/^\//, '');
+  const auth = inject(AuthService);
+  if (!tokens.isAuthenticated) {
+    return 'login';
   }
-  return 'login';
+  const localRole = session.role ?? (session.user ? normalizeUserRole(session.user) : null);
+  if (localRole) {
+    return homePathForRole(localRole).replace(/^\//, '');
+  }
+  // Token without session role (admin bounce case) — ask junctionBack.
+  return auth.ensureSessionRole().pipe(
+    map((role) => homePathForRole(role).replace(/^\//, '')),
+    catchError(() => of('login')),
+  );
 };
 
 async function loadBackOfficeRoutes(): Promise<Routes> {

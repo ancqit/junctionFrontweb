@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { catchError, finalize, of, switchMap } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
 import { EmployeesApi } from '../../core/employees.api';
 import { buildPlanCountdown, PlanCountdown } from '../../core/plan-countdown';
@@ -181,7 +181,14 @@ export class OverviewPage implements OnInit {
       ? this.shopsApi.update(existing.id, payload)
       : this.shopsApi.create({ ...payload, is_open: false });
 
-    full$.subscribe({
+    // Register city/locality via guest session JWT (junctionBack JunctionSession).
+    this.locationsApi
+      .addJunction(payload.city, payload.locality)
+      .pipe(
+        catchError(() => of(null)),
+        switchMap(() => full$),
+      )
+      .subscribe({
       next: (shop) => {
         this.shopSaving.set(false);
         this.applySavedShop(shop, payload, shopType);
