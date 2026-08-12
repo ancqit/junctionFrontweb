@@ -14,11 +14,12 @@ export class SessionService {
   private readonly session$ = new BehaviorSubject<StoredSession | null>(this.read());
 
   get user(): AuthUser | null {
-    return this.session$.value?.user ?? null;
+    // Re-read so back-office LogoutService clearing localStorage is visible to the shell.
+    return this.syncFromStorage()?.user ?? null;
   }
 
   get role(): UserRole | null {
-    return this.session$.value?.role ?? null;
+    return this.syncFromStorage()?.role ?? null;
   }
 
   readonly changes$ = this.session$.asObservable();
@@ -37,6 +38,16 @@ export class SessionService {
   clear(): void {
     localStorage.removeItem(SESSION_KEY);
     this.session$.next(null);
+  }
+
+  /** Keep in-memory session aligned with localStorage (shared with the back-office remote). */
+  private syncFromStorage(): StoredSession | null {
+    const stored = this.read();
+    const current = this.session$.value;
+    if (stored?.role !== current?.role || stored?.user?.id !== current?.user?.id) {
+      this.session$.next(stored);
+    }
+    return stored;
   }
 
   private read(): StoredSession | null {

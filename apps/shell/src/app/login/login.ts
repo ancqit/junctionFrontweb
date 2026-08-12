@@ -20,6 +20,7 @@ import {
 import { RecaptchaService } from '../core/recaptcha.service';
 import { SessionService } from '../core/session.service';
 import { TermsAndConditions, TermsService } from '../core/terms.service';
+import { TokenService } from '../core/token.service';
 
 @Component({
   selector: 'app-login',
@@ -35,6 +36,7 @@ export class Login implements OnInit {
   private readonly termsApi = inject(TermsService);
   private readonly recaptcha = inject(RecaptchaService);
   private readonly router = inject(Router);
+  private readonly tokens = inject(TokenService);
 
   readonly step = signal<'details' | 'otp' | 'plans'>('details');
   readonly busy = signal(false);
@@ -59,7 +61,8 @@ export class Login implements OnInit {
   });
 
   ngOnInit(): void {
-    if (this.auth.authenticated$.value && this.auth.role) {
+    // Prefer live TokenService — authenticated$ can be stale after remote logout.
+    if (this.tokens.isAuthenticated && this.auth.role) {
       void this.router.navigateByUrl(this.auth.homePath());
       return;
     }
