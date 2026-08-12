@@ -21,6 +21,7 @@ const PUBLIC_EXACT = new Set([
   '/auth/login',
   '/auth/register',
   '/auth/recaptcha-params',
+  '/auth/roles',
 ]);
 
 /** Paths that require a junction.today session JWT (JunctionSession). */

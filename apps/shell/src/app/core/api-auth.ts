@@ -16,6 +16,7 @@ const PUBLIC_EXACT = new Set([
   '/auth/login',
   '/auth/register',
   '/auth/recaptcha-params',
+  '/auth/roles',
 ]);
 
 export function requiresGuestSession(path: string): boolean {

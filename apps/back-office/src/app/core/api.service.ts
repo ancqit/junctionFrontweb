@@ -52,6 +52,13 @@ export class BackOfficeApiService {
     );
   }
 
+  /** Binary GET (e.g. CatalogReader `GET /products/images/:id`) with the correct Bearer. */
+  getBlob(path: string, auth?: ApiAuthMode): Observable<Blob> {
+    return this.withAuthHeaders('GET', path, auth, (headers) =>
+      this.http.get(this.url(path), { headers, responseType: 'blob' }),
+    );
+  }
+
   private withAuthHeaders<T>(
     method: string,
     path: string,
