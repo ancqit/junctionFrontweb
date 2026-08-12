@@ -1,6 +1,8 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { homePathForRole, UserRole } from './auth.models';
+import { Observable, catchError, map, of } from 'rxjs';
+import { AuthService } from './auth.service';
+import { homePathForRole, normalizeUserRole, UserRole } from './auth.models';
 import { SessionService } from './session.service';
 import { TokenService } from './token.service';
 
@@ -18,9 +20,7 @@ export type AuthorGuardOptions = {
  * Reusable authorization guard for role-based routes.
  *
  * Use on any route that should only open for specific login roles.
- * Easy to extend later (more roles, permissions, feature flags).
- * Prefer including `'admin'` when a route should stay open to platform admins
- * who already have access to the entire application.
+ * Prefer including `'admin'` when a route should stay open to platform admins.
  *
  * @example
  * canActivate: [authGuard, authorGuard('admin')]
@@ -32,26 +32,43 @@ export function authorGuard(
 ): CanActivateFn {
   const allowedRoles = (Array.isArray(allowed) ? allowed : [allowed]) as UserRole[];
 
-  return (): boolean | UrlTree => {
+  return (): boolean | UrlTree | Observable<boolean | UrlTree> => {
     const tokens = inject(TokenService);
     const session = inject(SessionService);
+    const auth = inject(AuthService);
     const router = inject(Router);
     const loginUrl = options.loginUrl ?? '/login';
 
     if (!tokens.isAuthenticated) {
-      return router.createUrlTree([loginUrl]);
+      return router.parseUrl(loginUrl);
     }
 
-    const role = session.role ?? 'owner';
-    if (allowedRoles.includes(role)) {
+    const localRole = session.role ?? (session.user ? normalizeUserRole(session.user) : null);
+    if (localRole && allowedRoles.includes(localRole)) {
       return true;
     }
 
-    const forbidden =
-      typeof options.forbiddenUrl === 'function'
-        ? options.forbiddenUrl(role)
-        : (options.forbiddenUrl ?? homePathForRole(role));
-
-    return router.createUrlTree([forbidden]);
+    // JWT present but role missing/stale (admin often stored as owner locally) —
+    // rehydrate from junctionBack GET /auth/me before bouncing away.
+    return auth.ensureSessionRole(true).pipe(
+      map((role) => {
+        if (allowedRoles.includes(role)) {
+          return true;
+        }
+        const forbidden =
+          typeof options.forbiddenUrl === 'function'
+            ? options.forbiddenUrl(role)
+            : (options.forbiddenUrl ?? homePathForRole(role));
+        return router.parseUrl(forbidden);
+      }),
+      catchError((err: unknown) => {
+        const status = (err as { status?: number })?.status;
+        if (status === 401) {
+          return of(router.parseUrl(loginUrl));
+        }
+        const fallback = localRole ?? 'owner';
+        return of(router.parseUrl(homePathForRole(fallback)));
+      }),
+    );
   };
 }

@@ -117,7 +117,7 @@ export class AdminApi {
    */
   listShopRows(): Observable<AdminShopRow[]> {
     return forkJoin({
-      shops: this.listShops(),
+      shops: this.listShops().pipe(catchError(() => of([] as Shop[]))),
       users: this.listUsers().pipe(catchError(() => of([] as AdminUserRecord[]))),
       products: this.api
         .get<ProductStoreRef[]>('/products')
