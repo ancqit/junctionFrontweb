@@ -63,12 +63,24 @@ export class ShopsApi {
   }
 }
 
+/** junctionBack `AddJunctionResponse` (`POST /locations/add-junction`). */
+export interface AddJunctionResult {
+  city: string;
+  locality: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+/**
+ * Location catalog — junctionBack requires a guest session JWT (`JunctionSession`),
+ * not the owner access JWT. ApiService resolves auth mode `session` for /locations/*.
+ */
 @Injectable({ providedIn: 'root' })
 export class LocationsApi {
   private readonly api = inject(BackOfficeApiService);
 
   cities(): Observable<string[]> {
-    return this.api.get<CityListResponse | string[]>('/locations/cities').pipe(
+    return this.api.get<CityListResponse | string[]>('/locations/cities', undefined, 'session').pipe(
       map((res) => (Array.isArray(res) ? res : (res?.cities ?? []))),
       catchError(() => of([])),
     );
@@ -80,11 +92,20 @@ export class LocationsApi {
       return of([]);
     }
     return this.api
-      .get<LocalityListResponse | string[]>('/locations/localities', { city: trimmed })
+      .get<LocalityListResponse | string[]>('/locations/localities', { city: trimmed }, 'session')
       .pipe(
         map((res) => (Array.isArray(res) ? res : (res?.localities ?? []))),
         catchError(() => of([])),
       );
+  }
+
+  /** Geocode + upsert city/locality — session JWT required. */
+  addJunction(city: string, locality: string): Observable<AddJunctionResult> {
+    return this.api.post<AddJunctionResult>(
+      '/locations/add-junction',
+      { city: city.trim(), locality: locality.trim() },
+      'session',
+    );
   }
 }
 

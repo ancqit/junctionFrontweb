@@ -29,7 +29,7 @@ export class TermsService {
   private readonly api = inject(ApiService);
 
   get(): Observable<TermsAndConditions> {
-    return this.api.get<TermsAndConditions>('/terms-and-conditions').pipe(
+    return this.api.get<TermsAndConditions>('/terms-and-conditions', undefined, 'none').pipe(
       catchError(() => of(FALLBACK_TERMS)),
     );
   }

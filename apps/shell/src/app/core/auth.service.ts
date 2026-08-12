@@ -11,6 +11,7 @@ import {
   resolveLoginRole,
   UserRole,
 } from './auth.models';
+import { GuestSessionService } from './guest-session.service';
 import { SessionService } from './session.service';
 import { TokenService } from './token.service';
 
@@ -19,6 +20,7 @@ export class AuthService {
   private readonly api = inject(ApiService);
   private readonly tokens = inject(TokenService);
   private readonly session = inject(SessionService);
+  private readonly guestSession = inject(GuestSessionService);
   private readonly router = inject(Router);
   private refreshTimer?: ReturnType<typeof setTimeout>;
   /** Single-flight refresh so parallel 401s do not stampede POST /auth/refresh. */
@@ -39,16 +41,20 @@ export class AuthService {
   }
 
   requestOtp(payload: OtpRequest): Observable<OtpChallenge> {
-    return this.api.post<OtpChallenge>('/auth/otp/request', payload);
+    return this.api.post<OtpChallenge>('/auth/otp/request', payload, 'none');
   }
 
   verifyOtp(otp: string, phoneNumber: string, sessionInfo: string): Observable<OtpVerification> {
     return this.api
-      .post<OtpVerification>('/auth/otp/verify', {
-        otp,
-        phone_number: phoneNumber,
-        session_info: sessionInfo,
-      })
+      .post<OtpVerification>(
+        '/auth/otp/verify',
+        {
+          otp,
+          phone_number: phoneNumber,
+          session_info: sessionInfo,
+        },
+        'none',
+      )
       .pipe(tap((value) => this.acceptSession(value)));
   }
 
@@ -95,6 +101,7 @@ export class AuthService {
     this.refreshInFlight$ = null;
     this.tokens.clear();
     this.session.clear();
+    this.guestSession.clear();
     this.authenticated$.next(false);
     void this.router.navigateByUrl('/login');
   }
