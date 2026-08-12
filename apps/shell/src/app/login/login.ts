@@ -96,6 +96,8 @@ export class Login implements OnInit {
     this.loadTerms();
     this.termsModalOpen.set(true);
     this.termsViewed.set(true);
+    this.acceptTerms.set(true);
+    this.error.set('');
   }
 
   closeTermsModal(): void {
