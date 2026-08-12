@@ -71,10 +71,10 @@ export class AuthService {
           this.authenticated$.next(true);
           this.scheduleRefresh();
         }),
+        shareReplay({ bufferSize: 1, refCount: true }),
         finalize(() => {
           this.refreshInFlight$ = null;
         }),
-        shareReplay({ bufferSize: 1, refCount: true }),
       );
     }
     return this.refreshInFlight$;
@@ -127,11 +127,14 @@ export class AuthService {
     }
     this.refreshTimer = setTimeout(() => {
       this.refresh().subscribe({
-        // Do not logout on transient refresh errors while the access token is still valid.
-        error: () => {
-          if (this.tokens.isExpired) {
+        error: (err: unknown) => {
+          const status = (err as { status?: number })?.status;
+          // Only end the session when junctionBack rejects the access JWT.
+          if (status === 401) {
             this.logout();
-          } else if (this.tokens.isAuthenticated) {
+            return;
+          }
+          if (this.tokens.isAuthenticated) {
             this.scheduleRefresh();
           }
         },

@@ -7,17 +7,44 @@ import { authorGuard } from './core/author.guard';
 import { SessionService } from './core/session.service';
 import { TokenService } from './core/token.service';
 import { Login } from './login/login';
+import { RemoteLoadErrorPage } from './remote-load-error';
 
 /** Authenticated users land on their role home; everyone else on login. */
 const redirectHome: RedirectFunction = () => {
   const tokens = inject(TokenService);
   const session = inject(SessionService);
-  // Valid access JWT is enough — missing session.role must not bounce owners to /login.
   if (tokens.isAuthenticated) {
     return homePathForRole(session.role ?? 'owner').replace(/^\//, '');
   }
   return 'login';
 };
+
+async function loadBackOfficeRoutes(): Promise<Routes> {
+  try {
+    const module = await loadRemoteModule('backOffice', './Routes');
+    return module.APP_ROUTES as Routes;
+  } catch (firstError) {
+    console.error('back-office remote load failed, retrying once', firstError);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const module = await loadRemoteModule('backOffice', './Routes');
+      return module.APP_ROUTES as Routes;
+    } catch (secondError) {
+      console.error('back-office remote load failed after retry', secondError);
+      // Stay authenticated — do not fall back to previous URL (/login).
+      return [
+        {
+          path: '',
+          component: RemoteLoadErrorPage,
+        },
+        {
+          path: '**',
+          component: RemoteLoadErrorPage,
+        },
+      ];
+    }
+  }
+}
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -37,7 +64,7 @@ export const routes: Routes = [
     path: 'back-office',
     // Viewers may enter the deactivated Activate + Plans area; owners/admins get the full app.
     canActivate: [authGuard, authorGuard(['owner', 'admin', 'viewer'])],
-    loadChildren: () => loadRemoteModule('backOffice', './Routes').then((module) => module.APP_ROUTES),
+    loadChildren: () => loadBackOfficeRoutes(),
   },
   { path: '', pathMatch: 'full', redirectTo: redirectHome },
   { path: '**', redirectTo: redirectHome },

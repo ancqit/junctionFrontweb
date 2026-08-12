@@ -7,7 +7,7 @@ import { TokenService } from './token.service';
 
 /**
  * Attaches junctionBack Bearer access JWT and retries once via POST /auth/refresh on 401.
- * Only logs out when refresh fails with 401 (invalid/expired token) — not on network blips.
+ * Only logs out when refresh itself returns 401 (invalid/expired token).
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const config = inject(API_CONFIG);
@@ -40,8 +40,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         }),
         catchError((refreshError: unknown) => {
           const status = (refreshError as HttpErrorResponse)?.status;
-          // junctionBack returns 401 for invalid/expired access tokens — only then clear session.
-          if (status === 401 || tokens.isExpired) {
+          // Do not logout on network/5xx — that bounced shell → back-office → login.
+          if (status === 401) {
             auth.logout();
           }
           return throwError(() => refreshError);
