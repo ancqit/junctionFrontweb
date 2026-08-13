@@ -5,6 +5,9 @@
       @if (shop(); as shop) {
         <h1>{{ shop.name }}</h1>
         <p class="meta">{{ shop.locality }} · {{ shop.city }}</p>
+        @if (shop.address) {
+          <p class="meta address">{{ shop.address }}</p>
+        }
         @if (shopTypeLabelText()) {
           <p class="meta type">{{ shopTypeLabelText() }}</p>
         }
@@ -108,6 +111,14 @@
           <small class="field-hint">Please choose a locality.</small>
         }
       </div>
+      <label class="full">
+        Address
+        <input
+          formControlName="address"
+          placeholder="Shop no., street, landmark"
+          autocomplete="street-address"
+        />
+      </label>
       <label>
         Entry time
         <input type="time" formControlName="open_time" />

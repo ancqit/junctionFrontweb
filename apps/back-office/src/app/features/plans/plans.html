@@ -178,7 +178,7 @@
           @if (plan.price_inr === 0) {
             Free
           } @else {
-            {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/mo</small>
+            {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/year</small>
           }
         </p>
         <p class="limit">{{ productLimitLabel(plan) }}</p>
@@ -209,5 +209,61 @@
         }
       </article>
     }
+  </section>
+
+  <section class="product-pack" aria-labelledby="product-pack-title">
+    <div>
+      <p class="eyebrow">PRODUCT BUCKET</p>
+      <h2 id="product-pack-title">Extra product pack</h2>
+      <p>
+        After your shop plan allowance is used, add capacity in packs of
+        {{ packSize() }} products for
+        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }} each
+        (junctionBack product bucket).
+      </p>
+      @if (bucket(); as bucket) {
+        <dl class="pack-stats">
+          <div>
+            <dt>Plan allowance</dt>
+            <dd>{{ bucket.plan_limit ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Listed products</dt>
+            <dd>{{ bucket.products_count }}</dd>
+          </div>
+          <div>
+            <dt>Extra slots</dt>
+            <dd>{{ bucket.extra_slots }}</dd>
+          </div>
+          <div>
+            <dt>Total capacity</dt>
+            <dd>{{ bucket.capacity ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Remaining</dt>
+            <dd>{{ bucket.remaining ?? '—' }}</dd>
+          </div>
+        </dl>
+      } @else if (shop()) {
+        <p class="muted">Could not load product capacity for this shop yet.</p>
+      } @else {
+        <p class="muted">Select a shop to see product capacity.</p>
+      }
+    </div>
+    <div class="pack-actions">
+      <p class="pack-price">
+        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}
+        <small>+{{ packSize() }} products</small>
+      </p>
+      <button
+        type="button"
+        class="primary"
+        (click)="purchaseProductPack()"
+        [disabled]="bucketBusy() || !shop()?.id"
+      >
+        {{ bucketBusy() ? 'Purchasing…' : 'Buy product pack' }}
+      </button>
+      <a routerLink="/back-office/products" class="ghost">Open Products</a>
+    </div>
   </section>
 }

@@ -3,8 +3,22 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { FREE_TRIAL_DAYS, PlanOption, PlanSummary, PlanType } from '../../core/models';
+import {
+  FREE_TRIAL_DAYS,
+  PlanOption,
+  PlanSummary,
+  PlanType,
+  PRODUCT_PACK_PRICE_INR,
+  PRODUCT_PACK_SIZE,
+} from '../../core/models';
+import { PaymentsApi, ShopPayment } from '../../core/payments.api';
 import { PlanApplication, planDisplayName, PlansApi } from '../../core/plans.api';
+import {
+  DEFAULT_PACK_PRICE_INR,
+  DEFAULT_PACK_SIZE,
+  ProductBucket,
+  ProductBucketApi,
+} from '../../core/product-bucket.api';
 import { Shop, ShopsApi } from '../../core/shops.api';
 
 export type PlansViewMode = 'plans' | 'waitlist';
@@ -18,13 +32,17 @@ export type PlansViewMode = 'plans' | 'waitlist';
 export class PlansPage implements OnInit {
   private readonly api = inject(PlansApi);
   private readonly shopsApi = inject(ShopsApi);
+  private readonly bucketApi = inject(ProductBucketApi);
+  private readonly paymentsApi = inject(PaymentsApi);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
   readonly application = signal<PlanApplication | null>(null);
   readonly shop = signal<Shop | null>(null);
+  readonly bucket = signal<ProductBucket | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly bucketBusy = signal(false);
   readonly error = signal('');
   readonly success = signal('');
   readonly trialDays = FREE_TRIAL_DAYS;
@@ -33,6 +51,13 @@ export class PlansPage implements OnInit {
   readonly viewMode = signal<PlansViewMode>('plans');
   /** Plan the user is confirming before joining the waitlist. */
   readonly confirmPlanType = signal<PlanType | null>(null);
+
+  readonly packSize = computed(
+    () => this.bucket()?.pack_size ?? DEFAULT_PACK_SIZE ?? PRODUCT_PACK_SIZE,
+  );
+  readonly packPrice = computed(
+    () => this.bucket()?.pack_price_inr ?? DEFAULT_PACK_PRICE_INR ?? PRODUCT_PACK_PRICE_INR,
+  );
 
   readonly shopReady = computed(() => {
     const shop = this.shop();
@@ -73,13 +98,13 @@ export class PlansPage implements OnInit {
       application: this.api.myApplication().pipe(catchError(() => of(null))),
       shops: this.shopsApi.list().pipe(catchError(() => of([] as Shop[]))),
       current: this.api.me().pipe(catchError(() => of(null as PlanSummary | null))),
+      bucket: this.bucketApi.get().pipe(catchError(() => of(null as ProductBucket | null))),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ plans, application, shops, current }) => {
+        next: ({ plans, application, shops, current, bucket }) => {
           this.plans.set(plans.length ? plans : []);
           this.application.set(application);
-          // Prefer an owned/active shop when multiple exist (admin-safe via CurrentShop later).
           const activeId =
             typeof localStorage !== 'undefined'
               ? localStorage.getItem('junction.activeShopId')?.trim()
@@ -87,6 +112,7 @@ export class PlansPage implements OnInit {
           const active = activeId ? shops.find((row) => row.id === activeId) : null;
           this.shop.set(active ?? shops[0] ?? null);
           this.current.set(current);
+          this.bucket.set(bucket);
           this.viewMode.set(application?.status === 'pending' ? 'waitlist' : 'plans');
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load plans.')),
@@ -163,6 +189,58 @@ export class PlansPage implements OnInit {
       });
   }
 
+  /** Buy one product pack (40 slots) via junctionBack product-bucket payment. */
+  purchaseProductPack(): void {
+    if (!this.shop()?.id) {
+      this.error.set('Select a shop before buying a product pack.');
+      return;
+    }
+    this.bucketBusy.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.bucketApi
+      .purchasePacks(1)
+      .pipe(finalize(() => this.bucketBusy.set(false)))
+      .subscribe({
+        next: (result) => {
+          if (!result) {
+            return;
+          }
+          if (this.isBucket(result)) {
+            this.bucket.set(result);
+            this.success.set(
+              `Added ${this.packSize()} product slots. Capacity is now ${result.capacity ?? '—'}.`,
+            );
+            return;
+          }
+          const payment = result as ShopPayment;
+          if (payment.status === 'pending' && payment.id) {
+            this.paymentsApi
+              .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
+              .subscribe({
+                next: (done) => {
+                  if (done.bucket) {
+                    this.bucket.set(done.bucket);
+                    this.success.set(
+                      `Purchased product pack · +${this.packSize()} slots. Capacity ${done.bucket.capacity ?? '—'}.`,
+                    );
+                  } else {
+                    this.reloadBucket();
+                    this.success.set('Product pack payment completed.');
+                  }
+                },
+                error: (err: unknown) =>
+                  this.error.set(this.readError(err, 'Payment could not be completed.')),
+              });
+            return;
+          }
+          this.reloadBucket();
+        },
+        error: (err: unknown) =>
+          this.error.set(this.readError(err, 'Could not purchase a product pack.')),
+      });
+  }
+
   requestedPlanName(app: PlanApplication): string {
     return planDisplayName(app.requested_plan_type, this.plans());
   }
@@ -172,16 +250,13 @@ export class PlansPage implements OnInit {
       return 'Profile only · yearly';
     }
     if (plan.max_products === null) {
-      return 'More than 150 products · yearly';
+      return 'Unlimited products · yearly';
     }
     if (plan.type === 'free_trial') {
       const days = 'duration_days' in plan ? (plan.duration_days ?? this.trialDays) : this.trialDays;
       return `Up to ${plan.max_products} products for ${days} days`;
     }
-    if (plan.type === 'starter') {
-      return `Profile and up to ${plan.max_products} products · yearly`;
-    }
-    return `Up to ${plan.max_products} products · yearly`;
+    return `Up to ${plan.max_products} products · 1 year`;
   }
 
   isCurrent(planType: PlanType): boolean {
@@ -200,6 +275,17 @@ export class PlansPage implements OnInit {
       return false;
     }
     return !this.isCurrent(plan.type);
+  }
+
+  private reloadBucket(): void {
+    this.bucketApi.get().subscribe({
+      next: (bucket) => this.bucket.set(bucket),
+      error: () => undefined,
+    });
+  }
+
+  private isBucket(value: ShopPayment | ProductBucket): value is ProductBucket {
+    return 'can_add_product' in value && 'products_count' in value;
   }
 
   private readError(error: unknown, fallback: string): string {

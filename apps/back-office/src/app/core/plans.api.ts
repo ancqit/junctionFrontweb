@@ -48,23 +48,30 @@ interface PlansListResponse {
   plans: PlanOption[];
 }
 
-/** Align Starter with junctionBack: profile + 10 products (overrides stale API payloads). */
+/** Force catalog fields to match junctionBack (overrides stale API payloads). */
 export function alignPlanCatalog(plans: PlanOption[]): PlanOption[] {
-  const starter = PLAN_CATALOG.find((plan) => plan.type === 'starter');
-  if (!starter) {
-    return plans;
+  const byType = new Map(PLAN_CATALOG.map((plan) => [plan.type, plan]));
+  const aligned = (plans.length ? plans : PLAN_CATALOG).map((plan) => {
+    const canonical = byType.get(plan.type);
+    if (!canonical) {
+      return plan;
+    }
+    return {
+      ...plan,
+      name: canonical.name,
+      price_inr: canonical.price_inr,
+      max_products: canonical.max_products,
+      profile_only: canonical.profile_only,
+      description: canonical.description,
+      duration_days: canonical.duration_days,
+    };
+  });
+  for (const canonical of PLAN_CATALOG) {
+    if (!aligned.some((plan) => plan.type === canonical.type)) {
+      aligned.push(canonical);
+    }
   }
-  return plans.map((plan) =>
-    plan.type === 'starter'
-      ? {
-          ...plan,
-          max_products: starter.max_products,
-          profile_only: starter.profile_only,
-          description: starter.description,
-          duration_days: plan.duration_days ?? starter.duration_days,
-        }
-      : plan,
-  );
+  return aligned;
 }
 
 @Injectable({ providedIn: 'root' })
