@@ -25,6 +25,13 @@ export interface ProductBucket {
   pack_price_inr?: number;
 }
 
+/** Identify a shop via store_id, shop_id alias, or product_id (junctionBack resolve_store_id). */
+export interface ProductBucketShopRef {
+  storeId?: string | null;
+  shopId?: string | null;
+  productId?: string | null;
+}
+
 export const DEFAULT_PACK_SIZE = 40;
 export const DEFAULT_PACK_PRICE_INR = 999;
 
@@ -37,64 +44,132 @@ export class ProductBucketApi {
   private readonly api = inject(BackOfficeApiService);
   private readonly currentShop = inject(CurrentShopService);
 
-  /** `GET /product-bucket?store_id=` — product count vs plan capacity. */
-  get(storeId?: string): Observable<ProductBucket | null> {
-    return this.withStoreId(storeId, (id) =>
-      this.api.get<ProductBucket>('/product-bucket', { store_id: id }, 'user'),
+  /**
+   * `GET /product-bucket` — pass `store_id`, `shop_id`, or `product_id`.
+   * When omitted, uses the active shop.
+   */
+  get(ref?: string | ProductBucketShopRef): Observable<ProductBucket | null> {
+    return this.resolveShopRef(ref).pipe(
+      switchMap((resolved) => {
+        if (!resolved) {
+          return of(null);
+        }
+        const params = this.queryParams(resolved);
+        if (!params) {
+          return of(null);
+        }
+        return this.api.get<ProductBucket>('/product-bucket', params, 'user');
+      }),
     );
   }
 
   /**
    * `POST /product-bucket/purchase` — start pack purchase (pending payment).
-   * Admins may get immediate capacity via `/slots` alias.
+   * Body accepts `store_id`, `shop_id`, or `product_id`.
    */
-  purchasePacks(packs = 1, storeId?: string): Observable<ShopPayment | ProductBucket | null> {
+  purchasePacks(
+    packs = 1,
+    ref?: string | ProductBucketShopRef,
+  ): Observable<ShopPayment | ProductBucket | null> {
     const qty = Math.floor(Number(packs));
     if (!Number.isFinite(qty) || qty < 1) {
       return of(null);
     }
-    return this.withStoreId(storeId, (id) =>
-      this.api.post<ShopPayment | ProductBucket>(
-        '/product-bucket/purchase',
-        { store_id: id, packs: qty },
-        'user',
-      ),
+    return this.resolveShopRef(ref).pipe(
+      switchMap((resolved) => {
+        const body = this.bodyShopRef(resolved, qty);
+        if (!body) {
+          return of(null);
+        }
+        return this.api.post<ShopPayment | ProductBucket>(
+          '/product-bucket/purchase',
+          body,
+          'user',
+        );
+      }),
     );
   }
 
-  /**
-   * Alias — `POST /product-bucket/slots` with `{ store_id, packs }`.
-   * Prefer purchasePacks + payments complete for non-admins.
-   */
-  addPacks(packs = 1, storeId?: string): Observable<ShopPayment | ProductBucket | null> {
+  /** Alias — `POST /product-bucket/slots`. Admins may get capacity immediately. */
+  addPacks(
+    packs = 1,
+    ref?: string | ProductBucketShopRef,
+  ): Observable<ShopPayment | ProductBucket | null> {
     const qty = Math.floor(Number(packs));
     if (!Number.isFinite(qty) || qty < 1) {
       return of(null);
     }
-    return this.withStoreId(storeId, (id) =>
-      this.api.post<ShopPayment | ProductBucket>(
-        '/product-bucket/slots',
-        { store_id: id, packs: qty },
-        'user',
-      ),
+    return this.resolveShopRef(ref).pipe(
+      switchMap((resolved) => {
+        const body = this.bodyShopRef(resolved, qty);
+        if (!body) {
+          return of(null);
+        }
+        return this.api.post<ShopPayment | ProductBucket>(
+          '/product-bucket/slots',
+          body,
+          'user',
+        );
+      }),
     );
   }
 
-  private withStoreId<T>(
-    storeId: string | undefined,
-    fn: (id: string) => Observable<T>,
-  ): Observable<T | null> {
-    if (storeId?.trim()) {
-      return fn(storeId.trim());
+  private resolveShopRef(ref?: string | ProductBucketShopRef): Observable<ProductBucketShopRef | null> {
+    if (typeof ref === 'string') {
+      const id = ref.trim();
+      return of(id ? { storeId: id } : null);
+    }
+    if (ref) {
+      const storeId = ref.storeId?.trim();
+      const shopId = ref.shopId?.trim();
+      const productId = ref.productId?.trim();
+      if (storeId || shopId || productId) {
+        return of({ storeId, shopId, productId });
+      }
     }
     return this.currentShop.ensureShop().pipe(
       switchMap((shop) => {
         const id = shop?.id?.trim();
-        if (!id) {
-          return of(null);
-        }
-        return fn(id);
+        return of(id ? { storeId: id } : null);
       }),
     );
+  }
+
+  private queryParams(ref: ProductBucketShopRef): Record<string, string> | null {
+    const productId = ref.productId?.trim();
+    if (productId) {
+      return { product_id: productId };
+    }
+    const shopId = ref.shopId?.trim();
+    if (shopId) {
+      return { shop_id: shopId };
+    }
+    const storeId = ref.storeId?.trim();
+    if (storeId) {
+      return { store_id: storeId };
+    }
+    return null;
+  }
+
+  private bodyShopRef(
+    ref: ProductBucketShopRef | null,
+    packs: number,
+  ): Record<string, string | number> | null {
+    if (!ref) {
+      return null;
+    }
+    const productId = ref.productId?.trim();
+    if (productId) {
+      return { product_id: productId, packs };
+    }
+    const shopId = ref.shopId?.trim();
+    if (shopId) {
+      return { shop_id: shopId, packs };
+    }
+    const storeId = ref.storeId?.trim();
+    if (storeId) {
+      return { store_id: storeId, packs };
+    }
+    return null;
   }
 }

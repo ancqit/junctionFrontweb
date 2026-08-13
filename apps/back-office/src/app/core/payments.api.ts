@@ -32,7 +32,16 @@ export interface ShopPayment {
 export interface ShopPaymentCompleteResponse {
   payment: ShopPayment;
   plan?: PlanSummary | null;
-  bucket?: ProductBucket | null;
+  /** junctionBack field name (`ShopPaymentCompleteResponse.product_bucket`). */
+  product_bucket?: ProductBucket | null;
+  message?: string;
+}
+
+/** Read bucket from a payment-complete payload (junctionBack uses `product_bucket`). */
+export function paymentCompleteBucket(
+  response: ShopPaymentCompleteResponse,
+): ProductBucket | null | undefined {
+  return response.product_bucket;
 }
 
 /**

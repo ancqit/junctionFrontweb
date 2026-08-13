@@ -11,7 +11,7 @@ import {
   PRODUCT_PACK_PRICE_INR,
   PRODUCT_PACK_SIZE,
 } from '../../core/models';
-import { PaymentsApi, ShopPayment } from '../../core/payments.api';
+import { PaymentsApi, ShopPayment, paymentCompleteBucket } from '../../core/payments.api';
 import { PlanApplication, planDisplayName, PlansApi } from '../../core/plans.api';
 import {
   DEFAULT_PACK_PRICE_INR,
@@ -219,10 +219,11 @@ export class PlansPage implements OnInit {
               .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
               .subscribe({
                 next: (done) => {
-                  if (done.bucket) {
-                    this.bucket.set(done.bucket);
+                  const bucket = paymentCompleteBucket(done);
+                  if (bucket) {
+                    this.bucket.set(bucket);
                     this.success.set(
-                      `Purchased product pack · +${this.packSize()} slots. Capacity ${done.bucket.capacity ?? '—'}.`,
+                      `Purchased product pack · +${this.packSize()} slots. Capacity ${bucket.capacity ?? '—'}.`,
                     );
                   } else {
                     this.reloadBucket();

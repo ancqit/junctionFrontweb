@@ -20,7 +20,7 @@ import {
   Product,
   ProductStatus,
 } from '../../core/models';
-import { PaymentsApi, ShopPayment } from '../../core/payments.api';
+import { PaymentsApi, ShopPayment, paymentCompleteBucket } from '../../core/payments.api';
 import {
   DEFAULT_PACK_PRICE_INR,
   DEFAULT_PACK_SIZE,
@@ -269,8 +269,9 @@ export class ProductsPage implements OnInit, OnDestroy {
               .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
               .subscribe({
                 next: (done) => {
-                  if (done.bucket) {
-                    this.bucket.set(done.bucket);
+                  const bucket = paymentCompleteBucket(done);
+                  if (bucket) {
+                    this.bucket.set(bucket);
                   } else {
                     this.reloadBucket();
                   }
