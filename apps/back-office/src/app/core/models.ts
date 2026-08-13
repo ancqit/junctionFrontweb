@@ -40,7 +40,9 @@ export interface Employee {
   updated_at: string;
 }
 
-export type EmployeeCreate = Omit<Employee, 'id' | 'created_at' | 'updated_at'>;
+export type EmployeeCreate = Omit<Employee, 'id' | 'created_at' | 'updated_at' | 'employee_code'> & {
+  employee_code?: string | null;
+};
 export type EmployeeUpdate = Partial<Omit<EmployeeCreate, 'store_id'>>;
 
 export type ProductStatus = 'active' | 'inactive' | 'discontinued';

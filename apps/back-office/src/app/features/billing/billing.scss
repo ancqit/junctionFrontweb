@@ -13,6 +13,14 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .error {
   margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; background: #f8eaea; color: #7a2a2a; font-size: 14px;
 }
+.success {
+  margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; background: #eef6f1; color: #1a6541; font-size: 14px;
+}
+.phone {
+  display: flex; align-items: center; border: 1px solid #d8d4c8; border-radius: 10px; overflow: hidden; background: white;
+}
+.phone span { padding: 0 12px; background: #f3f1eb; color: #556057; font-weight: 700; }
+.phone input { border: 0; flex: 1; min-width: 0; border-radius: 0; }
 .layout {
   display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 22px; align-items: start;
 }

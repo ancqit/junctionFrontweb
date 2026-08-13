@@ -136,24 +136,33 @@ code { font-size: 12px; background: #eef3ef; padding: 1px 5px; border-radius: 4p
 @media (max-width: 900px) {
   .admin { grid-template-columns: 1fr; }
   .menu-toggle {
-    display: inline-flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 30;
-    margin: 12px 12px 0; border: 0; border-radius: 10px; padding: 11px 14px;
+    display: inline-flex; align-items: center; gap: 10px;
+    position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left));
+    z-index: 45;
+    margin: 0; border: 0; border-radius: 10px; padding: 11px 14px;
     color: white; background: #0f2f22; font: inherit; font-weight: 700; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(10, 20, 16, .22);
   }
   .menu-bars {
     width: 18px; height: 2px; background: white; box-shadow: 0 6px 0 white, 0 -6px 0 white;
   }
   .menu-backdrop {
-    display: block; position: fixed; inset: 0; z-index: 35; background: rgba(10, 20, 16, .45);
+    display: block; position: fixed; inset: 0; z-index: 40; background: rgba(10, 20, 16, .45);
   }
   aside {
-    position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
+    position: fixed; z-index: 50; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
     height: 100vh; height: 100dvh; max-height: 100dvh; transform: translateX(-105%);
     transition: transform .2s ease; overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .admin.menu-open aside { transform: translateX(0); }
   nav { margin-top: 12px; grid-template-columns: 1fr; flex-shrink: 0; }
   aside .ghost, aside .logout { margin-top: auto; }
+  main {
+    padding: 72px 16px 28px;
+    padding-top: calc(72px + env(safe-area-inset-top));
+    min-width: 0;
+  }
   header { flex-direction: column; align-items: start; }
   .stats, .create-grid { grid-template-columns: 1fr; }
 }

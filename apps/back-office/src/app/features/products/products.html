@@ -36,19 +36,19 @@
       type="search"
       [value]="searchQuery()"
       (input)="onSearchInput($any($event.target).value)"
-      placeholder="Search name, category, description…"
-    />
-  </label>
-  <div class="category-filter">
-    <app-inline-select
-      [options]="categoryOptions()"
-      [value]="categoryFilter()"
-      (valueChange)="onCategoryFilter($event)"
-      placeholder="All categories"
-      [searchable]="true"
-      searchPlaceholder="Search categories…"
-    />
-  </div>
+        placeholder="Search name, category, or tags…"
+      />
+    </label>
+    <div class="category-filter">
+      <app-inline-select
+        [options]="categoryOptions()"
+        [value]="categoryFilter()"
+        (valueChange)="onCategoryFilter($event)"
+        placeholder="All categories"
+        [searchable]="true"
+        searchPlaceholder="Search categories…"
+      />
+    </div>
   <button type="button" class="ghost" (click)="reload()">Refresh</button>
   @if (searchQuery() || categoryFilter() || activeTag()) {
     <button type="button" class="ghost" (click)="clearFilters()">Clear filters</button>
@@ -56,7 +56,7 @@
 </section>
 
 @if (descriptionTags().length > 0) {
-  <section class="tag-row" aria-label="Description tags">
+  <section class="tag-row" aria-label="Product tags">
     @for (tag of descriptionTags(); track tag) {
       <button
         type="button"
@@ -73,7 +73,7 @@
 @if (showForm()) {
   <section class="panel">
     <div class="panel-head">
-      <h2>New product</h2>
+      <h2>{{ editingId() ? 'Edit product' : 'New product' }}</h2>
     </div>
     <form [formGroup]="form" (ngSubmit)="create()" class="grid-form">
       <label>Name<input formControlName="name" placeholder="Organic rice 5kg" /></label>
@@ -83,8 +83,7 @@
           [options]="formCategoryOptions()"
           placeholder="Choose category"
           [searchable]="true"
-          [allowCustom]="true"
-          searchPlaceholder="Search or type category…"
+          searchPlaceholder="Search categories…"
         />
       </label>
       <label>Price (₹)<input formControlName="price" type="number" min="0" step="0.01" /></label>
@@ -98,7 +97,7 @@
       <label>Tax %<input formControlName="tax_rate" type="number" min="0" max="100" step="0.01" placeholder="optional" /></label>
       <label>Low stock at<input formControlName="low_stock_threshold" type="number" min="0" step="1" placeholder="optional" /></label>
       <label class="full">Tags<input formControlName="tags" placeholder="organic, staple (comma separated)" /></label>
-      <label class="full">Description<textarea formControlName="description" rows="3" placeholder="Short notes — comma-separated phrases become filter tags"></textarea></label>
+      <label class="full">Description<textarea formControlName="description" rows="3" placeholder="Optional notes for this product"></textarea></label>
 
       <section class="image-picker full">
         <div class="image-picker-head">
@@ -185,7 +184,9 @@
 
       <div class="actions full">
         <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
-        <button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save product' }}</button>
+        <button type="submit" class="primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Save product' }}
+        </button>
       </div>
     </form>
   </section>
@@ -237,7 +238,10 @@
             <td>{{ product.price | currency: product.currency:'symbol-narrow':'1.0-2' }}</td>
             <td>{{ product.stock_quantity }} {{ product.unit }}</td>
             <td><span class="badge" [attr.data-status]="product.status">{{ product.status | titlecase }}</span></td>
-            <td><button type="button" class="danger" (click)="remove(product)">Delete</button></td>
+            <td class="row-actions">
+              <button type="button" class="ghost" (click)="openEdit(product)">Edit</button>
+              <button type="button" class="danger" (click)="remove(product)">Delete</button>
+            </td>
           </tr>
         }
       </tbody>

@@ -35,6 +35,7 @@ export class ProfilePage implements OnInit {
   readonly imageResults = signal<ImageSearchResult[]>([]);
   readonly selectedAvatarUrl = signal<string | null>(null);
   readonly imageError = signal('');
+  readonly uploadingAvatar = signal(false);
 
   readonly promptsForm = this.fb.nonNullable.group({
     display_name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -146,6 +147,41 @@ export class ProfilePage implements OnInit {
 
   isAvatarSelected(image: ImageSearchResult): boolean {
     return this.selectedAvatarUrl() === String(image.cdn_url);
+  }
+
+  openDeviceAvatarPicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  onDeviceAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      this.imageError.set('Choose a JPG, PNG, WEBP, or GIF image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.imageError.set('Image must be 5 MB or smaller.');
+      return;
+    }
+    this.uploadingAvatar.set(true);
+    this.imageError.set('');
+    this.profileApi
+      .uploadAvatar(file)
+      .pipe(finalize(() => this.uploadingAvatar.set(false)))
+      .subscribe({
+        next: (profile) => {
+          this.profile.set(profile);
+          this.selectedAvatarUrl.set(profile.avatar_url ?? null);
+          this.success.set('Photo uploaded.');
+        },
+        error: (err: unknown) =>
+          this.imageError.set(this.readError(err, 'Could not upload photo from device.')),
+      });
   }
 
   savedParagraphs(): string[] {

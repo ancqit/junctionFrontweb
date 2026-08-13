@@ -10,6 +10,9 @@
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
 }
+@if (success()) {
+  <p class="success" role="status">{{ success() }}</p>
+}
 
 <div class="layout">
   <section class="panel search-panel">
@@ -99,7 +102,7 @@
       <h3>Customer & payment</h3>
       <div class="grid">
         <label>Customer name<input formControlName="customer_name" placeholder="Walk-in customer" /></label>
-        <label>Phone<input formControlName="customer_phone" placeholder="+919876543210" /></label>
+        <label>Mobile<div class="phone"><span>+91</span><input formControlName="phone_local" maxlength="10" inputmode="numeric" placeholder="9876543210" /></div></label>
         <label>Email<input formControlName="customer_email" type="email" placeholder="optional" /></label>
         <label>Payment
           <app-inline-select formControlName="payment_method" [options]="paymentMethodOptions" />
