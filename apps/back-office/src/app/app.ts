@@ -2,11 +2,11 @@ import { Component, computed, HostListener, inject, OnInit, signal } from '@angu
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { finalize } from 'rxjs';
+import { CurrentShopService } from './core/current-shop.service';
 import { LogoutService } from './core/logout.service';
 import { PlanAccessService } from './core/plan-access.service';
 import { buildProfileCompleteness } from './core/profile-completeness';
 import { ProfileApi } from './core/profile.api';
-import { Shop, ShopsApi } from './core/shops.api';
 import { UserProfile } from './core/models';
 
 @Component({
@@ -19,11 +19,10 @@ export class App implements OnInit {
   readonly access = inject(PlanAccessService);
   private readonly logoutService = inject(LogoutService);
   private readonly profileApi = inject(ProfileApi);
-  private readonly shopsApi = inject(ShopsApi);
+  private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
 
   readonly profile = signal<UserProfile | null>(null);
-  readonly shop = signal<Shop | null>(null);
   readonly profileModalOpen = signal(false);
   readonly menuOpen = signal(false);
   readonly saving = signal(false);
@@ -36,6 +35,8 @@ export class App implements OnInit {
     bio: [''],
     avatar_url: [''],
   });
+
+  readonly shop = this.currentShop.shop;
 
   readonly completeness = computed(() => {
     const profile = this.profile();
@@ -76,6 +77,7 @@ export class App implements OnInit {
   ngOnInit(): void {
     this.access.refresh().subscribe();
     this.reloadProfile();
+    this.currentShop.ensureShop().subscribe();
   }
 
   @HostListener('document:keydown.escape')
@@ -172,10 +174,6 @@ export class App implements OnInit {
     this.profileApi.me().subscribe({
       next: (profile) => this.profile.set(profile),
       error: () => this.profile.set(null),
-    });
-    this.shopsApi.list().subscribe({
-      next: (shops) => this.shop.set(shops[0] ?? null),
-      error: () => this.shop.set(null),
     });
   }
 }

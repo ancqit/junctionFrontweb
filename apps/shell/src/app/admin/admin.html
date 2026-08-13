@@ -16,6 +16,7 @@
     <nav>
       <button type="button" [class.active]="tab() === 'shops'" (click)="setTab('shops')">Shops</button>
       <button type="button" [class.active]="tab() === 'waitlist'" (click)="setTab('waitlist')">Waitlist</button>
+      <a routerLink="/back-office/shops" (click)="closeMenu()">My shops</a>
       <a routerLink="/back-office" (click)="closeMenu()">Full application</a>
     </nav>
     <button type="button" class="ghost logout" (click)="logout()">Log out</button>

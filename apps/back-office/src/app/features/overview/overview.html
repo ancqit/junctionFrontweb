@@ -23,7 +23,8 @@
       <p class="meta">Save to return to Overview.</p>
     } @else {
       <h1>Hello, {{ greetingName() }}.</h1>
-      <p class="meta">Add your shop to unlock Overview.</p>
+      <p class="meta">Create or open a shop from Shops to unlock Overview.</p>
+      <a routerLink="/back-office/shops" class="ghost compact edit-btn">Go to Shops</a>
     }
   </div>
   @if (shopReady()) {

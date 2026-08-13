@@ -12,22 +12,51 @@
   </button>
 
   @if (open()) {
-    <ul
-      class="menu"
-      role="listbox"
-      (mousedown)="$event.preventDefault()"
-      (click)="$event.stopPropagation()"
-    >
-      @for (option of options; track option.value) {
-        <li
-          role="option"
-          [class.selected]="isSelected(option.value)"
-          [attr.aria-selected]="isSelected(option.value)"
-          (click)="onOptionClick($event, option.value)"
-        >
-          {{ option.label }}
-        </li>
+    <div class="menu" (mousedown)="$event.preventDefault()" (click)="$event.stopPropagation()">
+      @if (searchable) {
+        <div class="search-row">
+          <input
+            type="search"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchInput($event)"
+            [placeholder]="searchPlaceholder"
+            autocomplete="off"
+          />
+        </div>
       }
-    </ul>
+      <ul role="listbox">
+        @if (placeholder && searchable) {
+          <li
+            role="option"
+            class="clear-option"
+            [class.selected]="!selectedValue()"
+            (click)="clear($event)"
+          >
+            {{ placeholder }}
+          </li>
+        }
+        @for (option of filteredOptions(); track option.value) {
+          <li
+            role="option"
+            [class.selected]="isSelected(option.value)"
+            [attr.aria-selected]="isSelected(option.value)"
+            (click)="onOptionClick($event, option.value)"
+          >
+            {{ option.label }}
+          </li>
+        } @empty {
+          <li class="empty-option" role="presentation">No matches</li>
+        }
+        @if (allowCustom && searchQuery().trim()) {
+          <li
+            role="option"
+            class="custom-option"
+            (click)="addCustomFromSearch($event)"
+          >
+            Use “{{ searchQuery().trim() }}”
+          </li>
+        }
+      </ul>
+    </div>
   }
 </div>

@@ -194,44 +194,49 @@ export interface PlanSummary {
 export const FREE_TRIAL_DAYS = 15;
 export const PAID_PLAN_DAYS = 365;
 
+/** Matches junctionBack shop-level PLAN_CATALOG (plans live on each shop). */
 export const PLAN_CATALOG: PlanOption[] = [
   {
     type: 'free_trial',
     name: 'Free Trial',
     price_inr: 0,
-    max_products: 150,
+    max_products: 40,
     profile_only: false,
-    description: 'Try all features free for 15 days',
+    description: 'Up to 40 products for 15 days',
     duration_days: FREE_TRIAL_DAYS,
   },
   {
     type: 'starter',
     name: 'Starter',
-    price_inr: 0,
+    price_inr: 999,
     max_products: 10,
     profile_only: false,
-    description: 'Profile and up to 10 products · billed yearly',
+    description: 'Up to 10 products · INR 999 / year',
     duration_days: PAID_PLAN_DAYS,
   },
   {
     type: 'growth',
     name: 'Growth',
-    price_inr: 399,
-    max_products: 100,
+    price_inr: 2999,
+    max_products: 80,
     profile_only: false,
-    description: 'Add up to 100 products · billed yearly',
+    description: 'Up to 80 products · INR 2999 / year',
     duration_days: PAID_PLAN_DAYS,
   },
   {
     type: 'premium',
     name: 'Premium',
     price_inr: 599,
-    max_products: null,
+    max_products: 150,
     profile_only: false,
-    description: 'Add more than 150 products · billed yearly',
+    description: 'Up to 150 products · INR 599 / year',
     duration_days: PAID_PLAN_DAYS,
   },
 ];
+
+/** Extra product pack after plan allowance is used. */
+export const PRODUCT_PACK_SIZE = 40;
+export const PRODUCT_PACK_PRICE_INR = 999;
 
 export interface UserProfile {
   id: string;

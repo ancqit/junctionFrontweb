@@ -26,6 +26,7 @@
     } @else {
       <nav>
         <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Overview</a>
+        <a routerLink="/back-office/shops" routerLinkActive="active" (click)="closeMenu()">Shops</a>
         <a routerLink="/back-office/profile" routerLinkActive="active" (click)="closeMenu()">Profile</a>
         <a routerLink="/back-office/employees" routerLinkActive="active" (click)="closeMenu()">Employees</a>
         <a routerLink="/back-office/products" routerLinkActive="active" (click)="closeMenu()">Products</a>
@@ -104,7 +105,7 @@
             </button>
           }
           @if (item.id === 'shop' && !item.done) {
-            <a routerLink="/back-office" class="ghost" (click)="closeProfileModal()">Open Overview</a>
+            <a routerLink="/back-office/shops" class="ghost" (click)="closeProfileModal()">Open Shops</a>
           }
           @if (item.id === 'bio' && !item.done) {
             <a routerLink="/back-office/profile" class="ghost" (click)="closeProfileModal()">Gemini Profile</a>

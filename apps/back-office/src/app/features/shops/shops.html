@@ -1,0 +1,165 @@
+<header>
+  <div>
+    <p class="eyebrow">YOUR ACCOUNT</p>
+    <h1>Shops</h1>
+    <p class="sub">
+      Your mobile number owns these shops. Pick one to work in — like choosing an active project.
+    </p>
+  </div>
+  <button type="button" class="primary" (click)="openForm()">+ New shop</button>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+@if (success()) {
+  <p class="success" role="status">{{ success() }}</p>
+}
+
+@if (showForm()) {
+  <section class="panel" [formGroup]="form">
+    <div class="panel-head">
+      <h2>Create shop</h2>
+      <p class="sub">Starts on Free Trial (40 products / 15 days). Name must be unique on your number.</p>
+    </div>
+
+    <div class="field-grid two">
+      <label>
+        Shop name
+        <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
+      </label>
+      <label>
+        Shop type
+        <app-inline-select
+          formControlName="shop_type"
+          [options]="shopTypeSelectOptions"
+          placeholder="Select type"
+        />
+      </label>
+      <div class="picker-field">
+        <span class="field-label">City</span>
+        @if (form.controls.city.value.trim()) {
+          <p class="selected-value">{{ form.controls.city.value }}</p>
+        }
+        <button type="button" class="add-action-button" (click)="openCityPicker()">
+          {{ form.controls.city.value.trim() ? 'Change city' : 'Add your city' }}
+        </button>
+      </div>
+      <div class="picker-field">
+        <span class="field-label">Locality</span>
+        @if (form.controls.locality.value.trim()) {
+          <p class="selected-value">{{ form.controls.locality.value }}</p>
+        }
+        <button
+          type="button"
+          class="add-action-button"
+          [disabled]="!form.controls.city.value.trim() || localitiesLoading()"
+          (click)="openLocalityPicker()"
+        >
+          @if (localitiesLoading()) {
+            Loading localities…
+          } @else if (form.controls.locality.value.trim()) {
+            Change locality
+          } @else {
+            Add your locality
+          }
+        </button>
+      </div>
+      <label>
+        Entry time
+        <input type="time" formControlName="open_time" />
+      </label>
+      <label>
+        Closing time
+        <input type="time" formControlName="closed_time" />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
+      <button type="button" class="primary" (click)="createShop()" [disabled]="saving()">
+        {{ saving() ? 'Creating…' : 'Create shop' }}
+      </button>
+    </div>
+  </section>
+}
+
+<section class="list">
+  @if (loading()) {
+    <p class="muted">Loading shops…</p>
+  } @else if (shops().length === 0) {
+    <div class="empty">
+      <strong>No shops yet</strong>
+      <p>Create a shop to start adding products and orders.</p>
+      <button type="button" class="primary" (click)="openForm()">+ New shop</button>
+    </div>
+  } @else {
+    <div class="shop-grid">
+      @for (shop of shops(); track shop.id) {
+        <article class="shop-card" [class.active]="isActive(shop)">
+          <div class="shop-card-top">
+            <div>
+              <h2>{{ shop.name }}</h2>
+              <p class="place">{{ shop.locality }} · {{ shop.city }}</p>
+              <p class="meta">{{ typeLabel(shop) }} · {{ planLabel(shop) }}</p>
+            </div>
+            @if (isActive(shop)) {
+              <span class="active-badge">Active</span>
+            }
+          </div>
+          <p class="hours">
+            {{ shop.open_time || '09:00' }} – {{ shop.closed_time || '21:00' }}
+            ·
+            <span [class.open]="shop.is_open !== false">
+              {{ shop.is_open === false ? 'Closed' : 'Open' }}
+            </span>
+          </p>
+          @if (shop.created_at) {
+            <p class="created">Created {{ shop.created_at | date: 'mediumDate' }}</p>
+          }
+          <div class="card-actions">
+            @if (!isActive(shop)) {
+              <button type="button" class="primary" (click)="selectShop(shop)">Open shop</button>
+            } @else {
+              <a routerLink="/back-office" class="primary link-btn">Go to Overview</a>
+            }
+            <button
+              type="button"
+              class="danger"
+              (click)="removeShop(shop)"
+              [disabled]="deletingId() === shop.id"
+            >
+              {{ deletingId() === shop.id ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
+
+@if (activePicker() === 'city') {
+  <app-location-picker-modal
+    title="Add your city"
+    addSectionLabel="Add a new city"
+    [options]="cityPickerOptions()"
+    emptyMessage="No cities available."
+    (picked)="onCityPicked($event)"
+    (dismissed)="closeLocationPicker()"
+  />
+}
+
+@if (activePicker() === 'locality') {
+  <app-location-picker-modal
+    title="Add your locality"
+    addSectionLabel="Add a new locality"
+    [options]="localityPickerOptions()"
+    [loading]="localitiesLoading()"
+    [validating]="localityValidating()"
+    [errorMessage]="localityPickerError()"
+    emptyMessage="No localities available for this city."
+    (picked)="onLocalityPicked($event)"
+    (dismissed)="closeLocationPicker()"
+    (errorCleared)="clearLocalityPickerError()"
+  />
+}
