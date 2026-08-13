@@ -1,8 +1,28 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable, of, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
 import { CurrentShopService } from './current-shop.service';
 import { Product, ProductCreate, ProductImageSuggestResponse, ProductUpdate } from './models';
+
+/** junctionBack `ProductCategoryInfo` (`GET /products/categories`). */
+export interface ProductCategoryInfo {
+  value: string;
+  label: string;
+  group?: string | null;
+  description: string;
+}
+
+/** Fallback when categories API is unavailable. */
+export const PRODUCT_CATEGORY_FALLBACK: ProductCategoryInfo[] = [
+  { value: 'grocery', label: 'Grocery', description: 'Staples and packaged foods', group: 'food' },
+  { value: 'dairy', label: 'Dairy', description: 'Milk and dairy', group: 'food' },
+  { value: 'snacks', label: 'Snacks', description: 'Snacks and namkeen', group: 'food' },
+  { value: 'beverages', label: 'Beverages', description: 'Drinks', group: 'food' },
+  { value: 'personal_care', label: 'Personal care', description: 'Hygiene', group: 'health' },
+  { value: 'household', label: 'Household', description: 'Home supplies', group: 'home' },
+  { value: 'electronics', label: 'Electronics', description: 'Gadgets', group: 'electronics' },
+  { value: 'other', label: 'Other', description: 'Miscellaneous', group: 'general' },
+];
 
 @Injectable({ providedIn: 'root' })
 export class ProductsApi {
@@ -12,6 +32,14 @@ export class ProductsApi {
   list(): Observable<Product[]> {
     return this.withStoreId((storeId) =>
       this.api.get<Product[]>('/products', { store_id: storeId }),
+    );
+  }
+
+  /** `GET /products/categories` — catalog for searchable category dropdown. */
+  categories(): Observable<ProductCategoryInfo[]> {
+    return this.api.get<ProductCategoryInfo[]>('/products/categories', undefined, 'user').pipe(
+      map((rows) => (Array.isArray(rows) && rows.length ? rows : PRODUCT_CATEGORY_FALLBACK)),
+      catchError(() => of(PRODUCT_CATEGORY_FALLBACK)),
     );
   }
 
@@ -29,26 +57,22 @@ export class ProductsApi {
     return this.api.delete(`/products/${id}`);
   }
 
-  /** Product Pexels suggestions — POST /products/images/suggest { product_name } */
   suggestImages(productName: string): Observable<ProductImageSuggestResponse> {
     return this.api.post<ProductImageSuggestResponse>('/products/images/suggest', {
       product_name: productName.trim(),
     });
   }
 
-  /** Attach up to 5 CDN images (replaces gallery) — POST /products/:id/images */
   attachImagesFromCdn(productId: string, cdns: string[]): Observable<Product> {
     return this.api.post<Product>(`/products/${productId}/images`, { cdns });
   }
 
-  /** Upload a local image blob — POST /products/:id/image/upload (multipart) */
   uploadImage(productId: string, file: File): Observable<Product> {
     const formData = new FormData();
     formData.append('file', file, file.name);
     return this.api.postFormData<Product>(`/products/${productId}/image/upload`, formData);
   }
 
-  /** @deprecated Prefer attachImagesFromCdn */
   useImageFromCdn(productId: string, cdn: string): Observable<Product> {
     return this.api.post<Product>(`/products/${productId}/image/use`, { cdn });
   }
@@ -57,10 +81,6 @@ export class ProductsApi {
     return this.api.post<Product>(`/products/${productId}/image/cdn`, { cdn });
   }
 
-  /**
-   * CatalogReader image binary — must send user (or session) JWT.
-   * Browser `<img src>` cannot attach Authorization, so callers should blob+objectURL.
-   */
   fetchStoredImage(storedImageId: string): Observable<Blob> {
     return this.api.getBlob(`/products/images/${storedImageId}`, 'user');
   }

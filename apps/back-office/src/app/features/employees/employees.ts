@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -43,6 +43,7 @@ export class EmployeesPage implements OnInit {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly showForm = signal(false);
+  readonly editingId = signal<string | null>(null);
   readonly statusFilter = signal<EmploymentStatus | ''>('');
 
   readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
@@ -50,7 +51,6 @@ export class EmployeesPage implements OnInit {
   readonly employeeStatusOptions = EMPLOYEE_STATUS_OPTIONS;
 
   readonly form = this.fb.nonNullable.group({
-    employee_code: ['', [Validators.required, Validators.maxLength(40)]],
     first_name: ['', [Validators.required, Validators.maxLength(80)]],
     last_name: ['', [Validators.required, Validators.maxLength(80)]],
     email: [''],
@@ -87,39 +87,75 @@ export class EmployeesPage implements OnInit {
   }
 
   openForm(): void {
+    this.editingId.set(null);
     this.showForm.set(true);
     this.error.set('');
+    this.resetForm();
+  }
+
+  openEdit(employee: Employee): void {
+    this.editingId.set(employee.id);
+    this.showForm.set(true);
+    this.error.set('');
+    this.form.reset({
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      email: employee.email ?? '',
+      phone_local: localPhone(employee.phone_number),
+      role: employee.role,
+      department: employee.department,
+      employment_type: employee.employment_type,
+      status: employee.status,
+      hire_date: employee.hire_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+      salary: employee.salary != null ? String(employee.salary) : '',
+      notes: employee.notes ?? '',
+    });
   }
 
   closeForm(): void {
     this.showForm.set(false);
-    this.form.reset({
-      employee_code: '',
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone_local: '',
-      role: '',
-      department: '',
-      employment_type: 'full_time',
-      status: 'active',
-      hire_date: new Date().toISOString().slice(0, 10),
-      salary: '',
-      notes: '',
-    });
+    this.editingId.set(null);
+    this.resetForm();
   }
 
-  create(): void {
+  save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const value = this.form.getRawValue();
+    const editingId = this.editingId();
     this.saving.set(true);
     this.error.set('');
+
+    if (editingId) {
+      this.api
+        .update(editingId, {
+          first_name: value.first_name.trim(),
+          last_name: value.last_name.trim(),
+          email: value.email.trim() || null,
+          phone_number: `+91${value.phone_local}`,
+          role: value.role.trim(),
+          department: value.department.trim(),
+          employment_type: value.employment_type,
+          status: value.status,
+          hire_date: value.hire_date,
+          salary: value.salary ? Number(value.salary) : null,
+          notes: value.notes.trim() || null,
+        })
+        .pipe(finalize(() => this.saving.set(false)))
+        .subscribe({
+          next: () => {
+            this.closeForm();
+            this.reload();
+          },
+          error: (err: unknown) => this.error.set(this.readError(err, 'Could not update employee.')),
+        });
+      return;
+    }
+
     this.api
       .create({
-        employee_code: value.employee_code.trim(),
         first_name: value.first_name.trim(),
         last_name: value.last_name.trim(),
         email: value.email.trim() || null,
@@ -157,8 +193,32 @@ export class EmployeesPage implements OnInit {
     });
   }
 
+  private resetForm(): void {
+    this.form.reset({
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone_local: '',
+      role: '',
+      department: '',
+      employment_type: 'full_time',
+      status: 'active',
+      hire_date: new Date().toISOString().slice(0, 10),
+      salary: '',
+      notes: '',
+    });
+  }
+
   private readError(error: unknown, fallback: string): string {
     const detail = (error as { error?: { detail?: string } })?.error?.detail;
     return typeof detail === 'string' && detail.trim() ? detail : fallback;
   }
+}
+
+function localPhone(phone: string | null | undefined): string {
+  const digits = (phone ?? '').replace(/\D/g, '');
+  if (digits.length >= 10) {
+    return digits.slice(-10);
+  }
+  return '';
 }

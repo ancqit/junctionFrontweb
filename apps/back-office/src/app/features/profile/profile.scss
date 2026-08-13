@@ -381,6 +381,13 @@ h3 {
   margin: 14px 0;
 }
 
+.avatar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .avatar-head p {
   margin: 0;
   color: #667069;

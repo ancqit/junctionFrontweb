@@ -115,11 +115,28 @@
       <div class="avatar-head">
         <div>
           <h3>Shop photo</h3>
-          <p>Optional — search Pexels, pick one thumbnail, then save.</p>
+          <p>Optional — search Pexels or upload from your device.</p>
         </div>
-        <button type="button" class="ghost" (click)="loadAvatarOptions()" [disabled]="searchingImages()">
-          {{ searchingImages() ? 'Loading…' : 'Find images' }}
-        </button>
+        <div class="avatar-actions">
+          <button type="button" class="ghost" (click)="loadAvatarOptions()" [disabled]="searchingImages()">
+            {{ searchingImages() ? 'Loading…' : 'Find images' }}
+          </button>
+          <button
+            type="button"
+            class="ghost"
+            (click)="openDeviceAvatarPicker(deviceAvatarInput)"
+            [disabled]="uploadingAvatar()"
+          >
+            {{ uploadingAvatar() ? 'Uploading…' : 'Upload from device' }}
+          </button>
+          <input
+            #deviceAvatarInput
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            hidden
+            (change)="onDeviceAvatarSelected($event)"
+          />
+        </div>
       </div>
 
       @if (imageError()) {

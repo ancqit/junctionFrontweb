@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">TEAM</p>
     <h1>Employees</h1>
-    <p class="sub">People working at Main Road Store</p>
+    <p class="sub">People working at your active shop</p>
   </div>
   <button type="button" class="primary" (click)="openForm()">+ Add employee</button>
 </header>
@@ -27,11 +27,10 @@
 @if (showForm()) {
   <section class="panel">
     <div class="panel-head">
-      <h2>New employee</h2>
+      <h2>{{ editingId() ? 'Edit employee' : 'New employee' }}</h2>
       <button type="button" class="ghost" (click)="closeForm()">Cancel</button>
     </div>
-    <form [formGroup]="form" (ngSubmit)="create()" class="grid-form">
-      <label>Code<input formControlName="employee_code" placeholder="EMP-001" /></label>
+    <form [formGroup]="form" (ngSubmit)="save()" class="grid-form">
       <label>First name<input formControlName="first_name" /></label>
       <label>Last name<input formControlName="last_name" /></label>
       <label>Email<input formControlName="email" type="email" placeholder="optional" /></label>
@@ -48,7 +47,9 @@
       <label>Salary<input formControlName="salary" type="number" min="0" step="0.01" placeholder="optional" /></label>
       <label class="full">Notes<textarea formControlName="notes" rows="3"></textarea></label>
       <div class="actions full">
-        <button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save employee' }}</button>
+        <button type="submit" class="primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Save employee' }}
+        </button>
       </div>
     </form>
   </section>
@@ -67,7 +68,6 @@
       <thead>
         <tr>
           <th>Name</th>
-          <th>Code</th>
           <th>Role</th>
           <th>Department</th>
           <th>Status</th>
@@ -82,12 +82,14 @@
               <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
               <small>{{ employee.phone_number }}</small>
             </td>
-            <td>{{ employee.employee_code }}</td>
             <td>{{ employee.role }}</td>
             <td>{{ employee.department }}</td>
             <td><span class="badge" [attr.data-status]="employee.status">{{ employee.status | titlecase }}</span></td>
             <td>{{ employee.hire_date | date: 'mediumDate' }}</td>
-            <td><button type="button" class="danger" (click)="remove(employee)">Delete</button></td>
+            <td class="row-actions">
+              <button type="button" class="ghost" (click)="openEdit(employee)">Edit</button>
+              <button type="button" class="danger" (click)="remove(employee)">Delete</button>
+            </td>
           </tr>
         }
       </tbody>

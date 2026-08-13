@@ -19,6 +19,13 @@ export class ProfileApi {
     return this.api.patch<UserProfile>('/profile', payload);
   }
 
+  /** Upload shop photo from device — `POST /profile/avatar` (multipart). */
+  uploadAvatar(file: File): Observable<UserProfile> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.api.postFormData<UserProfile>('/profile/avatar', formData);
+  }
+
   /** Start DigiLocker OAuth — `GET /auth/digilocker/connect`. */
   connectDigiLocker(): Observable<DigiLockerConnectResponse | null> {
     return this.api.get<DigiLockerConnectResponse>('/auth/digilocker/connect').pipe(

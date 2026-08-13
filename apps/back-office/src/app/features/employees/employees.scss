@@ -34,6 +34,7 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .phone span { padding: 0 12px; background: #f3f1eb; color: #556057; font-weight: 700; }
 .phone input { border: 0; flex: 1; min-width: 0; }
 .actions { display: flex; justify-content: flex-end; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .table-wrap {
   border: 1px solid #dedbd1; border-radius: 16px; background: white; overflow: auto;
 }

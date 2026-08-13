@@ -124,24 +124,31 @@ main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
 .menu-toggle { display: none; }
 .menu-backdrop { display: none; }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
   .office { grid-template-columns: 1fr; }
   .menu-toggle {
-    display: inline-flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 30;
-    margin: 12px 12px 0; border: 0; border-radius: 10px; padding: 11px 14px;
-    color: white; background: #103d29; font: inherit; font-weight: 700; cursor: pointer; width: fit-content;
+    display: inline-flex; align-items: center; gap: 10px;
+    position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left));
+    z-index: 45;
+    margin: 0; border: 0; border-radius: 10px; padding: 11px 14px;
+    color: white; background: #103d29; font: inherit; font-weight: 700; cursor: pointer;
+    width: fit-content; box-shadow: 0 8px 24px rgba(10, 20, 16, .22);
   }
   .office.locked .menu-toggle { background: #2a1818; }
   .menu-bars {
     width: 18px; height: 2px; background: white; box-shadow: 0 6px 0 white, 0 -6px 0 white;
   }
   .menu-backdrop {
-    display: block; position: fixed; inset: 0; z-index: 35; background: rgba(10, 20, 16, .45);
+    display: block; position: fixed; inset: 0; z-index: 40; background: rgba(10, 20, 16, .45);
   }
   aside {
-    position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
-    max-width: none; height: 100vh; height: 100dvh; max-height: 100dvh; transform: translateX(-105%);
-    transition: transform .2s ease; overflow-y: auto; overscroll-behavior: contain;
+    position: fixed; z-index: 50; top: 0; left: 0; bottom: 0;
+    width: min(280px, 86vw); max-width: none;
+    height: 100vh; height: 100dvh; max-height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform .2s ease;
+    overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .office.menu-open aside { transform: translateX(0); }
   nav { display: grid; grid-template-columns: 1fr; margin-top: 24px; gap: 6px; flex-shrink: 0; }
@@ -149,13 +156,24 @@ main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
   .lock-note { margin-top: 12px; }
   .store { display: flex; }
   .logout { text-align: left; }
-  main { padding: 28px 20px; }
+  main {
+    padding: 72px 16px 28px;
+    padding-top: calc(72px + env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+    min-width: 0;
+  }
   .checks li { grid-template-columns: auto 1fr; }
   .checks li .ghost { grid-column: 2; justify-self: start; }
-  .profile-modal { padding: 20px 16px; }
+  .profile-modal {
+    width: min(720px, calc(100vw - 24px));
+    max-height: min(90dvh, 820px);
+    padding: 20px 16px;
+  }
 }
 
-@media (max-width: 800px) and (max-height: 700px) {
+@media (max-width: 900px) and (max-height: 700px) {
   aside { padding: 22px 18px; }
   nav { margin-top: 16px; gap: 4px; }
   .brand { font-size: 18px; }
@@ -163,7 +181,7 @@ main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
   .lock-note { margin-top: 10px; }
 }
 
-@media (max-width: 800px) and (max-height: 560px) {
+@media (max-width: 900px) and (max-height: 560px) {
   aside { padding: 16px 14px; }
   nav { margin-top: 10px; }
   .brand { font-size: 16px; }
@@ -171,4 +189,9 @@ main { padding: 50px clamp(30px, 5vw, 76px); min-width: 0; }
   .logout { padding: 9px 12px; }
   .store { padding: 6px; }
   .avatar { width: 34px; height: 34px; }
+}
+
+@media (max-width: 480px) {
+  main { padding-left: 12px; padding-right: 12px; }
+  .menu-toggle { top: 8px; left: 8px; padding: 10px 12px; }
 }
