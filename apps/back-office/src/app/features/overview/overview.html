@@ -72,31 +72,41 @@
           placeholder="Select type"
         />
       </label>
-      <label>
-        City
-        @if (useCityDropdown()) {
-          <app-inline-select
-            formControlName="city"
-            [options]="citySelectOptions()"
-            placeholder="Select city"
-            (valueChange)="onCityChange()"
-          />
-        } @else {
-          <input formControlName="city" placeholder="Enter city" (change)="onCityChange()" />
+      <div class="picker-field">
+        <span class="field-label">City</span>
+        @if (shopForm.controls.city.value.trim()) {
+          <p class="selected-value">{{ shopForm.controls.city.value }}</p>
         }
-      </label>
-      <label>
-        Locality
-        @if (useLocalityDropdown()) {
-          <app-inline-select
-            formControlName="locality"
-            [options]="localitySelectOptions()"
-            placeholder="Select locality"
-          />
-        } @else {
-          <input formControlName="locality" placeholder="Enter locality" />
+        <button type="button" class="add-action-button" (click)="openCityPicker()">
+          {{ shopForm.controls.city.value.trim() ? 'Change city' : 'Add your city' }}
+        </button>
+        @if (shopForm.controls.city.touched && shopForm.controls.city.invalid) {
+          <small class="field-hint">Please choose a city.</small>
         }
-      </label>
+      </div>
+      <div class="picker-field">
+        <span class="field-label">Locality</span>
+        @if (shopForm.controls.locality.value.trim()) {
+          <p class="selected-value">{{ shopForm.controls.locality.value }}</p>
+        }
+        <button
+          type="button"
+          class="add-action-button"
+          [disabled]="!shopForm.controls.city.value.trim() || localitiesLoading()"
+          (click)="openLocalityPicker()"
+        >
+          @if (localitiesLoading()) {
+            Loading localities…
+          } @else if (shopForm.controls.locality.value.trim()) {
+            Change locality
+          } @else {
+            Add your locality
+          }
+        </button>
+        @if (shopForm.controls.locality.touched && shopForm.controls.locality.invalid) {
+          <small class="field-hint">Please choose a locality.</small>
+        }
+      </div>
       <label>
         Entry time
         <input type="time" formControlName="open_time" />
@@ -247,4 +257,30 @@
       </div>
     </section>
   </div>
+}
+
+@if (activePicker() === 'city') {
+  <app-location-picker-modal
+    title="Add your city"
+    addSectionLabel="Add a new city"
+    [options]="cityPickerOptions()"
+    emptyMessage="No cities available."
+    (picked)="onCityPicked($event)"
+    (dismissed)="closeLocationPicker()"
+  />
+}
+
+@if (activePicker() === 'locality') {
+  <app-location-picker-modal
+    title="Add your locality"
+    addSectionLabel="Add a new locality"
+    [options]="localityPickerOptions()"
+    [loading]="localitiesLoading()"
+    [validating]="localityValidating()"
+    [errorMessage]="localityPickerError()"
+    emptyMessage="No localities available for this city."
+    (picked)="onLocalityPicked($event)"
+    (dismissed)="closeLocationPicker()"
+    (errorCleared)="clearLocalityPickerError()"
+  />
 }
