@@ -79,9 +79,14 @@ export class PlansPage implements OnInit {
         next: ({ plans, application, shops, current }) => {
           this.plans.set(plans.length ? plans : []);
           this.application.set(application);
-          this.shop.set(shops[0] ?? null);
+          // Prefer an owned/active shop when multiple exist (admin-safe via CurrentShop later).
+          const activeId =
+            typeof localStorage !== 'undefined'
+              ? localStorage.getItem('junction.activeShopId')?.trim()
+              : null;
+          const active = activeId ? shops.find((row) => row.id === activeId) : null;
+          this.shop.set(active ?? shops[0] ?? null);
           this.current.set(current);
-          // Always check waitlist — if pending, land on waitlist view.
           this.viewMode.set(application?.status === 'pending' ? 'waitlist' : 'plans');
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load plans.')),

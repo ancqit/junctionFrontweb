@@ -1,8 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, of } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
+import { PlanSummary, PlanType } from './models';
+import { ShopPayment } from './payments.api';
 
-/** junctionBack `Shop` (`GET /shops`). */
+/** junctionBack `Shop` (`GET /shops`) — plan lives on the shop (multi-shop model). */
 export interface Shop {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export interface Shop {
   open_time?: string | null;
   closed_time?: string | null;
   is_open?: boolean;
+  plan?: PlanSummary | null;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +53,10 @@ export class ShopsApi {
     return this.api.get<Shop[]>('/shops').pipe(catchError(() => of([])));
   }
 
+  get(shopId: string): Observable<Shop> {
+    return this.api.get<Shop>(`/shops/${shopId}`);
+  }
+
   create(payload: Partial<ShopWrite> & Pick<ShopWrite, 'name'>): Observable<Shop> {
     return this.api.post<Shop>('/shops', payload);
   }
@@ -58,8 +65,39 @@ export class ShopsApi {
     return this.api.put<Shop>(`/shops/${shopId}`, payload);
   }
 
+  remove(shopId: string): Observable<void> {
+    return this.api.delete(`/shops/${shopId}`);
+  }
+
   updateOpenStatus(payload: ShopOpenStatusUpdate): Observable<Shop> {
     return this.api.put<Shop>('/shops/open-status', payload);
+  }
+
+  /** `GET /shops/{shop_id}/plan` — billing/limits are per shop. */
+  plan(shopId: string): Observable<PlanSummary> {
+    return this.api.get<PlanSummary>(`/shops/${shopId}/plan`, undefined, 'user');
+  }
+
+  /**
+   * `POST /shops/{shop_id}/plan/purchase` — starts pending payment.
+   * Plan activates after `POST /payments/{id}/complete`.
+   * Admins may be activated immediately by the backend.
+   */
+  purchasePlan(shopId: string, planType: PlanType): Observable<ShopPayment> {
+    return this.api.post<ShopPayment>(
+      `/shops/${shopId}/plan/purchase`,
+      { plan_type: planType },
+      'user',
+    );
+  }
+
+  /** Alias of purchase — kept for older clients. */
+  selectPlan(shopId: string, planType: PlanType): Observable<ShopPayment> {
+    return this.api.post<ShopPayment>(
+      `/shops/${shopId}/plan/select`,
+      { plan_type: planType },
+      'user',
+    );
   }
 }
 

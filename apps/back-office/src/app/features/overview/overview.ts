@@ -464,12 +464,10 @@ export class OverviewPage implements OnInit {
     this.locationsApi.cities().subscribe({
       next: (cities) => this.cities.set(cities),
     });
-    // junctionBack `GET /shops` — if a shop exists, show overview; otherwise create form.
-    this.shopsApi.list().subscribe({
-      next: (shops) => {
-        const shop = this.currentShop.applyPlaceOverlay(shops[0] ?? null);
+    // Active shop from CurrentShopService (owned shops only — admin-safe).
+    this.currentShop.ensureShop().subscribe({
+      next: (shop) => {
         this.shop.set(shop);
-        this.currentShop.setShop(shop);
         this.shopLoaded.set(true);
         if (shop?.id) {
           const storedType = this.currentShop.readShopType(shop.id);

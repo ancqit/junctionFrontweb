@@ -8,8 +8,9 @@ import {
   EventEmitter,
   inject,
   signal,
+  computed,
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface InlineSelectOption {
   value: string;
@@ -18,7 +19,7 @@ export interface InlineSelectOption {
 
 @Component({
   selector: 'app-inline-select',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './inline-select.html',
   styleUrl: './inline-select.scss',
   providers: [
@@ -34,6 +35,10 @@ export class InlineSelectComponent implements ControlValueAccessor {
 
   @Input() options: InlineSelectOption[] = [];
   @Input() placeholder = 'Select…';
+  /** Searchable dropdown (category filters, long lists). */
+  @Input() searchable = false;
+  @Input() searchPlaceholder = 'Search…';
+  @Input() allowCustom = false;
   @Input() set value(v: string | null | undefined) {
     if (!this.usingFormControl) {
       this.selectedValue.set(v ?? '');
@@ -44,6 +49,18 @@ export class InlineSelectComponent implements ControlValueAccessor {
   readonly open = signal(false);
   readonly selectedValue = signal('');
   readonly isDisabled = signal(false);
+  readonly searchQuery = signal('');
+
+  readonly filteredOptions = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    if (!query) {
+      return this.options;
+    }
+    return this.options.filter(
+      (row) =>
+        row.label.toLowerCase().includes(query) || row.value.toLowerCase().includes(query),
+    );
+  });
 
   private usingFormControl = false;
   private onChange: (value: string) => void = () => undefined;
@@ -100,14 +117,29 @@ export class InlineSelectComponent implements ControlValueAccessor {
     }
     this.open.update((state) => !state);
     if (this.open()) {
+      this.searchQuery.set('');
       this.onTouched();
     }
+  }
+
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
   }
 
   onOptionClick(event: MouseEvent, value: string): void {
     event.preventDefault();
     event.stopPropagation();
     this.select(value);
+  }
+
+  addCustomFromSearch(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const custom = this.searchQuery().trim();
+    if (!custom) {
+      return;
+    }
+    this.select(custom);
   }
 
   select(value: string): void {
@@ -118,8 +150,15 @@ export class InlineSelectComponent implements ControlValueAccessor {
     this.close();
   }
 
+  clear(event?: MouseEvent): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.select('');
+  }
+
   close(): void {
     this.open.set(false);
+    this.searchQuery.set('');
   }
 
   isSelected(value: string): boolean {

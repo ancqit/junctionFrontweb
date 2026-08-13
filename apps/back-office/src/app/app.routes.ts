@@ -14,6 +14,11 @@ export const APP_ROUTES: Routes = [
         loadComponent: () => import('./features/overview/overview').then((m) => m.OverviewPage),
       },
       {
+        path: 'shops',
+        canActivate: [planActiveGuard],
+        loadComponent: () => import('./features/shops/shops').then((m) => m.ShopsPage),
+      },
+      {
         path: 'employees',
         canActivate: [planActiveGuard],
         loadComponent: () => import('./features/employees/employees').then((m) => m.EmployeesPage),

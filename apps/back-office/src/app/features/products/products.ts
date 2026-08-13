@@ -1,10 +1,32 @@
 import { CurrencyPipe, TitleCasePipe } from '@angular/common';
-import { Component, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { finalize, from, Observable, of } from 'rxjs';
 import { concatMap, last, map, switchMap } from 'rxjs/operators';
-import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
-import { ProductBucket, ProductBucketApi } from '../../core/product-bucket.api';
+import {
+  ImageSearchResult,
+  PRODUCT_PACK_PRICE_INR,
+  PRODUCT_PACK_SIZE,
+  Product,
+  ProductStatus,
+} from '../../core/models';
+import { PaymentsApi, ShopPayment } from '../../core/payments.api';
+import {
+  DEFAULT_PACK_PRICE_INR,
+  DEFAULT_PACK_SIZE,
+  ProductBucket,
+  ProductBucketApi,
+} from '../../core/product-bucket.api';
 import { ProductsApi } from '../../core/products.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
@@ -16,8 +38,6 @@ const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
 
 const MAX_PRODUCT_IMAGES = 5;
 const PEXELS_RESULT_COUNT = 10;
-/** Default pack when adding bucket capacity after plan allowance is used. */
-const DEFAULT_BUCKET_PACK = 10;
 
 export type ProductImageDraftSource = 'pexels' | 'local';
 
@@ -32,20 +52,20 @@ export interface ProductImageDraft {
 
 @Component({
   selector: 'app-products',
-  imports: [ReactiveFormsModule, CurrencyPipe, TitleCasePipe, InlineSelectComponent],
+  imports: [ReactiveFormsModule, CurrencyPipe, TitleCasePipe, InlineSelectComponent, RouterLink],
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
 export class ProductsPage implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
   private readonly bucketApi = inject(ProductBucketApi);
+  private readonly paymentsApi = inject(PaymentsApi);
   private readonly fb = inject(FormBuilder);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('localFileInput');
 
   readonly maxImages = MAX_PRODUCT_IMAGES;
   readonly productStatusOptions = PRODUCT_STATUS_OPTIONS;
   readonly products = signal<Product[]>([]);
-  /** Object URLs for CatalogReader-protected stored images (keyed by product id). */
   readonly storedImageUrls = signal<Record<string, string>>({});
   readonly bucket = signal<ProductBucket | null>(null);
   readonly bucketBusy = signal(false);
@@ -53,6 +73,10 @@ export class ProductsPage implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly showForm = signal(false);
+
+  readonly searchQuery = signal('');
+  readonly categoryFilter = signal('');
+  readonly activeTag = signal<string | null>(null);
 
   readonly pexelsResults = signal<ImageSearchResult[]>([]);
   readonly selectedImages = signal<ProductImageDraft[]>([]);
@@ -73,6 +97,104 @@ export class ProductsPage implements OnInit, OnDestroy {
     tax_rate: [''],
     low_stock_threshold: [''],
   });
+
+  readonly categoryOptions = computed<InlineSelectOption[]>(() => {
+    const fromProducts = this.products()
+      .map((row) => row.category?.trim())
+      .filter((value): value is string => !!value);
+    const unique = [...new Set(fromProducts)].sort((a, b) => a.localeCompare(b));
+    return [
+      { value: '', label: 'All categories' },
+      ...unique.map((value) => ({ value, label: value })),
+    ];
+  });
+
+  readonly formCategoryOptions = computed<InlineSelectOption[]>(() => {
+    const options = this.categoryOptions().filter((row) => row.value);
+    return options.length
+      ? options
+      : [
+          { value: 'Grocery', label: 'Grocery' },
+          { value: 'Dairy', label: 'Dairy' },
+          { value: 'Snacks', label: 'Snacks' },
+          { value: 'Beverages', label: 'Beverages' },
+          { value: 'Personal care', label: 'Personal care' },
+          { value: 'Household', label: 'Household' },
+          { value: 'Other', label: 'Other' },
+        ];
+  });
+
+  /** Description chips (plus explicit tags) shown above the list for filtering. */
+  readonly descriptionTags = computed(() => {
+    const tags = new Set<string>();
+    for (const product of this.products()) {
+      for (const tag of product.tags ?? []) {
+        const trimmed = tag.trim();
+        if (trimmed) {
+          tags.add(trimmed);
+        }
+      }
+      const description = product.description?.trim() ?? '';
+      if (description) {
+        for (const part of description.split(/[,|;]/)) {
+          const chip = part.trim();
+          if (chip && chip.length <= 40) {
+            tags.add(chip);
+          }
+        }
+      }
+    }
+    return [...tags].sort((a, b) => a.localeCompare(b));
+  });
+
+  readonly filteredProducts = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const category = this.categoryFilter().trim().toLowerCase();
+    const tag = this.activeTag()?.trim().toLowerCase() ?? '';
+    return this.products().filter((product) => {
+      if (category && product.category.trim().toLowerCase() !== category) {
+        return false;
+      }
+      if (tag) {
+        const inTags = (product.tags ?? []).some((row) => row.trim().toLowerCase() === tag);
+        const inDescription = (product.description ?? '').toLowerCase().includes(tag);
+        if (!inTags && !inDescription) {
+          return false;
+        }
+      }
+      if (!query) {
+        return true;
+      }
+      const haystack = [
+        product.name,
+        product.category,
+        product.description ?? '',
+        ...(product.tags ?? []),
+        product.sku,
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  });
+
+  readonly capacityLabel = computed(() => {
+    const bucket = this.bucket();
+    if (!bucket) {
+      return '';
+    }
+    if (bucket.capacity == null) {
+      return `${bucket.products_count} products · ${bucket.plan_name}`;
+    }
+    return `${bucket.products_count} / ${bucket.capacity} products · ${bucket.plan_name}`;
+  });
+
+  readonly packSize = computed(
+    () => this.bucket()?.pack_size ?? DEFAULT_PACK_SIZE ?? PRODUCT_PACK_SIZE,
+  );
+  readonly packPrice = computed(
+    () => this.bucket()?.pack_price_inr ?? DEFAULT_PACK_PRICE_INR ?? PRODUCT_PACK_PRICE_INR,
+  );
 
   ngOnInit(): void {
     this.reload();
@@ -105,7 +227,29 @@ export class ProductsPage implements OnInit, OnDestroy {
     });
   }
 
-  addBucketSlots(quantity = DEFAULT_BUCKET_PACK): void {
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  onCategoryFilter(value: string): void {
+    this.categoryFilter.set(value);
+  }
+
+  toggleTag(tag: string): void {
+    this.activeTag.update((current) => (current === tag ? null : tag));
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.categoryFilter.set('');
+    this.activeTag.set(null);
+  }
+
+  /**
+   * After plan allowance is used: buy one pack (payment) or go change plan.
+   * Admins may get capacity immediately from `/slots`.
+   */
+  addProductPack(): void {
     const bucket = this.bucket();
     if (!bucket || bucket.plan_limit == null || !bucket.plan_allowance_consumed) {
       return;
@@ -113,28 +257,39 @@ export class ProductsPage implements OnInit, OnDestroy {
     this.bucketBusy.set(true);
     this.error.set('');
     this.bucketApi
-      .addSlots(quantity)
+      .purchasePacks(1)
       .pipe(finalize(() => this.bucketBusy.set(false)))
       .subscribe({
-        next: (next) => {
-          if (next) {
-            this.bucket.set(next);
+        next: (result) => {
+          if (!result) {
+            return;
           }
+          if (this.isBucket(result)) {
+            this.bucket.set(result);
+            return;
+          }
+          const payment = result as ShopPayment;
+          if (payment.status === 'pending' && payment.id) {
+            this.paymentsApi
+              .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
+              .subscribe({
+                next: (done) => {
+                  if (done.bucket) {
+                    this.bucket.set(done.bucket);
+                  } else {
+                    this.reloadBucket();
+                  }
+                },
+                error: (err: unknown) =>
+                  this.error.set(this.readError(err, 'Payment could not be completed.')),
+              });
+            return;
+          }
+          this.reloadBucket();
         },
         error: (err: unknown) =>
-          this.error.set(this.readError(err, 'Could not add product bucket capacity.')),
+          this.error.set(this.readError(err, 'Could not add more product capacity.')),
       });
-  }
-
-  bucketLabel(): string {
-    const bucket = this.bucket();
-    if (!bucket) {
-      return '';
-    }
-    if (bucket.capacity == null) {
-      return `${bucket.products_count} products · ${bucket.plan_name} (unlimited)`;
-    }
-    return `${bucket.products_count} / ${bucket.capacity} products · ${bucket.plan_name}`;
   }
 
   openForm(): void {
@@ -142,7 +297,7 @@ export class ProductsPage implements OnInit, OnDestroy {
     if (bucket && !bucket.can_add_product) {
       this.error.set(
         bucket.plan_allowance_consumed
-          ? 'Product bucket is full. Add more capacity or upgrade your plan.'
+          ? 'Product limit reached. Add more products or change plan.'
           : 'Your plan does not allow more products right now.',
       );
       return;
@@ -281,6 +436,17 @@ export class ProductsPage implements OnInit, OnDestroy {
 
     const value = this.form.getRawValue();
     const drafts = this.selectedImages();
+    const description = value.description.trim();
+    const tagsFromField = value.tags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const tagsFromDescription = description
+      .split(/[,|;]/)
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0 && tag.length <= 40);
+    const tags = [...new Set([...tagsFromField, ...tagsFromDescription])];
+
     this.saving.set(true);
     this.error.set('');
 
@@ -288,7 +454,7 @@ export class ProductsPage implements OnInit, OnDestroy {
       .create({
         sku: this.generateSku(value.name),
         name: value.name.trim(),
-        description: value.description.trim() || null,
+        description: description || null,
         category: value.category.trim(),
         price: Number(value.price),
         cost_price: value.cost_price === '' ? null : Number(value.cost_price),
@@ -296,10 +462,7 @@ export class ProductsPage implements OnInit, OnDestroy {
         stock_quantity: Number(value.stock_quantity),
         unit: value.unit.trim() || 'piece',
         status: value.status,
-        tags: value.tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
+        tags,
         barcode: value.barcode.trim() || null,
         tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
         low_stock_threshold:
@@ -339,8 +502,11 @@ export class ProductsPage implements OnInit, OnDestroy {
     if (hero?.cdn) {
       return hero.cdn;
     }
-    // stored_image_id requires Bearer (CatalogReader) — hydrated async into storedImageUrls
     return product.image_url || product.image_cdn || product.image?.cdn || null;
+  }
+
+  private isBucket(value: ProductBucket | ShopPayment): value is ProductBucket {
+    return 'products_count' in value && 'can_add_product' in value;
   }
 
   private hydrateStoredImages(products: Product[]): void {
