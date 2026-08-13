@@ -82,6 +82,24 @@ h2 {
   font-weight: 700;
 }
 
+.meta.phone-line {
+  font-variant-numeric: tabular-nums;
+}
+
+.phone-pill.is-visible {
+  background: #eef3ef;
+  color: var(--brand);
+}
+
+.phone-toggle-wrap {
+  width: 100%;
+}
+
+.open-toggle input:disabled + .slider {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .muted {
   color: #778078;
   margin: 0;

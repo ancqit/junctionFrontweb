@@ -11,6 +11,9 @@
         @if (shopTypeLabelText()) {
           <p class="meta type">{{ shopTypeLabelText() }}</p>
         }
+        @if (ownerPhone()) {
+          <p class="meta phone-line">Mobile · {{ ownerPhone() }}</p>
+        }
         @if (countdown(); as plan) {
           <p class="plan-mini">
             {{ plan.planName }}
@@ -39,8 +42,32 @@
           <span class="slider"></span>
         </label>
       </div>
+      @if (hasOwnerPhone()) {
+        <div class="open-toggle-wrap phone-toggle-wrap">
+          <span class="status-pill phone-pill" [class.is-visible]="phoneVisible()">{{ phoneStatusLabel() }}</span>
+          <label
+            class="open-toggle"
+            [attr.aria-label]="
+              phoneVisible()
+                ? 'Hide shop mobile on junction.today catalog'
+                : 'Show shop mobile on junction.today catalog'
+            "
+          >
+            <input
+              type="checkbox"
+              [checked]="phoneVisible()"
+              [disabled]="phoneBusy()"
+              (change)="togglePhoneVisible()"
+            />
+            <span class="slider"></span>
+          </label>
+        </div>
+      }
       @if (statusError()) {
         <p class="error head-error" role="alert">{{ statusError() }}</p>
+      }
+      @if (phoneError()) {
+        <p class="error head-error" role="alert">{{ phoneError() }}</p>
       }
       <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
     </div>

@@ -31,7 +31,9 @@ export function requiresGuestSession(path: string): boolean {
     normalized === '/locations/cities' ||
     normalized === '/locations/localities' ||
     normalized === '/locations/add-junction' ||
-    normalized.startsWith('/locations/')
+    normalized.startsWith('/locations/') ||
+    normalized === '/session/shops' ||
+    normalized.startsWith('/session/shops/')
   );
 }
 
