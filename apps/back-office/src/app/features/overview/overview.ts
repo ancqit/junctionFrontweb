@@ -11,6 +11,7 @@ import { OrdersApi } from '../../core/orders.api';
 import { PlansApi } from '../../core/plans.api';
 import { ProductsApi } from '../../core/products.api';
 import { ProfileApi } from '../../core/profile.api';
+import { SessionShopContact, SessionShopsApi } from '../../core/session-shops.api';
 import {
   DEFAULT_CLOSED_TIME,
   DEFAULT_OPEN_TIME,
@@ -58,6 +59,7 @@ export class OverviewPage implements OnInit {
   private readonly ordersApi = inject(OrdersApi);
   private readonly plansApi = inject(PlansApi);
   private readonly profileApi = inject(ProfileApi);
+  private readonly sessionShopsApi = inject(SessionShopsApi);
   private readonly shopsApi = inject(ShopsApi);
   private readonly locationsApi = inject(LocationsApi);
   private readonly noticesApi = inject(NoticesApi);
@@ -85,6 +87,10 @@ export class OverviewPage implements OnInit {
   readonly shopSuccess = signal('');
 
   readonly shopOpen = signal(false);
+  /** Catalog API only (`GET /session/shops/{id}?show_phone=`) — does not hide numbers in this app. */
+  readonly phoneVisible = signal(false);
+  readonly phoneBusy = signal(false);
+  readonly phoneError = signal('');
   readonly statusError = signal('');
 
   readonly todayNotice = signal<Notice | null>(null);
@@ -121,6 +127,18 @@ export class OverviewPage implements OnInit {
   );
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
   readonly shopStatusLabel = computed(() => (this.shopOpen() ? 'Open now' : 'Closed'));
+
+  readonly ownerPhone = computed(() => {
+    const fromShop = this.shop()?.phone_number?.trim();
+    const fromProfile = this.profile()?.phone_number?.trim();
+    return fromShop || fromProfile || '';
+  });
+
+  readonly hasOwnerPhone = computed(() => !!this.ownerPhone());
+
+  readonly phoneStatusLabel = computed(() =>
+    this.phoneVisible() ? 'Phone shown' : 'Phone hidden',
+  );
 
   /** Shop exists in junctionBack (`GET /shops` returned a record). */
   readonly shopCreated = computed(() => !!this.shop()?.id?.trim());
@@ -328,6 +346,28 @@ export class OverviewPage implements OnInit {
     });
   }
 
+  togglePhoneVisible(): void {
+    const shop = this.shop();
+    if (!shop?.id || !this.hasOwnerPhone()) {
+      return;
+    }
+    const next = !this.phoneVisible();
+    const previous = this.phoneVisible();
+    this.phoneVisible.set(next);
+    this.phoneError.set('');
+    this.phoneBusy.set(true);
+    this.sessionShopsApi
+      .getShop(shop.id, next)
+      .pipe(finalize(() => this.phoneBusy.set(false)))
+      .subscribe({
+        next: (contact) => this.applyPhonePreference(shop.id, contact.show_phone),
+        error: (err: unknown) => {
+          this.phoneVisible.set(previous);
+          this.phoneError.set(this.describeApiError(err, 'Could not update phone visibility.'));
+        },
+      });
+  }
+
   toggleShopOpen(): void {
     const shop = this.shop();
     if (!shop?.id || !shop.name?.trim()) {
@@ -427,6 +467,39 @@ export class OverviewPage implements OnInit {
     this.shop.set(overlay);
     this.currentShop.setShop(overlay);
     this.syncShopFromApi(overlay);
+    this.loadPhoneContact(overlay);
+  }
+
+  private applyPhonePreference(shopId: string, showPhone: boolean): void {
+    this.phoneVisible.set(showPhone);
+    this.currentShop.writePhoneVisible(shopId, showPhone);
+  }
+
+  private loadPhoneContact(shop: Shop | null): void {
+    if (!shop?.id) {
+      this.phoneVisible.set(false);
+      return;
+    }
+    const showPhone = this.currentShop.readPhoneVisible(shop.id);
+    this.phoneVisible.set(showPhone);
+    this.phoneBusy.set(true);
+    this.phoneError.set('');
+    this.sessionShopsApi
+      .getShop(shop.id, showPhone)
+      .pipe(
+        catchError(() =>
+          of({
+            id: shop.id,
+            name: shop.name,
+            phone_number: null,
+            show_phone: showPhone,
+          } satisfies SessionShopContact),
+        ),
+        finalize(() => this.phoneBusy.set(false)),
+      )
+      .subscribe({
+        next: (contact) => this.applyPhonePreference(shop.id, contact.show_phone),
+      });
   }
 
   private syncShopFromApi(shop: Shop | null): void {
@@ -490,6 +563,7 @@ export class OverviewPage implements OnInit {
             this.loadLocalities(shop.city, shop.locality ?? '');
           }
           this.syncShopFromApi(shop);
+          this.loadPhoneContact(shop);
           this.editingShop.set(false);
           this.loadDashboard();
         } else {

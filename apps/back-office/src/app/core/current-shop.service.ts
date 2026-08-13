@@ -6,6 +6,7 @@ import { Shop, ShopsApi } from './shops.api';
 
 const SHOP_TYPE_STORAGE_KEY = 'junction.shopTypeById';
 const SHOP_PLACE_STORAGE_KEY = 'junction.shopPlaceById';
+const SHOP_PHONE_VISIBLE_KEY = 'junction.phoneVisibleById';
 const ACTIVE_SHOP_STORAGE_KEY = 'junction.activeShopId';
 
 export interface ShopPlaceOverlay {
@@ -222,6 +223,35 @@ export class CurrentShopService {
         locality: place.locality.trim(),
       };
       localStorage.setItem(SHOP_PLACE_STORAGE_KEY, JSON.stringify(map));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  /** Whether the owner chose to show shop mobile on session catalog (`show_phone` query). */
+  readPhoneVisible(shopId: string | null | undefined): boolean {
+    if (!shopId) {
+      return false;
+    }
+    try {
+      const raw = localStorage.getItem(SHOP_PHONE_VISIBLE_KEY);
+      if (!raw) {
+        return false;
+      }
+      const map = JSON.parse(raw) as Record<string, boolean>;
+      const value = map[shopId];
+      return value === true;
+    } catch {
+      return false;
+    }
+  }
+
+  writePhoneVisible(shopId: string, visible: boolean): void {
+    try {
+      const raw = localStorage.getItem(SHOP_PHONE_VISIBLE_KEY);
+      const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      map[shopId] = visible;
+      localStorage.setItem(SHOP_PHONE_VISIBLE_KEY, JSON.stringify(map));
     } catch {
       // ignore storage failures
     }
