@@ -22,8 +22,16 @@ import {
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 import { Order, UserProfile } from '../../core/models';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+import {
+  LocationPickerModalComponent,
+  LocationPickerOption,
+} from '../../shared/location-picker-modal/location-picker-modal';
 
 const RECENT_ORDERS_LIMIT = 8;
+const LOCALITY_GEOCODE_ERROR =
+  'Could not verify that locality. Enter a real or prominent locality name.';
+
+type ActiveLocationPicker = 'city' | 'locality' | null;
 
 const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
   { value: '', label: 'Select type' },
@@ -32,7 +40,15 @@ const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
 
 @Component({
   selector: 'app-overview',
-  imports: [RouterLink, CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule, InlineSelectComponent],
+  imports: [
+    RouterLink,
+    CurrencyPipe,
+    DatePipe,
+    TitleCasePipe,
+    ReactiveFormsModule,
+    InlineSelectComponent,
+    LocationPickerModalComponent,
+  ],
   templateUrl: './overview.html',
   styleUrl: './overview.scss',
 })
@@ -63,6 +79,7 @@ export class OverviewPage implements OnInit {
   readonly editingShop = signal(false);
   readonly cities = signal<string[]>([]);
   readonly localities = signal<string[]>([]);
+  readonly localitiesLoading = signal(false);
   readonly shopSaving = signal(false);
   readonly shopError = signal('');
   readonly shopSuccess = signal('');
@@ -75,6 +92,11 @@ export class OverviewPage implements OnInit {
   readonly noticeSaving = signal(false);
   readonly noticeError = signal('');
   readonly noticeSuccess = signal('');
+
+  /** junction.today-style city/locality picker modal. */
+  readonly activePicker = signal<ActiveLocationPicker>(null);
+  readonly localityValidating = signal(false);
+  readonly localityPickerError = signal<string | null>(null);
 
   readonly shopForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -90,16 +112,12 @@ export class OverviewPage implements OnInit {
   });
 
   readonly greetingName = computed(() => this.profile()?.display_name?.trim() || 'there');
-  readonly useCityDropdown = computed(() => this.cities().length > 0);
-  readonly useLocalityDropdown = computed(() => this.localities().length > 0);
-  readonly citySelectOptions = computed<InlineSelectOption[]>(() => [
-    { value: '', label: 'Select city' },
-    ...this.cities().map((city) => ({ value: city, label: city })),
-  ]);
-  readonly localitySelectOptions = computed<InlineSelectOption[]>(() => [
-    { value: '', label: 'Select locality' },
-    ...this.localities().map((locality) => ({ value: locality, label: locality })),
-  ]);
+  readonly cityPickerOptions = computed<LocationPickerOption[]>(() =>
+    this.cities().map((city) => ({ id: city.toLowerCase(), label: city })),
+  );
+  readonly localityPickerOptions = computed<LocationPickerOption[]>(() =>
+    this.localities().map((locality) => ({ id: locality.toLowerCase(), label: locality })),
+  );
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
   readonly shopStatusLabel = computed(() => (this.shopOpen() ? 'Open now' : 'Closed'));
 
@@ -117,10 +135,83 @@ export class OverviewPage implements OnInit {
     this.loadShopForm();
   }
 
-  onCityChange(): void {
-    const city = this.shopForm.controls.city.value;
+  openCityPicker(): void {
+    this.localityPickerError.set(null);
+    this.activePicker.set('city');
+  }
+
+  openLocalityPicker(): void {
+    if (!this.shopForm.controls.city.value.trim() || this.localitiesLoading()) {
+      return;
+    }
+    this.localityPickerError.set(null);
+    this.activePicker.set('locality');
+  }
+
+  closeLocationPicker(): void {
+    this.activePicker.set(null);
+    this.localityPickerError.set(null);
+    this.localityValidating.set(false);
+  }
+
+  clearLocalityPickerError(): void {
+    this.localityPickerError.set(null);
+  }
+
+  onCityPicked(cityName: string): void {
+    const trimmed = cityName.trim();
+    if (!trimmed) {
+      return;
+    }
+    const known = this.cities().find((city) => city.toLowerCase() === trimmed.toLowerCase());
+    const city = known ?? trimmed;
+    if (!known) {
+      this.cities.update((rows) => (rows.includes(city) ? rows : [...rows, city].sort()));
+    }
+    this.shopForm.controls.city.setValue(city);
     this.shopForm.controls.locality.setValue('');
+    this.localities.set([]);
+    this.closeLocationPicker();
     this.loadLocalities(city);
+  }
+
+  onLocalityPicked(localityName: string): void {
+    const city = this.shopForm.controls.city.value.trim();
+    const trimmed = localityName.trim();
+    if (!city || !trimmed) {
+      return;
+    }
+
+    const known = this.localities().find((row) => row.toLowerCase() === trimmed.toLowerCase());
+    if (known) {
+      this.shopForm.controls.locality.setValue(known);
+      this.closeLocationPicker();
+      return;
+    }
+
+    // New locality — validate via junctionBack add-junction (session JWT), same as greet.
+    this.localityValidating.set(true);
+    this.localityPickerError.set(null);
+    this.locationsApi.addJunction(city, trimmed).subscribe({
+      next: (result) => {
+        this.localityValidating.set(false);
+        const locality = result.locality?.trim() || trimmed;
+        this.localities.update((rows) =>
+          rows.some((row) => row.toLowerCase() === locality.toLowerCase())
+            ? rows
+            : [...rows, locality].sort(),
+        );
+        this.shopForm.controls.locality.setValue(locality);
+        if (result.city?.trim() && result.city.trim() !== city) {
+          this.shopForm.controls.city.setValue(result.city.trim());
+        }
+        this.closeLocationPicker();
+      },
+      error: () => {
+        this.localityValidating.set(false);
+        this.localityPickerError.set(LOCALITY_GEOCODE_ERROR);
+      },
+    });
   }
 
   openShopEditor(): void {
@@ -466,12 +557,23 @@ export class OverviewPage implements OnInit {
   }
 
   private loadLocalities(city: string, keepLocality = ''): void {
-    this.locationsApi.localities(city).subscribe({
+    const trimmed = city.trim();
+    if (!trimmed) {
+      this.localities.set([]);
+      return;
+    }
+    this.localitiesLoading.set(true);
+    this.locationsApi.localities(trimmed).subscribe({
       next: (rows) => {
         this.localities.set(rows);
+        this.localitiesLoading.set(false);
         if (keepLocality) {
           this.shopForm.controls.locality.setValue(keepLocality);
         }
+      },
+      error: () => {
+        this.localities.set([]);
+        this.localitiesLoading.set(false);
       },
     });
   }
