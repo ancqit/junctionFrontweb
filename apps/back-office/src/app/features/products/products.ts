@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, from, Observable, of } from 'rxjs';
 import { concatMap, last, map, switchMap } from 'rxjs/operators';
 import { ImageSearchResult, Product, ProductStatus } from '../../core/models';
+import { ProductBucket, ProductBucketApi } from '../../core/product-bucket.api';
 import { ProductsApi } from '../../core/products.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
@@ -15,6 +16,8 @@ const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
 
 const MAX_PRODUCT_IMAGES = 5;
 const PEXELS_RESULT_COUNT = 10;
+/** Default pack when adding bucket capacity after plan allowance is used. */
+const DEFAULT_BUCKET_PACK = 10;
 
 export type ProductImageDraftSource = 'pexels' | 'local';
 
@@ -35,6 +38,7 @@ export interface ProductImageDraft {
 })
 export class ProductsPage implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
+  private readonly bucketApi = inject(ProductBucketApi);
   private readonly fb = inject(FormBuilder);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('localFileInput');
 
@@ -43,6 +47,8 @@ export class ProductsPage implements OnInit, OnDestroy {
   readonly products = signal<Product[]>([]);
   /** Object URLs for CatalogReader-protected stored images (keyed by product id). */
   readonly storedImageUrls = signal<Record<string, string>>({});
+  readonly bucket = signal<ProductBucket | null>(null);
+  readonly bucketBusy = signal(false);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
@@ -86,12 +92,61 @@ export class ProductsPage implements OnInit, OnDestroy {
         next: (rows) => {
           this.products.set(rows);
           this.hydrateStoredImages(rows);
+          this.reloadBucket();
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load products.')),
       });
   }
 
+  reloadBucket(): void {
+    this.bucketApi.get().subscribe({
+      next: (bucket) => this.bucket.set(bucket),
+      error: () => this.bucket.set(null),
+    });
+  }
+
+  addBucketSlots(quantity = DEFAULT_BUCKET_PACK): void {
+    const bucket = this.bucket();
+    if (!bucket || bucket.plan_limit == null || !bucket.plan_allowance_consumed) {
+      return;
+    }
+    this.bucketBusy.set(true);
+    this.error.set('');
+    this.bucketApi
+      .addSlots(quantity)
+      .pipe(finalize(() => this.bucketBusy.set(false)))
+      .subscribe({
+        next: (next) => {
+          if (next) {
+            this.bucket.set(next);
+          }
+        },
+        error: (err: unknown) =>
+          this.error.set(this.readError(err, 'Could not add product bucket capacity.')),
+      });
+  }
+
+  bucketLabel(): string {
+    const bucket = this.bucket();
+    if (!bucket) {
+      return '';
+    }
+    if (bucket.capacity == null) {
+      return `${bucket.products_count} products · ${bucket.plan_name} (unlimited)`;
+    }
+    return `${bucket.products_count} / ${bucket.capacity} products · ${bucket.plan_name}`;
+  }
+
   openForm(): void {
+    const bucket = this.bucket();
+    if (bucket && !bucket.can_add_product) {
+      this.error.set(
+        bucket.plan_allowance_consumed
+          ? 'Product bucket is full. Add more capacity or upgrade your plan.'
+          : 'Your plan does not allow more products right now.',
+      );
+      return;
+    }
     this.showForm.set(true);
     this.error.set('');
     this.resetImagePicker();

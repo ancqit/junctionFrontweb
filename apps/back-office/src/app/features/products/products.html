@@ -3,8 +3,30 @@
     <p class="eyebrow">CATALOG</p>
     <h1>Products</h1>
     <p class="sub">Inventory for Main Road Store</p>
+    @if (bucket(); as b) {
+      <p class="bucket-line">
+        Product bucket · {{ bucketLabel() }}
+        @if (b.remaining != null) {
+          <span>· {{ b.remaining }} remaining</span>
+        }
+      </p>
+    }
   </div>
-  <button type="button" class="primary" (click)="openForm()">+ Add product</button>
+  <div class="header-actions">
+    @if (bucket()?.plan_allowance_consumed && bucket()?.plan_limit != null) {
+      <button
+        type="button"
+        class="ghost"
+        (click)="addBucketSlots()"
+        [disabled]="bucketBusy()"
+      >
+        {{ bucketBusy() ? 'Adding…' : '+ Add bucket capacity' }}
+      </button>
+    }
+    <button type="button" class="primary" (click)="openForm()" [disabled]="bucket() !== null && !bucket()!.can_add_product">
+      + Add product
+    </button>
+  </div>
 </header>
 
 @if (error()) {
