@@ -163,10 +163,20 @@ export class ProductsPage implements OnInit, OnDestroy {
     if (!bucket) {
       return '';
     }
+    const planName = bucket.plan_name?.trim() || 'this plan';
     if (bucket.capacity == null) {
-      return `${bucket.products_count} products · ${bucket.plan_name}`;
+      return `${bucket.products_count} products · ${planName}`;
     }
-    return `${bucket.products_count} / ${bucket.capacity} products · ${bucket.plan_name}`;
+    return `${bucket.products_count}/${bucket.capacity} products · product bucket for ${planName}`;
+  });
+
+  /** True when plan + pack capacity is fully used. */
+  readonly capacityFull = computed(() => {
+    const bucket = this.bucket();
+    if (!bucket || bucket.capacity == null) {
+      return false;
+    }
+    return bucket.remaining === 0 || bucket.products_count >= bucket.capacity || !bucket.can_add_product;
   });
 
   readonly packSize = computed(

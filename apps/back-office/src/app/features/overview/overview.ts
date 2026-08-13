@@ -102,6 +102,7 @@ export class OverviewPage implements OnInit {
     name: ['', [Validators.required, Validators.minLength(2)]],
     city: ['', [Validators.required, Validators.minLength(2)]],
     locality: ['', [Validators.required, Validators.minLength(2)]],
+    address: [''],
     shop_type: ['', [Validators.required]],
     open_time: [DEFAULT_OPEN_TIME, [Validators.required]],
     closed_time: [DEFAULT_CLOSED_TIME, [Validators.required]],
@@ -223,6 +224,7 @@ export class OverviewPage implements OnInit {
       name: shop.name ?? '',
       city: shop.city ?? '',
       locality: shop.locality ?? '',
+      address: shop.address ?? '',
       shop_type: this.shopType() ?? '',
       open_time: normalizeShopTime(shop.open_time) ?? DEFAULT_OPEN_TIME,
       closed_time: normalizeShopTime(shop.closed_time) ?? DEFAULT_CLOSED_TIME,
@@ -252,6 +254,7 @@ export class OverviewPage implements OnInit {
       name: raw.name.trim(),
       city: raw.city.trim(),
       locality: raw.locality.trim(),
+      address: raw.address.trim() || null,
       open_time: normalizeShopTime(raw.open_time) ?? DEFAULT_OPEN_TIME,
       closed_time: normalizeShopTime(raw.closed_time) ?? DEFAULT_CLOSED_TIME,
       is_open: this.shopOpen(),
@@ -294,6 +297,7 @@ export class OverviewPage implements OnInit {
           name: payload.name,
           city: payload.city,
           locality: payload.locality,
+          address: payload.address,
         };
         const placeOnly$ = existing
           ? this.shopsApi.update(existing.id, placePayload)
@@ -394,7 +398,7 @@ export class OverviewPage implements OnInit {
 
   private applySavedShop(
     shop: Shop,
-    payload: { name: string; city: string; locality: string },
+    payload: { name: string; city: string; locality: string; address?: string | null },
     shopType: string,
   ): void {
     const existing = this.shop();
@@ -404,6 +408,7 @@ export class OverviewPage implements OnInit {
       name: payload.name || shop.name,
       city: payload.city || shop.city || '',
       locality: payload.locality || shop.locality || '',
+      address: payload.address ?? shop.address ?? null,
     };
     this.currentShop.writeShopType(merged.id, shopType);
     this.currentShop.writeShopPlace(merged.id, {
@@ -476,6 +481,7 @@ export class OverviewPage implements OnInit {
             name: shop.name ?? '',
             city: shop.city ?? '',
             locality: shop.locality ?? '',
+            address: shop.address ?? '',
             shop_type: storedType ?? '',
             open_time: normalizeShopTime(shop.open_time) ?? DEFAULT_OPEN_TIME,
             closed_time: normalizeShopTime(shop.closed_time) ?? DEFAULT_CLOSED_TIME,

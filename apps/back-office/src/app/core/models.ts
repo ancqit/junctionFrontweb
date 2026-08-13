@@ -204,7 +204,7 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 0,
     max_products: 40,
     profile_only: false,
-    description: 'Up to 40 products for 15 days',
+    description: 'Shop profile with up to 40 products for 15 days',
     duration_days: FREE_TRIAL_DAYS,
   },
   {
@@ -213,7 +213,7 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 999,
     max_products: 10,
     profile_only: false,
-    description: 'Up to 10 products · INR 999 / year',
+    description: 'Shop profile with up to 10 products for 1 year (INR 999)',
     duration_days: PAID_PLAN_DAYS,
   },
   {
@@ -222,7 +222,7 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 2999,
     max_products: 80,
     profile_only: false,
-    description: 'Up to 80 products · INR 2999 / year',
+    description: 'Shop profile with up to 80 products for 1 year (INR 2999)',
     duration_days: PAID_PLAN_DAYS,
   },
   {
@@ -231,7 +231,7 @@ export const PLAN_CATALOG: PlanOption[] = [
     price_inr: 599,
     max_products: 150,
     profile_only: false,
-    description: 'Up to 150 products · INR 599 / year',
+    description: 'Shop profile with up to 150 products for 1 year (INR 599)',
     duration_days: PAID_PLAN_DAYS,
   },
 ];

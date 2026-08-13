@@ -4,7 +4,20 @@ header { display: flex; justify-content: space-between; align-items: end; gap: 1
 h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .sub { margin: 0; color: #778078; font-size: 14px; }
 .bucket-line { margin: 10px 0 0; color: #1a6541; font-size: 13px; font-weight: 700; }
-.capacity-line { margin: 10px 0 0; color: #1a6541; font-size: 13px; font-weight: 700; }
+.bucket-banner {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  margin: 0 0 18px; padding: 16px 18px; border-radius: 14px;
+  border: 1px solid #cfe0d6; background: #f4faf6;
+}
+.bucket-banner .eyebrow { margin: 0 0 4px; color: #1a6541; font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+.bucket-count { margin: 0; color: #1a6541; font-size: 16px; font-weight: 800; }
+.bucket-hint { margin: 6px 0 0; color: #7a2a2a; font-size: 13px; font-weight: 600; }
+.bucket-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.bucket-banner.full {
+  border-color: #e2c4c4; background: #fbf4f4;
+}
+.bucket-banner.full .eyebrow,
+.bucket-banner.full .bucket-count { color: #9b2c2c; }
 .header-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center; }
 .header-actions a.ghost { text-decoration: none; display: inline-flex; align-items: center; }
 .primary, .ghost, .danger {
@@ -127,6 +140,7 @@ td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
 @media (max-width: 900px) {
   .grid-form { grid-template-columns: 1fr; }
   header { align-items: start; flex-direction: column; }
+  .bucket-banner { flex-direction: column; align-items: start; }
   .image-picker-head { flex-direction: column; align-items: stretch; }
   .picker-actions { justify-content: stretch; }
   .picker-actions .ghost { flex: 1; }

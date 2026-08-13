@@ -12,6 +12,8 @@ export interface Shop {
   owner_user_id: string;
   city: string;
   locality: string;
+  /** Street / shop address line (junctionBack `address`). */
+  address?: string | null;
   open_time?: string | null;
   closed_time?: string | null;
   is_open?: boolean;
@@ -25,6 +27,7 @@ export interface ShopWrite {
   name: string;
   city: string;
   locality: string;
+  address?: string | null;
   open_time?: string;
   closed_time?: string;
   is_open?: boolean;

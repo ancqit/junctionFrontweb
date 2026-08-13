@@ -41,62 +41,75 @@ interface PlansListResponse {
 export const FREE_TRIAL_DAYS = 15;
 export const PAID_PLAN_DAYS = 365;
 
+/** Matches junctionBack `PLAN_CATALOG` (shop plans · yearly). */
 export const PLAN_CATALOG: PlanOption[] = [
   {
     type: 'free_trial',
     name: 'Free Trial',
     price_inr: 0,
-    max_products: 150,
+    max_products: 40,
     profile_only: false,
-    description: 'Try all features free for 15 days',
+    description: 'Shop profile with up to 40 products for 15 days',
     duration_days: FREE_TRIAL_DAYS,
   },
   {
     type: 'starter',
     name: 'Starter',
-    price_inr: 0,
+    price_inr: 999,
     max_products: 10,
     profile_only: false,
-    description: 'Profile and up to 10 products · billed yearly',
+    description: 'Shop profile with up to 10 products for 1 year (INR 999)',
     duration_days: PAID_PLAN_DAYS,
   },
   {
     type: 'growth',
     name: 'Growth',
-    price_inr: 399,
-    max_products: 100,
+    price_inr: 2999,
+    max_products: 80,
     profile_only: false,
-    description: 'Add up to 100 products · billed yearly',
+    description: 'Shop profile with up to 80 products for 1 year (INR 2999)',
     duration_days: PAID_PLAN_DAYS,
   },
   {
     type: 'premium',
     name: 'Premium',
     price_inr: 599,
-    max_products: null,
+    max_products: 150,
     profile_only: false,
-    description: 'Add more than 150 products · billed yearly',
+    description: 'Shop profile with up to 150 products for 1 year (INR 599)',
     duration_days: PAID_PLAN_DAYS,
   },
 ];
 
-/** Align Starter with junctionBack: profile + 10 products (overrides stale API payloads). */
+/** Extra product pack after plan allowance is used (junctionBack product_bucket). */
+export const PRODUCT_PACK_SIZE = 40;
+export const PRODUCT_PACK_PRICE_INR = 999;
+
+/** Force catalog fields to match junctionBack (overrides stale API payloads). */
 export function alignPlanCatalog(plans: PlanOption[]): PlanOption[] {
-  const starter = PLAN_CATALOG.find((plan) => plan.type === 'starter');
-  if (!starter) {
-    return plans;
+  const byType = new Map(PLAN_CATALOG.map((plan) => [plan.type, plan]));
+  const aligned = (plans.length ? plans : PLAN_CATALOG).map((plan) => {
+    const canonical = byType.get(plan.type);
+    if (!canonical) {
+      return plan;
+    }
+    return {
+      ...plan,
+      name: canonical.name,
+      price_inr: canonical.price_inr,
+      max_products: canonical.max_products,
+      profile_only: canonical.profile_only,
+      description: canonical.description,
+      duration_days: canonical.duration_days,
+    };
+  });
+  // Ensure every catalog plan is present even if API omits some.
+  for (const canonical of PLAN_CATALOG) {
+    if (!aligned.some((plan) => plan.type === canonical.type)) {
+      aligned.push(canonical);
+    }
   }
-  return plans.map((plan) =>
-    plan.type === 'starter'
-      ? {
-          ...plan,
-          max_products: starter.max_products,
-          profile_only: starter.profile_only,
-          description: starter.description,
-          duration_days: plan.duration_days ?? starter.duration_days,
-        }
-      : plan,
-  );
+  return aligned;
 }
 
 @Injectable({ providedIn: 'root' })

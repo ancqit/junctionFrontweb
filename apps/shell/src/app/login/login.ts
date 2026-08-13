@@ -207,7 +207,13 @@ export class Login implements OnInit {
             return;
           }
 
-          this.currentPlan.set(response.plan ?? null);
+          const plan = response.plan ?? null;
+          this.currentPlan.set(plan);
+          // Users who already have an active plan (trial or paid) go straight in.
+          if (plan?.is_active) {
+            void this.router.navigateByUrl(homePathForRole('owner'));
+            return;
+          }
           this.loadPlans();
           this.step.set('plans');
         },
@@ -255,15 +261,12 @@ export class Login implements OnInit {
       return 'Profile only';
     }
     if (plan.max_products === null) {
-      return 'More than 150 products';
+      return 'Unlimited products';
     }
     if (plan.type === 'free_trial') {
       return `Up to ${plan.max_products} products · ${plan.duration_days ?? this.trialDays} days`;
     }
-    if (plan.type === 'starter') {
-      return `Profile and up to ${plan.max_products} products`;
-    }
-    return `Up to ${plan.max_products} products`;
+    return `Up to ${plan.max_products} products · 1 year`;
   }
 
   selectablePlans(): PlanOption[] {

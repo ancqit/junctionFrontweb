@@ -81,7 +81,7 @@
         @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
           <button type="button" class="trial" (click)="continueWithTrial()" [disabled]="busy()">
             <span>Free trial</span>
-            <strong>Continue with Premium trial</strong>
+            <strong>Continue with free trial</strong>
             <small>{{ currentPlan()?.days_remaining ?? trialDays }} days remaining · closes automatically</small>
           </button>
         }
@@ -94,7 +94,7 @@
                 @if (plan.price_inr === 0) {
                   Free
                 } @else {
-                  {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}/mo
+                  {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}/year
                 }
               </span>
               <span class="plan-limit">{{ productLimitLabel(plan) }}</span>
@@ -134,7 +134,7 @@
             @if (plan.price_inr === 0) {
               Free
             } @else {
-              {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/mo</small>
+              {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/year</small>
             }
           </p>
           <p class="modal-limit">{{ productLimitLabel(plan) }}</p>

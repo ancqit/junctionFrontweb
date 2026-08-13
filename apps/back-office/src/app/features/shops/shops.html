@@ -65,6 +65,14 @@
           }
         </button>
       </div>
+      <label class="full">
+        Address
+        <input
+          formControlName="address"
+          placeholder="Shop no., street, landmark"
+          autocomplete="street-address"
+        />
+      </label>
       <label>
         Entry time
         <input type="time" formControlName="open_time" />
@@ -101,6 +109,9 @@
             <div>
               <h2>{{ shop.name }}</h2>
               <p class="place">{{ shop.locality }} · {{ shop.city }}</p>
+              @if (shop.address) {
+                <p class="address">{{ shop.address }}</p>
+              }
               <p class="meta">{{ typeLabel(shop) }} · {{ planLabel(shop) }}</p>
             </div>
             @if (isActive(shop)) {

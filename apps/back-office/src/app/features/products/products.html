@@ -3,22 +3,8 @@
     <p class="eyebrow">CATALOG</p>
     <h1>Products</h1>
     <p class="sub">Inventory for the active shop</p>
-    @if (capacityLabel()) {
-      <p class="capacity-line">{{ capacityLabel() }}</p>
-    }
   </div>
   <div class="header-actions">
-    @if (bucket()?.plan_allowance_consumed && bucket()?.plan_limit != null) {
-      <button
-        type="button"
-        class="ghost"
-        (click)="addProductPack()"
-        [disabled]="bucketBusy()"
-      >
-        {{ bucketBusy() ? 'Adding…' : '+ Add ' + packSize() + ' products (₹' + packPrice() + ')' }}
-      </button>
-      <a routerLink="/back-office/plans" class="ghost">Change plan</a>
-    }
     <button type="button" class="primary" (click)="openForm()" [disabled]="bucket() !== null && !bucket()!.can_add_product">
       + Add product
     </button>
@@ -189,6 +175,35 @@
         </button>
       </div>
     </form>
+  </section>
+}
+
+@if (capacityLabel()) {
+  <section
+    class="bucket-banner"
+    [class.full]="capacityFull()"
+    [attr.aria-live]="capacityFull() ? 'assertive' : 'polite'"
+  >
+    <div>
+      <p class="eyebrow">PRODUCT BUCKET</p>
+      <p class="bucket-count">{{ capacityLabel() }}</p>
+      @if (capacityFull()) {
+        <p class="bucket-hint">Capacity full — add a product pack or change plan to list more items.</p>
+      }
+    </div>
+    @if (capacityFull() || bucket()?.plan_allowance_consumed) {
+      <div class="bucket-actions">
+        <button
+          type="button"
+          class="ghost"
+          (click)="addProductPack()"
+          [disabled]="bucketBusy()"
+        >
+          {{ bucketBusy() ? 'Adding…' : '+ Add ' + packSize() + ' products (₹' + packPrice() + ')' }}
+        </button>
+        <a routerLink="/back-office/plans" class="ghost">Change plan</a>
+      </div>
+    }
   </section>
 }
 
