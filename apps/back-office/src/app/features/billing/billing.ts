@@ -3,8 +3,9 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { downloadBillPdf } from '../../core/bill-pdf';
 import { CurrentShopService } from '../../core/current-shop.service';
-import { OrderLineItem, PaymentMethod, Product } from '../../core/models';
+import { Order, OrderLineItem, PaymentMethod, Product } from '../../core/models';
 import { OrdersApi } from '../../core/orders.api';
 import { ProductsApi } from '../../core/products.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
@@ -43,6 +44,7 @@ export class BillingPage implements OnInit {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
+  readonly success = signal('');
   readonly paymentMethodOptions = PAYMENT_METHOD_OPTIONS;
 
   readonly filteredProducts = computed(() => {
@@ -76,7 +78,7 @@ export class BillingPage implements OnInit {
 
   readonly customerForm = this.fb.nonNullable.group({
     customer_name: ['Walk-in customer', [Validators.required, Validators.maxLength(160)]],
-    customer_phone: [''],
+    phone_local: ['', [Validators.pattern(/^$|^[6-9]\d{9}$/)]],
     customer_email: [''],
     payment_method: this.fb.nonNullable.control<PaymentMethod>('cash', Validators.required),
     notes: [''],
@@ -150,6 +152,7 @@ export class BillingPage implements OnInit {
   clearBill(): void {
     this.lines.set([]);
     this.error.set('');
+    this.success.set('');
   }
 
   createOrder(): void {
@@ -169,11 +172,8 @@ export class BillingPage implements OnInit {
     }
 
     const customer = this.customerForm.getRawValue();
-    const phone = customer.customer_phone.trim();
-    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
-      this.error.set('Phone must be in E.164 format, e.g. +919876543210.');
-      return;
-    }
+    const phoneLocal = customer.phone_local.trim();
+    const phone = phoneLocal ? `+91${phoneLocal}` : null;
 
     const email = customer.customer_email.trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -181,7 +181,8 @@ export class BillingPage implements OnInit {
       return;
     }
 
-    const items: OrderLineItem[] = this.lines().map((line) => ({
+    const billLines = this.lines();
+    const items: OrderLineItem[] = billLines.map((line) => ({
       product_id: line.product.id,
       product_name: line.product.name,
       sku: line.product.sku,
@@ -192,14 +193,16 @@ export class BillingPage implements OnInit {
     const subtotal = this.subtotal();
     const taxAmount = this.taxAmount();
     const totalAmount = this.totalAmount();
+    const shopName = this.currentShop.shop()?.name?.trim() || 'Junction shop';
 
     this.saving.set(true);
     this.error.set('');
+    this.success.set('');
     this.ordersApi
       .create({
         store_id: storeId,
         customer_name: customer.customer_name.trim(),
-        customer_phone: phone || null,
+        customer_phone: phone,
         customer_email: email || null,
         items,
         billing: {
@@ -218,7 +221,34 @@ export class BillingPage implements OnInit {
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: () => {
+        next: (order: Order) => {
+          downloadBillPdf({
+            shopName,
+            orderNumber: order.order_number,
+            customerName: customer.customer_name.trim(),
+            customerPhone: phone,
+            paymentMethod: customer.payment_method,
+            lines: billLines.map((line) => ({
+              name: line.product.name,
+              quantity: line.quantity,
+              unitPrice: line.unit_price,
+              lineTotal: round2(line.quantity * line.unit_price),
+            })),
+            subtotal,
+            taxAmount,
+            totalAmount,
+            currency: 'INR',
+            createdAt: order.created_at ? new Date(order.created_at) : new Date(),
+          });
+          this.success.set('Bill created — PDF downloaded.');
+          this.lines.set([]);
+          this.customerForm.patchValue({
+            customer_name: 'Walk-in customer',
+            phone_local: '',
+            customer_email: '',
+            notes: '',
+            payment_method: 'cash',
+          });
           void this.router.navigateByUrl('/back-office/orders');
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not create order.')),

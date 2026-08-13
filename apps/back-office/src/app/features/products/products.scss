@@ -120,6 +120,7 @@ td small { display: block; margin-top: 4px; color: #808780; font-size: 12px; }
   font-size: 12px; font-weight: 700; text-transform: capitalize;
 }
 .badge[data-status='inactive'], .badge[data-status='discontinued'] { background: #f3eeee; color: #7a3b3b; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .muted, .empty { padding: 28px; color: #778078; }
 .empty strong { display: block; margin-bottom: 6px; color: #1a281f; font: 500 20px Georgia, serif; }
 

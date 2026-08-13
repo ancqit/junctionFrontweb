@@ -73,6 +73,8 @@ export class ProductsPage implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly showForm = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly categoryCatalog = signal<{ value: string; label: string }[]>([]);
 
   readonly searchQuery = signal('');
   readonly categoryFilter = signal('');
@@ -99,32 +101,21 @@ export class ProductsPage implements OnInit, OnDestroy {
   });
 
   readonly categoryOptions = computed<InlineSelectOption[]>(() => {
-    const fromProducts = this.products()
-      .map((row) => row.category?.trim())
-      .filter((value): value is string => !!value);
-    const unique = [...new Set(fromProducts)].sort((a, b) => a.localeCompare(b));
+    const catalog = this.categoryCatalog();
     return [
       { value: '', label: 'All categories' },
-      ...unique.map((value) => ({ value, label: value })),
+      ...catalog.map((row) => ({ value: row.value, label: row.label })),
     ];
   });
 
   readonly formCategoryOptions = computed<InlineSelectOption[]>(() => {
-    const options = this.categoryOptions().filter((row) => row.value);
-    return options.length
-      ? options
-      : [
-          { value: 'Grocery', label: 'Grocery' },
-          { value: 'Dairy', label: 'Dairy' },
-          { value: 'Snacks', label: 'Snacks' },
-          { value: 'Beverages', label: 'Beverages' },
-          { value: 'Personal care', label: 'Personal care' },
-          { value: 'Household', label: 'Household' },
-          { value: 'Other', label: 'Other' },
-        ];
+    const catalog = this.categoryCatalog();
+    return catalog.length
+      ? catalog.map((row) => ({ value: row.value, label: row.label }))
+      : [{ value: 'other', label: 'Other' }];
   });
 
-  /** Description chips (plus explicit tags) shown above the list for filtering. */
+  /** Tags shown above the list for filtering (product.tags only). */
   readonly descriptionTags = computed(() => {
     const tags = new Set<string>();
     for (const product of this.products()) {
@@ -132,15 +123,6 @@ export class ProductsPage implements OnInit, OnDestroy {
         const trimmed = tag.trim();
         if (trimmed) {
           tags.add(trimmed);
-        }
-      }
-      const description = product.description?.trim() ?? '';
-      if (description) {
-        for (const part of description.split(/[,|;]/)) {
-          const chip = part.trim();
-          if (chip && chip.length <= 40) {
-            tags.add(chip);
-          }
         }
       }
     }
@@ -157,8 +139,7 @@ export class ProductsPage implements OnInit, OnDestroy {
       }
       if (tag) {
         const inTags = (product.tags ?? []).some((row) => row.trim().toLowerCase() === tag);
-        const inDescription = (product.description ?? '').toLowerCase().includes(tag);
-        if (!inTags && !inDescription) {
+        if (!inTags) {
           return false;
         }
       }
@@ -168,7 +149,6 @@ export class ProductsPage implements OnInit, OnDestroy {
       const haystack = [
         product.name,
         product.category,
-        product.description ?? '',
         ...(product.tags ?? []),
         product.sku,
       ]
@@ -197,6 +177,11 @@ export class ProductsPage implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
+    this.api.categories().subscribe({
+      next: (rows) =>
+        this.categoryCatalog.set(rows.map((row) => ({ value: row.value, label: row.label }))),
+      error: () => this.categoryCatalog.set([]),
+    });
     this.reload();
   }
 
@@ -302,13 +287,51 @@ export class ProductsPage implements OnInit, OnDestroy {
       );
       return;
     }
+    this.editingId.set(null);
     this.showForm.set(true);
     this.error.set('');
     this.resetImagePicker();
+    this.form.reset({
+      name: '',
+      description: '',
+      category: '',
+      price: 0,
+      cost_price: '',
+      stock_quantity: 0,
+      unit: 'piece',
+      status: 'active',
+      tags: '',
+      barcode: '',
+      tax_rate: '',
+      low_stock_threshold: '',
+    });
+  }
+
+  openEdit(product: Product): void {
+    this.editingId.set(product.id);
+    this.showForm.set(true);
+    this.error.set('');
+    this.resetImagePicker();
+    this.form.reset({
+      name: product.name,
+      description: product.description ?? '',
+      category: product.category,
+      price: product.price,
+      cost_price: product.cost_price != null ? String(product.cost_price) : '',
+      stock_quantity: product.stock_quantity,
+      unit: product.unit || 'piece',
+      status: product.status,
+      tags: (product.tags ?? []).join(', '),
+      barcode: product.barcode ?? '',
+      tax_rate: product.tax_rate != null ? String(product.tax_rate) : '',
+      low_stock_threshold:
+        product.low_stock_threshold != null ? String(product.low_stock_threshold) : '',
+    });
   }
 
   closeForm(): void {
     this.showForm.set(false);
+    this.editingId.set(null);
     this.form.reset({
       name: '',
       description: '',
@@ -437,36 +460,58 @@ export class ProductsPage implements OnInit, OnDestroy {
     const value = this.form.getRawValue();
     const drafts = this.selectedImages();
     const description = value.description.trim();
-    const tagsFromField = value.tags
+    const tags = value.tags
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean);
-    const tagsFromDescription = description
-      .split(/[,|;]/)
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0 && tag.length <= 40);
-    const tags = [...new Set([...tagsFromField, ...tagsFromDescription])];
+    const editingId = this.editingId();
+
+    const payload = {
+      name: value.name.trim(),
+      description: description || null,
+      category: value.category.trim(),
+      price: Number(value.price),
+      cost_price: value.cost_price === '' ? null : Number(value.cost_price),
+      currency: 'INR' as const,
+      stock_quantity: Number(value.stock_quantity),
+      unit: value.unit.trim() || 'piece',
+      status: value.status,
+      tags,
+      barcode: value.barcode.trim() || null,
+      tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
+      low_stock_threshold:
+        value.low_stock_threshold === '' ? null : Number(value.low_stock_threshold),
+    };
 
     this.saving.set(true);
     this.error.set('');
 
+    if (editingId) {
+      this.api
+        .update(editingId, payload)
+        .pipe(
+          switchMap((updated) =>
+            drafts.length ? this.persistProductImages(updated.id, drafts) : of(undefined),
+          ),
+        )
+        .subscribe({
+          next: () => {
+            this.saving.set(false);
+            this.closeForm();
+            this.reload();
+          },
+          error: (err: unknown) => {
+            this.saving.set(false);
+            this.error.set(this.readError(err, 'Could not update product.'));
+          },
+        });
+      return;
+    }
+
     this.api
       .create({
+        ...payload,
         sku: this.generateSku(value.name),
-        name: value.name.trim(),
-        description: description || null,
-        category: value.category.trim(),
-        price: Number(value.price),
-        cost_price: value.cost_price === '' ? null : Number(value.cost_price),
-        currency: 'INR',
-        stock_quantity: Number(value.stock_quantity),
-        unit: value.unit.trim() || 'piece',
-        status: value.status,
-        tags,
-        barcode: value.barcode.trim() || null,
-        tax_rate: value.tax_rate === '' ? null : Number(value.tax_rate),
-        low_stock_threshold:
-          value.low_stock_threshold === '' ? null : Number(value.low_stock_threshold),
       })
       .pipe(switchMap((created) => this.persistProductImages(created.id, drafts)))
       .subscribe({
