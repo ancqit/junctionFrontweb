@@ -18,6 +18,7 @@
     "electron:pack": "npm run build:app-bundle && electron-builder",
     "electron:pack:win": "npm run build:app-bundle && electron-builder --win",
     "electron:pack:mac": "npm run build:app-bundle && electron-builder --mac",
+    "release:win": "npm run branding:icons && npm run electron:pack:win && node tools/prepare-release.mjs",
     "watch": "nx build --watch --configuration development",
     "test": "nx test"
   },

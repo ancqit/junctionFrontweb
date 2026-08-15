@@ -45,6 +45,14 @@ copyDir(remoteBrowser, remoteOutDir);
 
 patchIndexBaseHref(path.join(outDir, 'index.html'));
 
+const brandingDir = path.join(root, 'branding');
+for (const name of ['favicon-32.png', 'favicon.ico', 'icon.png', 'logo.svg']) {
+  const src = path.join(brandingDir, name);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(outDir, name));
+  }
+}
+
 fs.writeFileSync(
   path.join(outDir, 'federation.manifest.json'),
   `${JSON.stringify({ backOffice: './remotes/back-office/remoteEntry.json' }, null, 2)}\n`,
