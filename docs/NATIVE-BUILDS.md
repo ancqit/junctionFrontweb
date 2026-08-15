@@ -137,7 +137,7 @@ cd android
 
 ### OTP / API note
 
-The APK uses `https://junctionback.onrender.com` for API calls (not `localhost:8000` or `/api`). OTP login uses reCAPTCHA in the WebView; ensure the device has internet access.
+The APK uses `https://junctionback.onrender.com` for API calls (not `localhost:8000` or `/api`). **CapacitorHttp** is enabled so native HTTP bypasses browser CORS (origin `https://localhost` is not allowed by the Render API). OTP login uses reCAPTCHA in the WebView; ensure the device has internet access.
 
 ### Release APK (signed)
 
@@ -210,8 +210,8 @@ Produces a `.dmg` in `dist/electron/`.
 | Gradle download timeout | Increase `networkTimeout` in `android/gradle/wrapper/gradle-wrapper.properties` or download Gradle manually |
 | `SDK location not found` | Create `android/local.properties` with `sdk.dir` |
 | `invalid source release: 21` | Use JDK 21 for Android build |
-| OTP fails in APK | Confirm API URL is Render (not localhost); check network on device |
-| reCAPTCHA errors | Device needs Google connectivity; check backend `GCP_IDENTITY_PLATFORM_API_KEY` on Render |
+| OTP fails in APK | Confirm CapacitorHttp is enabled in `capacitor.config.ts`; device has network; reCAPTCHA may need Google connectivity |
+| Terms show fallback text in APK | API blocked by CORS — enable `CapacitorHttp` in `capacitor.config.ts` |
 | Electron OTP fails | Production bundle uses Render API; dev mode needs local backend on port 8000 |
 
 ---

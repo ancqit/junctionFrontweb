@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from './api.config';
 import { IDENTITY_PLATFORM_WEB_API_KEY } from './identity-platform.config';
+import { isNativeBundle } from '../../../../../shared/api-base-url';
 
 declare global {
   interface Window {
@@ -124,8 +126,13 @@ export class RecaptchaService {
         return;
       }
 
+      const recaptchaScript =
+        Capacitor.isNativePlatform() || isNativeBundle()
+          ? 'https://www.recaptcha.net/recaptcha/api.js?render=explicit'
+          : 'https://www.google.com/recaptcha/api.js?render=explicit';
+
       const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+      script.src = recaptchaScript;
       script.async = true;
       script.defer = true;
       script.dataset['junctionRecaptcha'] = 'true';

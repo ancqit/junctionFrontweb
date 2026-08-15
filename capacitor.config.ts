@@ -5,6 +5,11 @@ const config: CapacitorConfig = {
   appName: 'Junction',
   webDir: 'dist/app-bundle',
   bundledWebRuntime: false,
+  plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
   server: {
     androidScheme: 'https',
     cleartext: true,

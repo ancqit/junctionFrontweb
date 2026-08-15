@@ -31,3 +31,19 @@ export function resolveApiBaseUrl(): string {
 
   return '/api';
 }
+
+/** True when running inside Capacitor APK or Electron production bundle (not web/Vercel). */
+export function isNativeBundle(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const { protocol, hostname, port } = window.location;
+  if (protocol === 'file:') {
+    return true;
+  }
+
+  const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+  const isAngularDev = isLocalHost && (port === '4200' || port === '4201');
+  return isLocalHost && !isAngularDev;
+}
