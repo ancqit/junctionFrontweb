@@ -1,0 +1,24 @@
+appId: today.junction.app
+productName: Junction
+directories:
+  output: dist/electron
+  buildResources: branding
+files:
+  - electron/**/*
+  - dist/app-bundle/**/*
+  - branding/icon.png
+  - branding/logo.svg
+asar: true
+win:
+  target:
+    - nsis
+  icon: branding/icon.png
+mac:
+  target:
+    - dmg
+  icon: branding/icon.png
+  category: public.app-category.business
+linux:
+  target:
+    - AppImage
+  icon: branding/icon.png
