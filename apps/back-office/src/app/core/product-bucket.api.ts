@@ -30,7 +30,7 @@ export const DEFAULT_PACK_PRICE_INR = 999;
 
 /**
  * Shop product capacity — plan limit + optional packs under owner JWT.
- * Packs are purchased via `POST /product-bucket/purchase` then payment complete.
+ * Packs are purchased via `POST /product-bucket/purchase` then Razorpay verify.
  */
 @Injectable({ providedIn: 'root' })
 export class ProductBucketApi {

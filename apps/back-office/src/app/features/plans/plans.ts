@@ -11,7 +11,7 @@ import {
   PRODUCT_PACK_PRICE_INR,
   PRODUCT_PACK_SIZE,
 } from '../../core/models';
-import { PaymentsApi, ShopPayment } from '../../core/payments.api';
+import { paymentCompleteBucket, ShopPayment } from '../../core/payments.api';
 import { PlanApplication, planDisplayName, PlansApi } from '../../core/plans.api';
 import {
   DEFAULT_PACK_PRICE_INR,
@@ -19,6 +19,7 @@ import {
   ProductBucket,
   ProductBucketApi,
 } from '../../core/product-bucket.api';
+import { ShopPaymentFlowService } from '../../core/shop-payment-flow.service';
 import { Shop, ShopsApi } from '../../core/shops.api';
 
 export type PlansViewMode = 'plans' | 'waitlist';
@@ -33,7 +34,7 @@ export class PlansPage implements OnInit {
   private readonly api = inject(PlansApi);
   private readonly shopsApi = inject(ShopsApi);
   private readonly bucketApi = inject(ProductBucketApi);
-  private readonly paymentsApi = inject(PaymentsApi);
+  private readonly paymentFlow = inject(ShopPaymentFlowService);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
@@ -49,7 +50,7 @@ export class PlansPage implements OnInit {
 
   /** Toggle: browse plans vs your waitlist status. */
   readonly viewMode = signal<PlansViewMode>('plans');
-  /** Plan the user is confirming before joining the waitlist. */
+  /** Plan the user is confirming before Razorpay checkout. */
   readonly confirmPlanType = signal<PlanType | null>(null);
 
   readonly packSize = computed(
@@ -113,17 +114,13 @@ export class PlansPage implements OnInit {
           this.shop.set(active ?? shops[0] ?? null);
           this.current.set(current);
           this.bucket.set(bucket);
-          this.viewMode.set(application?.status === 'pending' ? 'waitlist' : 'plans');
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load plans.')),
       });
   }
 
-  /**
-   * First step: tell the user they will be added to the waitlist.
-   * Confirm → `joinWaitlist()` posts to `/waitlist`.
-   */
-  requestJoinWaitlist(planType: PlanType): void {
+  /** Confirm dialog before Razorpay checkout for a paid plan. */
+  requestPurchase(planType: PlanType): void {
     if (planType === 'free_trial') {
       this.error.set('Free trial starts automatically when you create an account.');
       return;
@@ -141,21 +138,21 @@ export class PlansPage implements OnInit {
     this.confirmPlanType.set(null);
   }
 
-  /** User approved the waitlist message — join via API and toggle to waitlist view. */
-  joinWaitlist(): void {
+  /** Create pending plan payment and open Razorpay Checkout. */
+  confirmPurchase(): void {
     const planType = this.confirmPlanType();
     if (!planType || planType === 'free_trial') {
       return;
     }
     const shop = this.shop();
     if (!shop?.id) {
-      this.error.set('Add your shop name, city, and locality on Overview before joining a plan waitlist.');
+      this.error.set('Add your shop name, city, and locality on Overview before paying for a plan.');
       this.confirmPlanType.set(null);
       return;
     }
     if (!shop.city?.trim() || !shop.locality?.trim()) {
       this.error.set(
-        'Your shop needs a city and locality before you can join the waitlist. Update them on Overview.',
+        'Your shop needs a city and locality before you can pay. Update them on Overview.',
       );
       this.confirmPlanType.set(null);
       return;
@@ -164,32 +161,19 @@ export class PlansPage implements OnInit {
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
-    this.api
-      .apply(planType, shop.id)
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: (app) => {
-          this.application.set(app);
-          this.confirmPlanType.set(null);
-          this.viewMode.set('waitlist');
-          const name = this.requestedPlanName(app);
-          this.success.set(
-            `You’re on the waitlist for ${name}. Shop forwarded: ${app.shop_name} · ${app.location.locality}, ${app.location.city}.`,
-          );
-          this.api.me().subscribe({
-            next: (state) => this.current.set(state),
-            error: () => undefined,
-          });
-          this.api.myApplication().subscribe({
-            next: (latest) => this.application.set(latest ?? app),
-          });
-        },
-        error: (err: unknown) =>
-          this.error.set(this.readError(err, 'Could not join the plan waitlist.')),
-      });
+    this.shopsApi.purchasePlan(shop.id, planType).subscribe({
+      next: (payment) => {
+        this.confirmPlanType.set(null);
+        this.collectPayment(payment, 'plan');
+      },
+      error: (err: unknown) => {
+        this.saving.set(false);
+        this.error.set(this.readError(err, 'Could not start plan purchase.'));
+      },
+    });
   }
 
-  /** Buy one product pack (40 slots) via junctionBack product-bucket payment. */
+  /** Buy one product pack (40 slots) via Razorpay. */
   purchaseProductPack(): void {
     if (!this.shop()?.id) {
       this.error.set('Select a shop before buying a product pack.');
@@ -213,28 +197,7 @@ export class PlansPage implements OnInit {
             );
             return;
           }
-          const payment = result as ShopPayment;
-          if (payment.status === 'pending' && payment.id) {
-            this.paymentsApi
-              .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
-              .subscribe({
-                next: (done) => {
-                  if (done.bucket) {
-                    this.bucket.set(done.bucket);
-                    this.success.set(
-                      `Purchased product pack · +${this.packSize()} slots. Capacity ${done.bucket.capacity ?? '—'}.`,
-                    );
-                  } else {
-                    this.reloadBucket();
-                    this.success.set('Product pack payment completed.');
-                  }
-                },
-                error: (err: unknown) =>
-                  this.error.set(this.readError(err, 'Payment could not be completed.')),
-              });
-            return;
-          }
-          this.reloadBucket();
+          this.collectPayment(result as ShopPayment, 'pack');
         },
         error: (err: unknown) =>
           this.error.set(this.readError(err, 'Could not purchase a product pack.')),
@@ -268,13 +231,49 @@ export class PlansPage implements OnInit {
     if (!plan || plan.type === 'free_trial') {
       return false;
     }
-    if (this.onWaitlist()) {
-      return false;
-    }
     if (!this.shopReady()) {
       return false;
     }
     return !this.isCurrent(plan.type);
+  }
+
+  private collectPayment(payment: ShopPayment, kind: 'plan' | 'pack'): void {
+    const busy = kind === 'plan' ? this.saving : this.bucketBusy;
+    busy.set(true);
+    this.paymentFlow
+      .collect(payment)
+      .pipe(finalize(() => busy.set(false)))
+      .subscribe({
+        next: (done) => {
+          if (done.plan) {
+            this.current.set(done.plan);
+          }
+          const bucket = paymentCompleteBucket(done);
+          if (bucket) {
+            this.bucket.set(bucket);
+          } else if (kind === 'pack') {
+            this.reloadBucket();
+          }
+          this.success.set(
+            done.message?.trim() ||
+              (kind === 'plan' ? 'Plan payment completed.' : 'Product pack payment completed.'),
+          );
+          if (kind === 'plan') {
+            this.api.me().subscribe({
+              next: (state) => this.current.set(state),
+              error: () => undefined,
+            });
+          }
+        },
+        error: (err: unknown) => {
+          const message = this.readError(err, 'Payment could not be completed.');
+          if (message.toLowerCase().includes('cancelled')) {
+            this.error.set('Payment cancelled. Your plan was not charged.');
+            return;
+          }
+          this.error.set(message);
+        },
+      });
   }
 
   private reloadBucket(): void {
@@ -289,7 +288,11 @@ export class PlansPage implements OnInit {
   }
 
   private readError(error: unknown, fallback: string): string {
-    const detail = (error as { error?: { detail?: string } })?.error?.detail;
-    return typeof detail === 'string' && detail.trim() ? detail : fallback;
+    const detail = (error as { error?: { detail?: string }; message?: string })?.error?.detail;
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
+    }
+    const message = (error as { message?: string })?.message;
+    return typeof message === 'string' && message.trim() ? message : fallback;
   }
 }

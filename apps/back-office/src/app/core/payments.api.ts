@@ -23,6 +23,9 @@ export interface ShopPayment {
   description: string;
   payment_method?: ShopPaymentMethod | null;
   payment_reference?: string | null;
+  provider?: string | null;
+  provider_order_id?: string | null;
+  provider_payment_id?: string | null;
   created_at: string;
   updated_at: string;
   paid_at?: string | null;
@@ -32,12 +35,46 @@ export interface ShopPayment {
 export interface ShopPaymentCompleteResponse {
   payment: ShopPayment;
   plan?: PlanSummary | null;
-  bucket?: ProductBucket | null;
+  /** junctionBack field name (`ShopPaymentCompleteResponse.product_bucket`). */
+  product_bucket?: ProductBucket | null;
+  message?: string;
+}
+
+/** junctionBack `RazorpayCheckoutResponse`. */
+export interface RazorpayCheckoutSession {
+  payment_id: string;
+  provider: string;
+  key_id: string;
+  order_id: string;
+  amount_inr: number;
+  amount_paise: number;
+  currency: string;
+  description: string;
+  store_id: string;
+  kind: ShopPaymentKind;
+  plan_type?: PlanType | null;
+  packs?: number | null;
+  name?: string | null;
+  email?: string | null;
+  contact?: string | null;
+}
+
+export interface RazorpayVerifyBody {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+/** Read bucket from a payment-complete payload (junctionBack uses `product_bucket`). */
+export function paymentCompleteBucket(
+  response: ShopPaymentCompleteResponse,
+): ProductBucket | null | undefined {
+  return response.product_bucket;
 }
 
 /**
- * Shop plan / pack payments — capacity activates after
- * `POST /payments/{id}/complete` (junctionBack shop-plan-payment).
+ * Shop plan / pack payments — capacity activates after Razorpay verify
+ * (`POST /payments/{id}/verify`) or webhook fulfillment.
  */
 @Injectable({ providedIn: 'root' })
 export class PaymentsApi {
@@ -52,6 +89,23 @@ export class PaymentsApi {
     return this.api.get<ShopPayment>(`/payments/${paymentId}`, undefined, 'user');
   }
 
+  checkout(paymentId: string): Observable<RazorpayCheckoutSession> {
+    return this.api.post<RazorpayCheckoutSession>(
+      `/payments/${paymentId}/checkout`,
+      {},
+      'user',
+    );
+  }
+
+  verify(paymentId: string, body: RazorpayVerifyBody): Observable<ShopPaymentCompleteResponse> {
+    return this.api.post<ShopPaymentCompleteResponse>(
+      `/payments/${paymentId}/verify`,
+      body,
+      'user',
+    );
+  }
+
+  /** Admin / local-dev fallback when Razorpay is not configured. */
   complete(
     paymentId: string,
     body: { payment_method?: ShopPaymentMethod; payment_reference?: string } = {},
