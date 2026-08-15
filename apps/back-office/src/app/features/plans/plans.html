@@ -3,8 +3,7 @@
     <p class="eyebrow">SUBSCRIPTION</p>
     <h1>Plans</h1>
     <p class="sub">
-      Choose a plan to join the waitlist, or check whether you’re already on it.
-      Toggle between catalog and waitlist status anytime.
+      Pay for Starter, Growth, or Premium with Razorpay. Extra product packs use the same checkout.
     </p>
   </div>
   <button type="button" class="ghost" (click)="reload()">Refresh</button>
@@ -57,7 +56,7 @@
       <p>
         {{ app.switch_message }}
         @if (app.status === 'pending') {
-          An admin will approve your application. You can still browse plans with the toggle above.
+          You can still pay for a plan directly from the Plans tab.
         }
       </p>
       <dl>
@@ -93,8 +92,8 @@
   } @else {
     <section class="empty-waitlist" role="status">
       <p class="eyebrow">WAITLIST</p>
-      <h2>You’re not on the waitlist yet.</h2>
-      <p>Pick a plan, confirm, and we’ll add you to the waitlist for that plan.</p>
+      <h2>No waitlist application on file.</h2>
+      <p>Paid plans are available now via Razorpay on the Plans tab.</p>
       <button type="button" class="primary" (click)="setViewMode('plans')">View plans</button>
     </section>
   }
@@ -105,8 +104,8 @@
         <p class="eyebrow">SHOP REQUIRED</p>
         <h2>Set shop name, city, and locality first.</h2>
         <p>
-          Joining a plan waitlist sends your shop name, city, and locality with the request.
-          Save them on Overview, then come back here.
+          Plan and product-pack payments are tied to your shop. Save name, city, and locality on
+          Overview, then come back here.
         </p>
       </div>
       <a routerLink="/back-office" class="primary">Open Overview</a>
@@ -142,24 +141,26 @@
   @if (shopReady()) {
     @if (shop(); as shop) {
       <p class="shop-chip">
-        Waitlist will include <strong>{{ shop.name }}</strong>
+        Paying for <strong>{{ shop.name }}</strong>
         · {{ shop.locality }}, {{ shop.city }}
       </p>
     }
   }
 
   @if (confirmPlan(); as pending) {
-    <section class="confirm" role="dialog" aria-labelledby="waitlist-confirm-title">
-      <p class="eyebrow">CONFIRM WAITLIST</p>
-      <h2 id="waitlist-confirm-title">You’ll be added to the waitlist for {{ pending.name }}.</h2>
+    <section class="confirm" role="dialog" aria-labelledby="pay-confirm-title">
+      <p class="eyebrow">CONFIRM PAYMENT</p>
+      <h2 id="pay-confirm-title">
+        Pay {{ pending.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }} for {{ pending.name }}
+      </h2>
       <p>
-        Approving sends your shop details for admin review. You won’t get the plan until an admin
-        approves your waitlist application.
+        You’ll complete payment securely with Razorpay (UPI / card). The plan activates only after
+        payment succeeds.
       </p>
       <div class="confirm-actions">
         <button type="button" class="ghost" (click)="cancelConfirm()" [disabled]="saving()">Cancel</button>
-        <button type="button" class="primary" (click)="joinWaitlist()" [disabled]="saving()">
-          {{ saving() ? 'Joining…' : 'Approve · join waitlist' }}
+        <button type="button" class="primary" (click)="confirmPurchase()" [disabled]="saving()">
+          {{ saving() ? 'Opening checkout…' : 'Pay with Razorpay' }}
         </button>
       </div>
     </section>
@@ -189,21 +190,19 @@
             {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
           </button>
         } @else {
-          <p class="note">Selecting this plan adds you to the waitlist for admin approval.</p>
+          <p class="note">Pay with Razorpay. Plan unlocks after payment is verified.</p>
           <button
             type="button"
             class="primary"
-            (click)="requestJoinWaitlist(plan.type)"
+            (click)="requestPurchase(plan.type)"
             [disabled]="saving() || !!confirmPlanType() || !canSelect(plan)"
           >
             @if (isCurrent(plan.type)) {
               Current plan
-            } @else if (onWaitlist()) {
-              Already on waitlist
             } @else if (!shopReady()) {
               Set shop details first
             } @else {
-              Select {{ plan.name }}
+              Buy {{ plan.name }}
             }
           </button>
         }
@@ -218,8 +217,8 @@
       <p>
         After your shop plan allowance is used, add capacity in packs of
         {{ packSize() }} products for
-        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }} each
-        (junctionBack product bucket).
+        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }} each.
+        Checkout uses Razorpay.
       </p>
       @if (bucket(); as bucket) {
         <dl class="pack-stats">
@@ -261,7 +260,7 @@
         (click)="purchaseProductPack()"
         [disabled]="bucketBusy() || !shop()?.id"
       >
-        {{ bucketBusy() ? 'Purchasing…' : 'Buy product pack' }}
+        {{ bucketBusy() ? 'Opening checkout…' : 'Buy product pack' }}
       </button>
       <a routerLink="/back-office/products" class="ghost">Open Products</a>
     </div>
