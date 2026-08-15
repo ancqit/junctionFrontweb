@@ -1,10 +1,23 @@
 /** Production backend (Render). Used by Capacitor APK and Electron when there is no Vercel /api proxy. */
 export const JUNCTION_PRODUCTION_API_URL = 'https://junctionback.onrender.com';
 
-/**
- * Capacitor virtual hostname — must match a domain authorized in Firebase / reCAPTCHA.
- */
-export const CAPACITOR_WEB_HOSTNAME = 'junction-frontweb.vercel.app';
+export const CAPACITOR_WEB_HOSTNAME = 'junction.website';
+
+export const JUNCTION_WEB_HOSTNAMES = [
+  'junction.website',
+  'www.junction.website',
+  'junction-frontweb.vercel.app',
+] as const;
+
+export function isJunctionWebHostname(hostname: string): boolean {
+  if (!hostname) {
+    return false;
+  }
+  return (
+    JUNCTION_WEB_HOSTNAMES.includes(hostname as (typeof JUNCTION_WEB_HOSTNAMES)[number]) ||
+    hostname.endsWith('.vercel.app')
+  );
+}
 
 function isCapacitorNative(): boolean {
   if (typeof window === 'undefined') {
