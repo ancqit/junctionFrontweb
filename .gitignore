@@ -42,6 +42,8 @@ __screenshots__/
 /android/.gradle/
 /android/app/build/
 /android/build/
+/android/local.properties
+/releases/
 /ios/App/Pods/
 /ios/App/build/
 Thumbs.db

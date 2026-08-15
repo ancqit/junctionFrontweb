@@ -20,6 +20,7 @@
     "cap:open:ios": "npx cap open ios",
     "cap:build:android:debug": "npm run cap:sync && cd android && .\\gradlew.bat assembleDebug",
     "cap:build:android:release": "npm run cap:sync && cd android && .\\gradlew.bat assembleRelease",
+    "release:android": "npm run branding:icons && npm run cap:build:android:debug && node tools/prepare-release.mjs",
     "watch": "nx build --watch --configuration development",
     "test": "nx test"
   },
@@ -63,6 +64,7 @@
     "typescript": "~6.0.2"
   },
   "allowScripts": {
-    "sharp@0.33.5": true
+    "sharp@0.33.5": true,
+    "nx@23.1.1": true
   }
 }

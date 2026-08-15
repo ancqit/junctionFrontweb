@@ -8,6 +8,13 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     cleartext: true,
+    allowNavigation: [
+      'junctionback.onrender.com',
+      'www.google.com',
+      'www.gstatic.com',
+      'www.recaptcha.net',
+      'identitytoolkit.googleapis.com',
+    ],
   },
 };
 
