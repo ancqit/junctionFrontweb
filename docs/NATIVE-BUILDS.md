@@ -137,7 +137,12 @@ cd android
 
 ### OTP / reCAPTCHA note
 
-The APK uses virtual hostname `junction-frontweb.vercel.app` (must be in Firebase **Authorized domains**) so reCAPTCHA tokens match GCP Identity Platform. API calls still go to `https://junctionback.onrender.com` via CapacitorHttp. If you see `CAPTCHA_CHECK_FAILED: Hostname match not found`, add `junction-frontweb.vercel.app` in Firebase Console → Authentication → Settings → Authorized domains.
+The APK uses virtual hostname **`junction.website`** (must be in Firebase **Authorized domains**) so reCAPTCHA tokens match GCP Identity Platform. Also add **`junction-frontweb.vercel.app`** if you use Vercel. API calls go to `https://junctionback.onrender.com` via CapacitorHttp.
+
+If you see `CAPTCHA_CHECK_FAILED: Hostname match not found`, open Firebase Console → Authentication → Settings → Authorized domains and add:
+
+- `junction.website`
+- `junction-frontweb.vercel.app`
 
 ### Release APK (signed)
 

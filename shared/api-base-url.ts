@@ -2,11 +2,27 @@
 export const JUNCTION_PRODUCTION_API_URL = 'https://junctionback.onrender.com';
 
 /**
- * Capacitor virtual hostname — must match a domain authorized in Firebase / reCAPTCHA
- * (same as the production web app). Do not use `localhost` or GCP returns
- * `CAPTCHA_CHECK_FAILED: Hostname match not found`.
+ * Capacitor virtual hostname — must match a domain in Firebase **Authorized domains**
+ * so reCAPTCHA tokens pass GCP Identity Platform (not `localhost`).
  */
-export const CAPACITOR_WEB_HOSTNAME = 'junction-frontweb.vercel.app';
+export const CAPACITOR_WEB_HOSTNAME = 'junction.website';
+
+/** Production web hosts (Capacitor virtual host + Vercel deploy). */
+export const JUNCTION_WEB_HOSTNAMES = [
+  'junction.website',
+  'www.junction.website',
+  'junction-frontweb.vercel.app',
+] as const;
+
+export function isJunctionWebHostname(hostname: string): boolean {
+  if (!hostname) {
+    return false;
+  }
+  return (
+    JUNCTION_WEB_HOSTNAMES.includes(hostname as (typeof JUNCTION_WEB_HOSTNAMES)[number]) ||
+    hostname.endsWith('.vercel.app')
+  );
+}
 
 function isCapacitorNative(): boolean {
   if (typeof window === 'undefined') {
@@ -18,10 +34,6 @@ function isCapacitorNative(): boolean {
 
 /**
  * Resolves the API base URL for shell, back-office, and native bundles.
- * - Capacitor APK: direct Render URL (virtual hostname is not a real API host).
- * - Web on Vercel: same-origin `/api` (rewritten to Render).
- * - Local Angular dev (4200/4201): `http://localhost:8000`.
- * - Electron `file://`: direct Render URL.
  */
 export function resolveApiBaseUrl(): string {
   if (typeof window === 'undefined') {

@@ -1,7 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-
-/** Must match Firebase / reCAPTCHA authorized domain (see shared/api-base-url.ts). */
-const CAPACITOR_WEB_HOSTNAME = 'junction-frontweb.vercel.app';
+import { CAPACITOR_WEB_HOSTNAME } from './shared/api-base-url';
 
 const config: CapacitorConfig = {
   appId: 'today.junction.app',
@@ -20,12 +18,14 @@ const config: CapacitorConfig = {
     adjustMarginsForEdgeToEdge: 'auto',
   },
   server: {
-    // Virtual hostname for reCAPTCHA / Firebase (must be in authorized domains).
+    // Virtual hostname for reCAPTCHA — must be in Firebase Authorized domains.
     hostname: CAPACITOR_WEB_HOSTNAME,
     androidScheme: 'https',
     cleartext: true,
     allowNavigation: [
       'junctionback.onrender.com',
+      'junction.website',
+      'www.junction.website',
       'junction-frontweb.vercel.app',
       'www.google.com',
       'www.gstatic.com',
@@ -34,4 +34,5 @@ const config: CapacitorConfig = {
     ],
   },
 };
+
 export default config;
