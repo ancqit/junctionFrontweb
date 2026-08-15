@@ -39,7 +39,10 @@ testem.log
 /typings
 __screenshots__/
 
-# System files
-.DS_Store
+/android/.gradle/
+/android/app/build/
+/android/build/
+/ios/App/Pods/
+/ios/App/build/
 Thumbs.db
 __pycache__/
