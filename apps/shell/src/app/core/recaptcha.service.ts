@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from './api.config';
 import { IDENTITY_PLATFORM_WEB_API_KEY } from './identity-platform.config';
-import { isNativeBundle } from '../../../../../shared/api-base-url';
+import { CAPACITOR_WEB_HOSTNAME, isCapacitorNative, isNativeBundle } from '../../../../../shared/api-base-url';
 
 declare global {
   interface Window {
@@ -77,7 +77,10 @@ export class RecaptchaService {
 
     // 2) Same-origin Vercel function (needs GCP_IDENTITY_PLATFORM_API_KEY env).
     const host = typeof window !== 'undefined' ? window.location.hostname : '';
-    const onVercel = host.endsWith('vercel.app') || host === 'junction-frontweb.vercel.app';
+    const onVercel =
+      host.endsWith('vercel.app') ||
+      host === CAPACITOR_WEB_HOSTNAME ||
+      host === 'junction-frontweb.vercel.app';
     if (onVercel) {
       try {
         const fromVercel = await firstValueFrom(
@@ -127,7 +130,7 @@ export class RecaptchaService {
       }
 
       const recaptchaScript =
-        Capacitor.isNativePlatform() || isNativeBundle()
+        isCapacitorNative() || isNativeBundle()
           ? 'https://www.recaptcha.net/recaptcha/api.js?render=explicit'
           : 'https://www.google.com/recaptcha/api.js?render=explicit';
 

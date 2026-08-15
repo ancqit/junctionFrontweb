@@ -135,9 +135,9 @@ cd android
 - Copy `junction-mobile-debug.apk` to the phone and open it, or
 - `adb install releases/junction-mobile-debug.apk` with USB debugging enabled
 
-### OTP / API note
+### OTP / reCAPTCHA note
 
-The APK uses `https://junctionback.onrender.com` for API calls (not `localhost:8000` or `/api`). **CapacitorHttp** is enabled so native HTTP bypasses browser CORS (origin `https://localhost` is not allowed by the Render API). OTP login uses reCAPTCHA in the WebView; ensure the device has internet access.
+The APK uses virtual hostname `junction-frontweb.vercel.app` (must be in Firebase **Authorized domains**) so reCAPTCHA tokens match GCP Identity Platform. API calls still go to `https://junctionback.onrender.com` via CapacitorHttp. If you see `CAPTCHA_CHECK_FAILED: Hostname match not found`, add `junction-frontweb.vercel.app` in Firebase Console → Authentication → Settings → Authorized domains.
 
 ### Release APK (signed)
 
