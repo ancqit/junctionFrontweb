@@ -16,10 +16,12 @@ function createWindow() {
     minHeight: 640,
     title: 'Junction',
     autoHideMenuBar: true,
-    webPreferences: {
-      contextIsolation: true,
-      sandbox: true,
-    },
+  webPreferences: {
+    contextIsolation: true,
+    sandbox: true,
+    // file:// bundle → cross-origin API calls need this (no Vercel /api proxy).
+    webSecurity: isDev,
+  },
   });
 
   if (isDev) {
