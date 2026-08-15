@@ -4,9 +4,11 @@ import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, from, switchMap } from 'rxjs';
+import { isCapacitorNative } from '../../../../../shared/api-base-url';
 import { AuthService } from '../core/auth.service';
 import {
   homePathForRole,
+  OtpRequest,
   PlanSummary,
   resolveLoginRole,
 } from '../core/auth.models';
@@ -18,6 +20,7 @@ import {
   PlansService,
 } from '../core/plans.service';
 import { RecaptchaService } from '../core/recaptcha.service';
+import { requestPlayIntegrityForPhone } from '../core/play-integrity.service';
 import { SessionService } from '../core/session.service';
 import { TermsAndConditions, TermsService } from '../core/terms.service';
 import { TokenService } from '../core/token.service';
@@ -153,15 +156,9 @@ export class Login implements OnInit {
     const formValue = this.details.getRawValue();
     const phoneNumber = `+91${formValue.phone_number}`;
 
-    from(this.recaptcha.getToken())
+    from(this.buildOtpRequest(formValue.display_name, phoneNumber))
       .pipe(
-        switchMap((recaptchaToken) =>
-          this.auth.requestOtp({
-            display_name: formValue.display_name,
-            phone_number: phoneNumber,
-            recaptcha_token: recaptchaToken,
-          }),
-        ),
+        switchMap((payload) => this.auth.requestOtp(payload)),
         finalize(() => this.busy.set(false)),
       )
       .subscribe({
@@ -296,6 +293,26 @@ export class Login implements OnInit {
     this.termsApi.get().subscribe({
       next: (terms) => this.terms.set(terms),
     });
+  }
+
+  private async buildOtpRequest(displayName: string, phoneNumber: string): Promise<OtpRequest> {
+    if (isCapacitorNative()) {
+      const playIntegrityToken = await requestPlayIntegrityForPhone(phoneNumber);
+      return {
+        display_name: displayName,
+        phone_number: phoneNumber,
+        play_integrity_token: playIntegrityToken,
+        client_type: 'android',
+      };
+    }
+
+    const recaptchaToken = await this.recaptcha.getToken();
+    return {
+      display_name: displayName,
+      phone_number: phoneNumber,
+      recaptcha_token: recaptchaToken,
+      client_type: 'web',
+    };
   }
 
   private readError(error: unknown, fallback: string): string {

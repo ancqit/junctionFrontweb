@@ -135,14 +135,31 @@ cd android
 - Copy `junction-mobile-debug.apk` to the phone and open it, or
 - `adb install releases/junction-mobile-debug.apk` with USB debugging enabled
 
-### OTP / reCAPTCHA note
+### OTP / reCAPTCHA (Android APK)
 
-The APK uses virtual hostname **`junction.website`** (must be in Firebase **Authorized domains**) so reCAPTCHA tokens match GCP Identity Platform. Also add **`junction-frontweb.vercel.app`** if you use Vercel. API calls go to `https://junctionback.onrender.com` via CapacitorHttp.
+Web login uses **reCAPTCHA** in the browser. The APK uses **Play Integrity** instead (WebView reCAPTCHA causes `CAPTCHA_CHECK_FAILED` and `TOO_MANY_ATTEMPTS`).
 
-If you see `CAPTCHA_CHECK_FAILED: Hostname match not found`, open Firebase Console → Authentication → Settings → Authorized domains and add:
+**Required on Firebase (same project as Identity Platform):**
 
-- `junction.website`
-- `junction-frontweb.vercel.app`
+1. Firebase Console → Project settings → Your apps → Add Android app `today.junction.app`
+2. Add **SHA-256** (and SHA-1) from debug keystore:
+
+```powershell
+cd android
+.\gradlew.bat signingReport
+```
+
+Copy `SHA-256` under `Variant: debug` (current debug keystore):
+
+`D8:0E:B5:F0:20:93:27:7D:E3:B3:44:D1:FD:3E:EB:08:87:83:7F:A8:F2:0B:30:03:9A:8E:BF:CE:C7:20:7F:6A`
+
+3. Enable **Google Play Integrity API** in Google Cloud Console
+4. Firebase → **App Check** → register Play Integrity for the Android app
+5. Authentication → Authorized domains: `junction.website`, `junction-frontweb.vercel.app`
+
+**Deploy backend patch (critical):** junctionBack on Render must accept `play_integrity_token` on `POST /auth/otp/request`. Merge `tools/junctionback-admin/patches/login.py` into junctionBack `app/login.py` and redeploy Render.
+
+Until Render is updated, the APK will fail OTP even with Play Integrity.
 
 ### Release APK (signed)
 

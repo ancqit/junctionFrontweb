@@ -1,7 +1,9 @@
 export interface OtpRequest {
   display_name: string;
   phone_number: string;
-  recaptcha_token: string;
+  recaptcha_token?: string;
+  play_integrity_token?: string;
+  client_type?: 'web' | 'android';
 }
 
 export interface OtpChallenge {
