@@ -4,6 +4,23 @@ import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from './api.config';
 import { IDENTITY_PLATFORM_WEB_API_KEY } from './identity-platform.config';
 
+/** Hostnames where Junction web is deployed (Vercel + custom domain). */
+const JUNCTION_WEB_HOSTNAMES = [
+  'junction.website',
+  'www.junction.website',
+  'junction-frontweb.vercel.app',
+] as const;
+
+function isJunctionWebHostname(hostname: string): boolean {
+  if (!hostname) {
+    return false;
+  }
+  return (
+    JUNCTION_WEB_HOSTNAMES.includes(hostname as (typeof JUNCTION_WEB_HOSTNAMES)[number]) ||
+    hostname.endsWith('.vercel.app')
+  );
+}
+
 declare global {
   interface Window {
     grecaptcha?: GrecaptchaApi;
@@ -73,19 +90,22 @@ export class RecaptchaService {
       // continue
     }
 
-    // 2) Same-origin Vercel function (needs GCP_IDENTITY_PLATFORM_API_KEY env).
+    // 2) Same-origin Vercel function or junction.website proxy.
     const host = typeof window !== 'undefined' ? window.location.hostname : '';
-    const onVercel = host.endsWith('vercel.app') || host === 'junction-frontweb.vercel.app';
-    if (onVercel) {
-      try {
-        const fromVercel = await firstValueFrom(
-          this.http.get<RecaptchaParamsResponse>('/api/auth/recaptcha-params'),
-        );
-        if (fromVercel.recaptcha_site_key) {
-          return fromVercel.recaptcha_site_key;
+    if (isJunctionWebHostname(host)) {
+      const paramUrls = [
+        '/api/auth/recaptcha-params',
+        ...JUNCTION_WEB_HOSTNAMES.map((h) => `https://${h}/api/auth/recaptcha-params`),
+      ];
+      for (const url of paramUrls) {
+        try {
+          const fromProxy = await firstValueFrom(this.http.get<RecaptchaParamsResponse>(url));
+          if (fromProxy.recaptcha_site_key) {
+            return fromProxy.recaptcha_site_key;
+          }
+        } catch {
+          // try next URL
         }
-      } catch {
-        // continue
       }
     }
 

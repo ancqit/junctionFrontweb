@@ -2,6 +2,14 @@
 
 What happens when someone signs in to Junction (shell + junctionBack).
 
+## OTP bot-check (web vs Android)
+
+| Client | Token | `client_type` | junctionBack → GCP |
+|--------|-------|---------------|---------------------|
+| **Web** | `recaptcha_token` | `web` | `recaptchaToken` + `CLIENT_TYPE_WEB` (do **not** send `recaptchaVersion: RECAPTCHA_VERSION_2` — GCP rejects it) |
+| **Android APK** | `play_integrity_token` | `android` | `playIntegrityToken` + `CLIENT_TYPE_ANDROID` |
+| **Android debug fallback** | `recaptcha_token` | `web` | When Play Integrity fails (common on debug APKs not from Play Store) |
+
 ## 1. Sign-in
 
 Two client flows share the same junctionBack OTP endpoints:
