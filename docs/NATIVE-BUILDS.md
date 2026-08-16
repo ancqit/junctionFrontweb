@@ -157,6 +157,12 @@ Copy `SHA-256` under `Variant: debug` (current debug keystore):
 4. Firebase → **App Check** → register Play Integrity for the Android app
 5. Authentication → Authorized domains: `junction.website`, `junction-frontweb.vercel.app`
 
+**Play Integrity nonce (Android):** SHA-256 of the E.164 phone (`+91…`), encoded as **Base64 URL-safe, no-wrap, no-padding** (same as Android `Base64.URL_SAFE | NO_WRAP | NO_PADDING`). Invalid nonces cause `NONCE_IS_NOT_BASE64`.
+
+**Token rules:** do not mix tokens.
+- Web → `recaptcha_token` + `client_type: "web"` only
+- APK → `play_integrity_token` + `client_type: "android"` only
+
 **Deploy backend (critical):** junctionBack on Render must accept `play_integrity_token` on `POST /auth/otp/request` and set `CLIENT_TYPE_ANDROID`. Merge/deploy:
 
 - https://github.com/ancqit/junctionBack/pull/40 (Play Integrity body)
