@@ -157,7 +157,10 @@ Copy `SHA-256` under `Variant: debug` (current debug keystore):
 4. Firebase → **App Check** → register Play Integrity for the Android app
 5. Authentication → Authorized domains: `junction.website`, `junction-frontweb.vercel.app`
 
-**Deploy backend patch (critical):** junctionBack on Render must accept `play_integrity_token` on `POST /auth/otp/request`. Merge `tools/junctionback-admin/patches/login.py` into junctionBack `app/login.py` and redeploy Render.
+**Deploy backend (critical):** junctionBack on Render must accept `play_integrity_token` on `POST /auth/otp/request` and set `CLIENT_TYPE_ANDROID`. Merge/deploy:
+
+- https://github.com/ancqit/junctionBack/pull/40 (Play Integrity body)
+- https://github.com/ancqit/junctionBack/pull/41 (web CLIENT_TYPE_WEB + recaptcha-params + verify hardening)
 
 Until Render is updated, the APK will fail OTP even with Play Integrity.
 

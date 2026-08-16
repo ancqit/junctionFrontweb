@@ -321,6 +321,15 @@ export class Login implements OnInit {
       if (typeof detail === 'string' && detail.trim()) {
         return detail;
       }
+      if (error.status === 500) {
+        return (
+          'Server error while sending OTP. Deploy the latest junctionBack OTP fix ' +
+          '(Play Integrity + plan verify), then try again.'
+        );
+      }
+      if (error.status === 0) {
+        return 'Cannot reach the server. Check your network connection.';
+      }
     }
     if (error instanceof Error && error.message.trim()) {
       return error.message;
