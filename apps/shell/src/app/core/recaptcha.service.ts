@@ -3,6 +3,12 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from './api.config';
 import { IDENTITY_PLATFORM_WEB_API_KEY } from './identity-platform.config';
+import {
+  isCapacitorNative,
+  isJunctionWebHostname,
+  isNativeBundle,
+  JUNCTION_WEB_HOSTNAMES,
+} from '../../../../../shared/api-base-url';
 
 declare global {
   interface Window {
@@ -59,7 +65,7 @@ export class RecaptchaService {
   }
 
   private async resolveSiteKey(): Promise<string> {
-    // 1) Backend (Render already has GCP_IDENTITY_PLATFORM_API_KEY).
+    // 1) Backend (Render).
     try {
       const fromBackend = await firstValueFrom(
         this.http.get<RecaptchaParamsResponse>(
@@ -73,23 +79,27 @@ export class RecaptchaService {
       // continue
     }
 
-    // 2) Same-origin Vercel function (needs GCP_IDENTITY_PLATFORM_API_KEY env).
+    // 2) Vercel / junction.website API helpers (GCP_IDENTITY_PLATFORM_API_KEY on Vercel).
     const host = typeof window !== 'undefined' ? window.location.hostname : '';
-    const onVercel = host.endsWith('vercel.app') || host === 'junction-frontweb.vercel.app';
-    if (onVercel) {
-      try {
-        const fromVercel = await firstValueFrom(
-          this.http.get<RecaptchaParamsResponse>('/api/auth/recaptcha-params'),
-        );
-        if (fromVercel.recaptcha_site_key) {
-          return fromVercel.recaptcha_site_key;
+    if (isJunctionWebHostname(host) || isCapacitorNative()) {
+      const paramUrls = [
+        '/api/auth/recaptcha-params',
+        ...JUNCTION_WEB_HOSTNAMES.map((h) => `https://${h}/api/auth/recaptcha-params`),
+        'https://junction-frontweb.vercel.app/api/auth/recaptcha-params',
+      ];
+      for (const url of paramUrls) {
+        try {
+          const fromProxy = await firstValueFrom(this.http.get<RecaptchaParamsResponse>(url));
+          if (fromProxy.recaptcha_site_key) {
+            return fromProxy.recaptcha_site_key;
+          }
+        } catch {
+          // try next URL
         }
-      } catch {
-        // continue
       }
     }
 
-    // 3) Browser → Identity Toolkit using public web API key from config.
+    // 3) Identity Toolkit using public web API key.
     const apiKey = IDENTITY_PLATFORM_WEB_API_KEY.trim();
     if (!apiKey) {
       throw new Error(
@@ -124,8 +134,13 @@ export class RecaptchaService {
         return;
       }
 
+      const recaptchaScript =
+        isCapacitorNative() || isNativeBundle()
+          ? 'https://www.recaptcha.net/recaptcha/api.js?render=explicit'
+          : 'https://www.google.com/recaptcha/api.js?render=explicit';
+
       const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+      script.src = recaptchaScript;
       script.async = true;
       script.defer = true;
       script.dataset['junctionRecaptcha'] = 'true';

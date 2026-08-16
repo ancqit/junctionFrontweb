@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Junction</string>
+    <string name="title_activity_main">Junction</string>
+    <string name="package_name">today.junction.app</string>
+    <string name="custom_url_scheme">today.junction.app</string>
+</resources>

@@ -3,10 +3,13 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize, from, switchMap } from 'rxjs';
+import { finalize, from, firstValueFrom } from 'rxjs';
+import { isCapacitorNative } from '../../../../../shared/api-base-url';
 import { AuthService } from '../core/auth.service';
 import {
   homePathForRole,
+  OtpChallenge,
+  OtpRequest,
   PlanSummary,
   resolveLoginRole,
 } from '../core/auth.models';
@@ -18,6 +21,7 @@ import {
   PlansService,
 } from '../core/plans.service';
 import { RecaptchaService } from '../core/recaptcha.service';
+import { requestPlayIntegrityForPhone } from '../core/play-integrity.service';
 import { SessionService } from '../core/session.service';
 import { TermsAndConditions, TermsService } from '../core/terms.service';
 import { TokenService } from '../core/token.service';
@@ -153,15 +157,8 @@ export class Login implements OnInit {
     const formValue = this.details.getRawValue();
     const phoneNumber = `+91${formValue.phone_number}`;
 
-    from(this.recaptcha.getToken())
+    from(this.requestOtpWithNativeFallback(formValue.display_name, phoneNumber))
       .pipe(
-        switchMap((recaptchaToken) =>
-          this.auth.requestOtp({
-            display_name: formValue.display_name,
-            phone_number: phoneNumber,
-            recaptcha_token: recaptchaToken,
-          }),
-        ),
         finalize(() => this.busy.set(false)),
       )
       .subscribe({
@@ -298,11 +295,85 @@ export class Login implements OnInit {
     });
   }
 
+  private async requestOtpWithNativeFallback(displayName: string, phoneNumber: string): Promise<OtpChallenge> {
+    if (!isCapacitorNative()) {
+      const payload = await this.buildWebOtpRequest(displayName, phoneNumber);
+      return await firstValueFrom(this.auth.requestOtp(payload));
+    }
+
+    try {
+      const integrityPayload = await this.buildAndroidIntegrityRequest(displayName, phoneNumber);
+      try {
+        return await firstValueFrom(this.auth.requestOtp(integrityPayload));
+      } catch (error: unknown) {
+        if (!this.shouldFallbackToRecaptcha(error)) {
+          throw error;
+        }
+        console.warn('Play Integrity rejected by server, falling back to reCAPTCHA');
+      }
+    } catch (mintError) {
+      if (!this.isIntegrityMintFailure(mintError)) {
+        throw mintError;
+      }
+      console.warn('Play Integrity unavailable, falling back to reCAPTCHA:', mintError);
+    }
+
+    const webPayload = await this.buildWebOtpRequest(displayName, phoneNumber);
+    return await firstValueFrom(this.auth.requestOtp(webPayload));
+  }
+
+  private async buildAndroidIntegrityRequest(displayName: string, phoneNumber: string): Promise<OtpRequest> {
+    const playIntegrityToken = await requestPlayIntegrityForPhone(phoneNumber);
+    return {
+      display_name: displayName,
+      phone_number: phoneNumber,
+      play_integrity_token: playIntegrityToken,
+      client_type: 'android',
+    };
+  }
+
+  private async buildWebOtpRequest(displayName: string, phoneNumber: string): Promise<OtpRequest> {
+    const recaptchaToken = await this.recaptcha.getToken();
+    return {
+      display_name: displayName,
+      phone_number: phoneNumber,
+      recaptcha_token: recaptchaToken,
+      client_type: 'web',
+    };
+  }
+
+  private shouldFallbackToRecaptcha(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) {
+      return false;
+    }
+    const detail = String(error.error?.detail ?? '');
+    return (
+      error.status === 400 &&
+      /internal error|play integrity|bot check failed/i.test(detail)
+    );
+  }
+
+  private isIntegrityMintFailure(error: unknown): boolean {
+    if (error instanceof Error) {
+      return /play integrity/i.test(error.message);
+    }
+    return false;
+  }
+
   private readError(error: unknown, fallback: string): string {
     if (error instanceof HttpErrorResponse) {
       const detail = error.error?.detail;
       if (typeof detail === 'string' && detail.trim()) {
         return detail;
+      }
+      if (error.status === 500) {
+        return (
+          'Server error while sending OTP. Deploy the latest junctionBack OTP fix ' +
+          '(Play Integrity + plan verify), then try again.'
+        );
+      }
+      if (error.status === 0) {
+        return 'Cannot reach the server. Check your network connection.';
       }
     }
     if (error instanceof Error && error.message.trim()) {
