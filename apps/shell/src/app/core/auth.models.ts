@@ -1,7 +1,12 @@
 export interface OtpRequest {
   display_name: string;
   phone_number: string;
-  recaptcha_token: string;
+  /** Web flow — invisible reCAPTCHA token. */
+  recaptcha_token?: string;
+  /** Android APK flow — Play Integrity token (nonce = SHA-256 of E.164 phone). */
+  play_integrity_token?: string;
+  /** Hint for junctionBack: `web` | `android`. */
+  client_type?: 'web' | 'android';
 }
 
 export interface OtpChallenge {

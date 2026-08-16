@@ -2,11 +2,26 @@
 
 What happens when someone signs in to Junction (shell + junctionBack).
 
+## OTP bot-check (web vs Android)
+
+| Client | Token | `client_type` | junctionBack → GCP |
+|--------|-------|---------------|---------------------|
+| **Web** | `recaptcha_token` | `web` | `recaptchaToken` + `CLIENT_TYPE_WEB` (do **not** send `recaptchaVersion: RECAPTCHA_VERSION_2` — GCP rejects it) |
+| **Android APK** | `play_integrity_token` | `android` | `playIntegrityToken` + `CLIENT_TYPE_ANDROID` |
+| **Android debug fallback** | `recaptcha_token` | `web` | When Play Integrity fails (common on debug APKs not from Play Store) |
+
 ## 1. Sign-in
 
+Two client flows share the same junctionBack OTP endpoints:
+
+| Client | Proof token | Body fields |
+|--------|-------------|-------------|
+| **Web** (shell) | Invisible reCAPTCHA | `recaptcha_token` + `client_type: "web"` |
+| **Android APK** | Play Integrity | `play_integrity_token` + `client_type: "android"` (nonce = SHA-256 of E.164 phone) |
+
 1. User opens `/login` and enters **name** + **mobile** (+91).
-2. Shell sends `POST /auth/otp/request` (with reCAPTCHA).
-3. User enters the OTP.
+2. Shell loads site key from `GET /auth/recaptcha-params`, runs reCAPTCHA, then `POST /auth/otp/request`.
+3. User enters the OTP from SMS.
 4. Shell sends `POST /auth/otp/verify`.
 5. Backend returns a **TokenResponse** with `user`, `plan`, and `role` (`admin` | `owner` | `viewer`).
 6. Shell stores the access token and session (`user` + `role`).

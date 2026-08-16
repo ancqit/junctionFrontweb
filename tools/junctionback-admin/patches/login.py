@@ -11,7 +11,7 @@ import httpx
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
@@ -85,7 +85,9 @@ AVAILABLE_ROLES = [
 class OtpRequest(BaseModel):
     display_name: str = Field(min_length=1, max_length=100)
     phone_number: str = Field(pattern=r"^\+[1-9]\d{7,14}$")
-    recaptcha_token: str = Field(min_length=1)
+    recaptcha_token: str | None = None
+    play_integrity_token: str | None = None
+    client_type: str | None = None
 
     @field_validator("display_name")
     @classmethod
@@ -94,6 +96,12 @@ class OtpRequest(BaseModel):
         if not value:
             raise ValueError("display_name must not be blank")
         return value
+
+    @model_validator(mode="after")
+    def verification_token_present(self) -> "OtpRequest":
+        if not self.recaptcha_token and not self.play_integrity_token:
+            raise ValueError("recaptcha_token or play_integrity_token is required")
+        return self
 
 
 class OtpRequestResponse(BaseModel):
@@ -225,12 +233,100 @@ def require_gcp_otp_configuration() -> None:
         raise HTTPException(status_code=503, detail="GCP Identity Platform API key is not configured")
 
 
-def gcp_error(response: httpx.Response) -> HTTPException:
+def gcp_error(response: httpx.Response, *, client_type: str | None = None) -> HTTPException:
     try:
         message = response.json().get("error", {}).get("message", "OTP provider request failed")
     except ValueError:
         message = "OTP provider request failed"
+    upper = message.upper()
+    hint = (client_type or "").strip().lower()
+    if "TOO_MANY_ATTEMPTS" in upper:
+        message = "Too many OTP attempts. Wait a few minutes and try again."
+    elif "INVALID_ARGUMENT" in upper and "RECAPTCHA_VERSION" in upper:
+        message = (
+            "OTP misconfigured: do not send recaptchaVersion RECAPTCHA_VERSION_2 to GCP "
+            "(only RECAPTCHA_ENTERPRISE is valid). Redeploy the latest junctionBack OTP fix."
+        )
+    elif "CAPTCHA" in upper or "RECAPTCHA" in upper:
+        if hint in {"android", "client_type_android"}:
+            message = (
+                "Android bot check failed. Send play_integrity_token "
+                "(not a web reCAPTCHA token) with client_type=android. "
+                "Debug APKs not from Play Store may need reCAPTCHA fallback (client_type=web)."
+            )
+        else:
+            message = (
+                "Web bot check failed. Refresh and complete reCAPTCHA, then retry. "
+                "Web must send recaptcha_token with client_type=web (not an integrity token)."
+            )
+    elif "INTERNAL_ERROR" in upper:
+        if hint in {"android", "client_type_android"}:
+            message = (
+                "Play Integrity failed (common on debug APKs not installed from Play Store). "
+                "Add the app SHA-256 in Firebase, or use an APK build that falls back to reCAPTCHA."
+            )
+        else:
+            message = "Identity Platform internal error. Wait a moment and try again."
+    elif "INVALID_PHONE" in upper or "PHONE_NUMBER" in upper:
+        message = "Invalid phone number. Use E.164 format, e.g. +9198XXXXXXXX."
+    elif "QUOTA" in upper or "BILLING" in upper:
+        message = "SMS quota or billing issue on Identity Platform. Check the GCP/Firebase console."
     return HTTPException(status_code=400, detail=message)
+
+
+def gcp_send_otp_payload(payload: OtpRequest) -> dict:
+    """
+    Strict dual flows (do not mix tokens):
+    - Web: recaptcha_token + CLIENT_TYPE_WEB (never recaptchaVersion RECAPTCHA_VERSION_2)
+    - Android APK: play_integrity_token + CLIENT_TYPE_ANDROID
+    """
+    phone = payload.phone_number.strip()
+    body: dict = {"phoneNumber": phone}
+    hint = (payload.client_type or "").strip().lower()
+    recaptcha = (payload.recaptcha_token or "").strip() or None
+    play_integrity = (payload.play_integrity_token or "").strip() or None
+
+    if hint in {"android", "client_type_android"}:
+        if not play_integrity:
+            raise HTTPException(
+                status_code=400,
+                detail="Android clients must send play_integrity_token (not recaptcha_token).",
+            )
+        body["playIntegrityToken"] = play_integrity
+        body["clientType"] = "CLIENT_TYPE_ANDROID"
+        return body
+
+    if hint in {"web", "client_type_web"}:
+        if not recaptcha:
+            raise HTTPException(
+                status_code=400,
+                detail="Web clients must send recaptcha_token (not play_integrity_token).",
+            )
+        body["recaptchaToken"] = recaptcha
+        body["clientType"] = "CLIENT_TYPE_WEB"
+        return body
+
+    if play_integrity and not recaptcha:
+        body["playIntegrityToken"] = play_integrity
+        body["clientType"] = "CLIENT_TYPE_ANDROID"
+        return body
+    if recaptcha and not play_integrity:
+        body["recaptchaToken"] = recaptcha
+        body["clientType"] = "CLIENT_TYPE_WEB"
+        return body
+    if play_integrity and recaptcha:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Send only one verification token. "
+                "Web: recaptcha_token + client_type=web. "
+                "Android: play_integrity_token + client_type=android."
+            ),
+        )
+    raise HTTPException(
+        status_code=400,
+        detail="recaptcha_token or play_integrity_token is required",
+    )
 
 
 def token_response(user: dict) -> TokenResponse:
@@ -337,13 +433,13 @@ def request_otp(payload: OtpRequest) -> OtpRequestResponse:
         response = httpx.post(
             GCP_SEND_OTP_URL,
             params={"key": GCP_IDENTITY_PLATFORM_API_KEY},
-            json={"phoneNumber": payload.phone_number, "recaptchaToken": payload.recaptcha_token},
+            json=gcp_send_otp_payload(payload),
             timeout=15.0,
         )
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Unable to reach GCP Identity Platform") from exc
     if response.is_error:
-        raise gcp_error(response)
+        raise gcp_error(response, client_type=payload.client_type)
     session_info = response.json().get("sessionInfo")
     if not session_info:
         raise HTTPException(status_code=502, detail="GCP did not return an OTP session")
@@ -377,7 +473,7 @@ def verify_otp(payload: OtpVerifyRequest) -> TokenResponse:
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Unable to reach GCP Identity Platform") from exc
     if response.is_error:
-        raise gcp_error(response)
+        raise gcp_error(response, client_type=payload.client_type)
     verified_phone = response.json().get("phoneNumber")
     gcp_user_id = response.json().get("localId")
     if verified_phone != payload.phone_number or not gcp_user_id:
