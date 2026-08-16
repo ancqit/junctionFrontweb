@@ -160,6 +160,7 @@ export class Login implements OnInit {
             display_name: formValue.display_name,
             phone_number: phoneNumber,
             recaptcha_token: recaptchaToken,
+            client_type: 'web',
           }),
         ),
         finalize(() => this.busy.set(false)),

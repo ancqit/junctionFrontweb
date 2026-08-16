@@ -4,9 +4,16 @@ What happens when someone signs in to Junction (shell + junctionBack).
 
 ## 1. Sign-in
 
+Two client flows share the same junctionBack OTP endpoints:
+
+| Client | Proof token | Body fields |
+|--------|-------------|-------------|
+| **Web** (shell) | Invisible reCAPTCHA | `recaptcha_token` + `client_type: "web"` |
+| **Android APK** | Play Integrity | `play_integrity_token` + `client_type: "android"` (nonce = SHA-256 of E.164 phone) |
+
 1. User opens `/login` and enters **name** + **mobile** (+91).
-2. Shell sends `POST /auth/otp/request` (with reCAPTCHA).
-3. User enters the OTP.
+2. Shell loads site key from `GET /auth/recaptcha-params`, runs reCAPTCHA, then `POST /auth/otp/request`.
+3. User enters the OTP from SMS.
 4. Shell sends `POST /auth/otp/verify`.
 5. Backend returns a **TokenResponse** with `user`, `plan`, and `role` (`admin` | `owner` | `viewer`).
 6. Shell stores the access token and session (`user` + `role`).
