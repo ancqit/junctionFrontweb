@@ -170,9 +170,57 @@ Copy `SHA-256` under `Variant: debug` (current debug keystore):
 
 Until Render is updated, the APK will fail OTP even with Play Integrity.
 
-### Release APK (signed)
+### Release APK / Play Store AAB (signed)
 
-Configure signing in `android/app/build.gradle`, then:
+Play Integrity only passes reliably when the app is installed from **Google Play**
+(Internal / Closed / Production). Sideloaded debug APKs get `Internal error encountered`.
+
+#### 1. Create upload keystore (once)
+
+```powershell
+cd android
+keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+copy key.properties.example key.properties
+# Edit key.properties with the passwords you chose
+```
+
+Keep `upload-keystore.jks` + `key.properties` backed up offline. Never commit them.
+
+#### 2. Build the Play Bundle (.aab)
+
+```powershell
+npm run release:android:aab
+```
+
+Output: `releases/junction-mobile-release.aab`
+
+#### 3. Google Play Console (fastest path: Internal testing)
+
+1. Create app → package name **`today.junction.app`** (must match exactly).
+2. Enable **Play App Signing** (default).
+3. Create an **Internal testing** track → upload the `.aab` → add your Gmail as tester.
+4. Install from the Play internal testing link (not a sideloaded APK).
+5. Later: promote the same track to Closed/Production; new builds = higher `versionCode`.
+
+#### 4. Firebase + Play Integrity (required for OTP)
+
+1. Firebase → Project settings → Android app `today.junction.app`.
+2. Add **both**:
+   - Upload keystore SHA-1 / SHA-256 (`.\gradlew.bat signingReport` → `release` variant)
+   - **App signing key** SHA-1 / SHA-256 from Play Console → Release → Setup → App integrity
+3. Google Cloud → enable **Play Integrity API**.
+4. Play Console → App integrity → link the same Cloud/Firebase project.
+5. Download `google-services.json` into `android/app/` (gitignored).
+
+#### 5. Updates later
+
+Bump `versionCode` / `versionName` in `android/app/build.gradle`, rebuild AAB, upload to the same track.
+
+Until Play Store install works, keep using the debug APK with **reCAPTCHA fallback**.
+
+### Release APK (signed, not for Play)
+
+Configure signing in `android/key.properties`, then:
 
 ```powershell
 npm run cap:build:android:release

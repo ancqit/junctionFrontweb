@@ -43,6 +43,12 @@ __screenshots__/
 /android/app/build/
 /android/build/
 /android/local.properties
+/android/key.properties
+/android/*.jks
+/android/*.keystore
+/android/app/upload-keystore.jks
+/android/UPLOAD-KEY-FINGERPRINTS.txt
+/android/app/google-services.json
 /releases/
 /ios/App/Pods/
 /ios/App/build/

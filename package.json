@@ -20,7 +20,9 @@
     "cap:open:ios": "npx cap open ios",
     "cap:build:android:debug": "npm run cap:sync && cd android && .\\gradlew.bat assembleDebug",
     "cap:build:android:release": "npm run cap:sync && cd android && .\\gradlew.bat assembleRelease",
+    "cap:build:android:aab": "npm run branding:icons && npm run cap:sync && cd android && .\\gradlew.bat bundleRelease",
     "release:android": "npm run branding:icons && npm run cap:build:android:debug && node tools/prepare-release.mjs",
+    "release:android:aab": "npm run cap:build:android:aab && node tools/prepare-play-aab.mjs",
     "watch": "nx build --watch --configuration development",
     "test": "nx test"
   },
