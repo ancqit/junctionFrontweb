@@ -144,7 +144,7 @@ export class ShopsPage implements OnInit {
   }
 
   removeShop(shop: Shop): void {
-    if (!confirm(`Delete shop “${shop.name}”? Products and employees for this shop stay on the server until cleaned up.`)) {
+    if (!confirm(`Delete shop “${shop.name}”? This permanently removes the shop profile, products, employees, and orders for this shop.`)) {
       return;
     }
     this.deletingId.set(shop.id);

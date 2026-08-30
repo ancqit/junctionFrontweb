@@ -1,0 +1,17 @@
+diff --git a/app/shops.py b/app/shops.py
+--- a/app/shops.py
++++ b/app/shops.py
+@@ -24,6 +24,7 @@ from .roles import UserRole, get_user_role
+ from .session import CatalogReader, is_junction_session
+ from .shop_payments import PlanPurchaseRequest, ShopPayment, create_plan_purchase
++from .shop_cleanup import delete_shop_cascade
+ from .shop_types import SHOP_TYPES, ShopTypeInfo
+ from .utils import parse_object_id
+ 
+@@ -620,5 +621,5 @@ def delete_shop(shop_id: str, current_user: Annotated[dict, Depends(get_current_
+     if existing is None:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shop not found")
+     ensure_shop_access(current_user, existing)
+-    shops.delete_one({"_id": existing["_id"]})
++    delete_shop_cascade(shop_id)
+     return Response(status_code=status.HTTP_204_NO_CONTENT)
