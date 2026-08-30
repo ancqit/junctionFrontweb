@@ -219,7 +219,8 @@
         After your shop plan allowance is used, add capacity in packs of
         {{ packSize() }} products for
         {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }} each
-        (junctionBack product bucket).
+        (junctionBack product bucket). Packs <strong>append</strong> onto the
+        current plan capacity (stack / LIFO: latest packs extend remaining slots).
       </p>
       @if (bucket(); as bucket) {
         <dl class="pack-stats">
