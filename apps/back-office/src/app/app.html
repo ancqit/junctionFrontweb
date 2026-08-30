@@ -19,6 +19,10 @@
       <nav>
         <a routerLink="/back-office/activate" routerLinkActive="active" (click)="closeMenu()">Deactivated</a>
         <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">Plans</a>
+        <div class="nav-lang" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">हिंदी</button>
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">EN</button>
+        </div>
       </nav>
       <p class="lock-note">
         Viewer mode — plan and grace period ended. Activate a plan to become an owner again.
@@ -33,6 +37,24 @@
         <a routerLink="/back-office/billing" routerLinkActive="active" (click)="closeMenu()">Billing</a>
         <a routerLink="/back-office/orders" routerLinkActive="active" (click)="closeMenu()">Orders</a>
         <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">Plans</a>
+        <div class="nav-lang" role="group" aria-label="Language">
+          <button
+            type="button"
+            class="lang-btn"
+            [class.active]="i18n.lang() === 'hi'"
+            (click)="i18n.setLang('hi')"
+          >
+            हिंदी
+          </button>
+          <button
+            type="button"
+            class="lang-btn"
+            [class.active]="i18n.lang() === 'en'"
+            (click)="i18n.setLang('en')"
+          >
+            EN
+          </button>
+        </div>
       </nav>
     }
     <div class="aside-footer">
