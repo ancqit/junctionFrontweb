@@ -1,13 +1,13 @@
 <header>
   <div>
-    <p class="eyebrow">SHOP PROFILE</p>
-    <h1>Profile</h1>
+    <p class="eyebrow">{{ 'profile.eyebrow' | t }}</p>
+    <h1>{{ 'profile.title' | t }}</h1>
     @if (step() === 'view') {
-      <p class="sub">Your shop’s public name, photo, and story.</p>
+      <p class="sub">{{ 'profile.subView' | t }}</p>
     } @else if (step() === 'edit') {
-      <p class="sub">Update your prompts and photo, then save.</p>
+      <p class="sub">{{ 'profile.subEdit' | t }}</p>
     } @else {
-      <p class="sub">Tell customers about your shop in three short prompts.</p>
+      <p class="sub">{{ 'profile.subCreate' | t }}</p>
     }
   </div>
 </header>
@@ -20,7 +20,7 @@
 }
 
 @if (loading()) {
-  <p class="muted">Loading profile…</p>
+  <p class="muted">{{ 'profile.loading' | t }}</p>
 } @else if (step() === 'view' && profile(); as current) {
   <section class="profile-view">
     <div class="profile-hero">
@@ -32,9 +32,9 @@
         }
       </div>
       <div class="profile-hero-copy">
-        <p class="eyebrow">YOUR SHOP</p>
+        <p class="eyebrow">{{ 'profile.yourShop' | t }}</p>
         <h2>{{ shopNameLabel() }}</h2>
-        <p class="lead">This is how your shop profile appears to customers.</p>
+        <p class="lead">{{ 'profile.lead' | t }}</p>
       </div>
     </div>
 
@@ -48,63 +48,63 @@
 
     @if (current.avatar_url) {
       <p class="avatar-open">
-        <a [href]="current.avatar_url" target="_blank" rel="noopener">Open profile photo</a>
+        <a [href]="current.avatar_url" target="_blank" rel="noopener">{{ 'profile.openPhoto' | t }}</a>
       </p>
     }
 
     <div class="actions">
-      <a routerLink="/back-office" class="ghost">Back to Overview</a>
+      <a routerLink="/back-office" class="ghost">{{ 'profile.backOverview' | t }}</a>
       <button type="button" class="ghost danger-text" (click)="deleteProfile()" [disabled]="saving()">
-        {{ saving() ? 'Deleting…' : 'Delete profile' }}
+        {{ saving() ? ('common.deleting' | t) : ('profile.delete' | t) }}
       </button>
-      <button type="button" class="primary" (click)="openEdit()">Edit profile</button>
+      <button type="button" class="primary" (click)="openEdit()">{{ 'profile.edit' | t }}</button>
     </div>
   </section>
 } @else {
   <section class="panel" [formGroup]="promptsForm">
     @if (step() === 'edit') {
-      <p class="eyebrow">EDIT PROFILE</p>
-      <h2>Update your shop story</h2>
-      <p class="lead">Change any prompt or photo. Preview updates as you type.</p>
+      <p class="eyebrow">{{ 'profile.editEyebrow' | t }}</p>
+      <h2>{{ 'profile.editTitle' | t }}</h2>
+      <p class="lead">{{ 'profile.editLead' | t }}</p>
     } @else {
-      <p class="eyebrow">CREATE PROFILE</p>
-      <h2>Set up your shop profile</h2>
-      <p class="lead">Each answer becomes its own paragraph in your bio.</p>
+      <p class="eyebrow">{{ 'profile.createEyebrow' | t }}</p>
+      <h2>{{ 'profile.createTitle' | t }}</h2>
+      <p class="lead">{{ 'profile.createLead' | t }}</p>
     }
 
     <label>
-      Shop name
-      <input formControlName="display_name" autocomplete="organization" placeholder="e.g. Main Road Store" />
+      {{ 'profile.shopName' | t }}
+      <input formControlName="display_name" autocomplete="organization" [placeholder]="'shops.namePh' | t" />
     </label>
 
     <label>
-      Prompt 1 — About your shop
+      {{ 'profile.prompt1' | t }}
       <textarea
         formControlName="prompt1"
         rows="3"
-        placeholder="Tell us about your shop, its location, and what you offer"
+        [placeholder]="'profile.prompt1Ph' | t"
       ></textarea>
     </label>
     <label>
-      Prompt 2 — Your services
+      {{ 'profile.prompt2' | t }}
       <textarea
         formControlName="prompt2"
         rows="3"
-        placeholder="Tell us about the services your shop provides"
+        [placeholder]="'profile.prompt2Ph' | t"
       ></textarea>
     </label>
     <label>
-      Prompt 3 — Anything else <span class="optional">optional</span>
+      {{ 'profile.prompt3' | t }} <span class="optional">{{ 'common.optional' | t }}</span>
       <textarea
         formControlName="prompt3"
         rows="3"
-        placeholder="Anything customers should know"
+        [placeholder]="'profile.prompt3Ph' | t"
       ></textarea>
     </label>
 
     @if (hasParagraphPreview()) {
       <div class="bio-preview">
-        <p class="preview-label">Preview</p>
+        <p class="preview-label">{{ 'common.preview' | t }}</p>
         @for (paragraph of paragraphsPreview(); track $index) {
           <p>{{ paragraph }}</p>
         }
@@ -114,12 +114,12 @@
     <div class="avatar-block">
       <div class="avatar-head">
         <div>
-          <h3>Shop photo</h3>
-          <p>Optional — search Pexels or upload from your device.</p>
+          <h3>{{ 'profile.shopPhoto' | t }}</h3>
+          <p>{{ 'profile.shopPhotoSub' | t }}</p>
         </div>
         <div class="avatar-actions">
           <button type="button" class="ghost" (click)="loadAvatarOptions()" [disabled]="searchingImages()">
-            {{ searchingImages() ? 'Loading…' : 'Find images' }}
+            {{ searchingImages() ? ('common.loading' | t) : ('profile.findImages' | t) }}
           </button>
           <button
             type="button"
@@ -127,7 +127,7 @@
             (click)="openDeviceAvatarPicker(deviceAvatarInput)"
             [disabled]="uploadingAvatar()"
           >
-            {{ uploadingAvatar() ? 'Uploading…' : 'Upload from device' }}
+            {{ uploadingAvatar() ? ('profile.uploading' | t) : ('profile.uploadDevice' | t) }}
           </button>
           <input
             #deviceAvatarInput
@@ -145,17 +145,17 @@
 
       @if (selectedAvatarUrl(); as avatar) {
         <div class="selected-avatar">
-          <img [src]="avatar" alt="Selected shop photo" />
+          <img [src]="avatar" [alt]="'profile.selectedPhoto' | t" />
           <span>
-            Selected
-            <a [href]="avatar" target="_blank" rel="noopener">Open</a>
+            {{ 'common.selected' | t }}
+            <a [href]="avatar" target="_blank" rel="noopener">{{ 'common.openLink' | t }}</a>
           </span>
         </div>
       }
 
       @if (imageResults().length > 0) {
-        <p class="results-meta">{{ imageResults().length }} results — tap to select</p>
-        <div class="image-grid" role="listbox" aria-label="Image search results">
+        <p class="results-meta">{{ 'profile.resultsMeta' | t: { count: imageResults().length } }}</p>
+        <div class="image-grid" role="listbox" [attr.aria-label]="'profile.imageAria' | t">
           @for (image of imageResults(); track image.id) {
             <button
               type="button"
@@ -175,14 +175,14 @@
 
     <div class="actions">
       @if (step() === 'edit') {
-        <button type="button" class="ghost" (click)="cancelEdit()">Cancel</button>
+        <button type="button" class="ghost" (click)="cancelEdit()">{{ 'common.cancel' | t }}</button>
         <button type="button" class="primary" (click)="updateProfile()" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save changes' }}
+          {{ saving() ? ('common.saving' | t) : ('common.saveChanges' | t) }}
         </button>
       } @else {
-        <a routerLink="/back-office" class="ghost">Back to Overview</a>
+        <a routerLink="/back-office" class="ghost">{{ 'profile.backOverview' | t }}</a>
         <button type="button" class="primary" (click)="saveProfile()" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save profile' }}
+          {{ saving() ? ('common.saving' | t) : ('profile.saveProfile' | t) }}
         </button>
       }
     </div>

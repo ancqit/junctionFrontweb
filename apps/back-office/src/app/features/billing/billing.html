@@ -1,10 +1,10 @@
 <header>
   <div>
-    <p class="eyebrow">CHECKOUT</p>
-    <h1>Billing</h1>
-    <p class="sub">Search products, set quantities, and create a bill</p>
+    <p class="eyebrow">{{ 'billing.eyebrow' | t }}</p>
+    <h1>{{ 'billing.title' | t }}</h1>
+    <p class="sub">{{ 'billing.sub' | t }}</p>
   </div>
-  <button type="button" class="ghost" (click)="clearBill()" [disabled]="lines().length === 0">Clear bill</button>
+  <button type="button" class="ghost" (click)="clearBill()" [disabled]="lines().length === 0">{{ 'billing.clear' | t }}</button>
 </header>
 
 @if (error()) {
@@ -17,32 +17,32 @@
 <div class="layout">
   <section class="panel search-panel">
     <div class="panel-head">
-      <h2>Find a product</h2>
-      <button type="button" class="ghost" (click)="reloadCatalog()">Refresh</button>
+      <h2>{{ 'billing.findProduct' | t }}</h2>
+      <button type="button" class="ghost" (click)="reloadCatalog()">{{ 'common.refresh' | t }}</button>
     </div>
 
     <label class="search">
-      Search
+      {{ 'billing.search' | t }}
       <input
         type="search"
         [value]="searchQuery()"
         (input)="onSearch($any($event.target).value)"
-        placeholder="Name, SKU, category, or barcode"
+        [placeholder]="'billing.searchPh' | t"
         autocomplete="off"
       />
     </label>
 
     <label class="qty">
-      Quantity to add
+      {{ 'billing.qty' | t }}
       <input type="number" min="1" step="1" [formControl]="addForm.controls.quantity" />
     </label>
 
     @if (loading()) {
-      <p class="muted">Loading catalog…</p>
+      <p class="muted">{{ 'billing.loading' | t }}</p>
     } @else if (filteredProducts().length === 0) {
       <div class="empty">
-        <strong>No matching products</strong>
-        <p>Try another search, or add products in the catalog first.</p>
+        <strong>{{ 'billing.noMatch' | t }}</strong>
+        <p>{{ 'billing.noMatchSub' | t }}</p>
       </div>
     } @else {
       <ul class="results">
@@ -50,11 +50,20 @@
           <li>
             <div>
               <strong>{{ product.name }}</strong>
-              <small>{{ product.sku }} · {{ product.category }} · {{ product.stock_quantity }} {{ product.unit }} in stock</small>
+              <small>{{
+                'billing.inStock'
+                  | t
+                    : {
+                        sku: product.sku,
+                        category: product.category,
+                        stock: product.stock_quantity,
+                        unit: product.unit,
+                      }
+              }}</small>
             </div>
             <div class="result-meta">
               <span>{{ product.price | currency: product.currency:'symbol-narrow':'1.0-2' }}</span>
-              <button type="button" class="primary" (click)="selectProduct(product)">Add</button>
+              <button type="button" class="primary" (click)="selectProduct(product)">{{ 'billing.add' | t }}</button>
             </div>
           </li>
         }
@@ -64,14 +73,21 @@
 
   <section class="panel bill-panel">
     <div class="panel-head">
-      <h2>Current bill</h2>
-      <span class="count">{{ lines().length }} item{{ lines().length === 1 ? '' : 's' }}</span>
+      <h2>{{ 'billing.current' | t }}</h2>
+      <span class="count">{{
+        'billing.itemCount'
+          | t
+            : {
+                count: lines().length,
+                label: lines().length === 1 ? ('billing.item' | t) : ('billing.items' | t),
+              }
+      }}</span>
     </div>
 
     @if (lines().length === 0) {
       <div class="empty">
-        <strong>Bill is empty</strong>
-        <p>Search and add products to build the order.</p>
+        <strong>{{ 'billing.emptyTitle' | t }}</strong>
+        <p>{{ 'billing.emptySub' | t }}</p>
       </div>
     } @else {
       <div class="lines">
@@ -79,10 +95,14 @@
           <article>
             <div>
               <strong>{{ line.product.name }}</strong>
-              <small>{{ line.product.sku }} · {{ line.unit_price | currency:'INR':'symbol-narrow':'1.0-2' }} each</small>
+              <small
+                >{{ line.product.sku }} ·
+                {{ line.unit_price | currency: 'INR':'symbol-narrow':'1.0-2' }}
+                {{ 'billing.eachSuffix' | t }}</small
+              >
             </div>
             <label>
-              Qty
+              {{ 'common.qty' | t }}
               <input
                 type="number"
                 min="1"
@@ -92,33 +112,33 @@
               />
             </label>
             <div class="line-total">{{ lineTotal(line) | currency:'INR':'symbol-narrow':'1.0-2' }}</div>
-            <button type="button" class="danger" (click)="removeLine(line.product.id)">Remove</button>
+            <button type="button" class="danger" (click)="removeLine(line.product.id)">{{ 'common.remove' | t }}</button>
           </article>
         }
       </div>
     }
 
     <form class="customer" [formGroup]="customerForm" (ngSubmit)="createOrder()">
-      <h3>Customer & payment</h3>
+      <h3>{{ 'billing.customerPay' | t }}</h3>
       <div class="grid">
-        <label>Customer name<input formControlName="customer_name" placeholder="Walk-in customer" /></label>
-        <label>Mobile<div class="phone"><span>+91</span><input formControlName="phone_local" maxlength="10" inputmode="numeric" placeholder="9876543210" /></div></label>
-        <label>Email<input formControlName="customer_email" type="email" placeholder="optional" /></label>
-        <label>Payment
-          <app-inline-select formControlName="payment_method" [options]="paymentMethodOptions" />
+        <label>{{ 'billing.customerName' | t }}<input formControlName="customer_name" [placeholder]="'billing.customerNamePh' | t" /></label>
+        <label>{{ 'billing.mobile' | t }}<div class="phone"><span>+91</span><input formControlName="phone_local" maxlength="10" inputmode="numeric" placeholder="9876543210" /></div></label>
+        <label>{{ 'billing.email' | t }}<input formControlName="customer_email" type="email" [placeholder]="'common.optional' | t" /></label>
+        <label>{{ 'billing.payment' | t }}
+          <app-inline-select formControlName="payment_method" [options]="paymentMethodOptions()" />
         </label>
-        <label class="full">Notes<textarea formControlName="notes" rows="2" placeholder="optional"></textarea></label>
+        <label class="full">{{ 'billing.notes' | t }}<textarea formControlName="notes" rows="2" [placeholder]="'common.optional' | t"></textarea></label>
       </div>
 
       <div class="totals">
-        <div><span>Subtotal</span><strong>{{ subtotal() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
-        <div><span>Tax</span><strong>{{ taxAmount() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
-        <div class="grand"><span>Total</span><strong>{{ totalAmount() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
+        <div><span>{{ 'billing.subtotal' | t }}</span><strong>{{ subtotal() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
+        <div><span>{{ 'billing.tax' | t }}</span><strong>{{ taxAmount() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
+        <div class="grand"><span>{{ 'billing.total' | t }}</span><strong>{{ totalAmount() | currency:'INR':'symbol-narrow':'1.0-2' }}</strong></div>
       </div>
 
       <div class="actions">
         <button type="submit" class="primary" [disabled]="saving() || lines().length === 0">
-          {{ saving() ? 'Creating…' : 'Create order' }}
+          {{ saving() ? ('common.creating' | t) : ('billing.createOrder' | t) }}
         </button>
       </div>
     </form>

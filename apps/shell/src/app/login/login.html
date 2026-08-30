@@ -1,34 +1,63 @@
 <main class="login-page">
   <section class="story">
     <div class="story-top">
-      <a class="brand" href="/" aria-label="Junction home"><span>J</span> Junction</a>
-      <button type="button" class="plans-link" (click)="openPlansModal()">Plans</button>
+      <a class="brand" href="/" [attr.aria-label]="'login.brandHome' | t"><span>J</span> Junction</a>
+      <div class="story-actions">
+        <div class="lang-toggle" role="group" [attr.aria-label]="'common.language' | t">
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">
+            {{ 'common.lang.hi' | t }}
+          </button>
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">
+            {{ 'common.lang.en' | t }}
+          </button>
+        </div>
+        <button type="button" class="plans-link" (click)="openPlansModal()">{{ 'login.plans' | t }}</button>
+      </div>
     </div>
     <div class="story-copy">
-      <p class="eyebrow">Your neighbourhood, connected</p>
-      <h1>Run your business from one calm place.</h1>
-      <p>Manage your storefront, orders and customers with tools designed for the way local businesses work.</p>
+      <p class="eyebrow">{{ 'login.eyebrow' | t }}</p>
+      <h1>{{ 'login.headline' | t }}</h1>
+      <p>{{ 'login.story' | t }}</p>
     </div>
-    <p class="trusted">Secure, password-free access</p>
+    <p class="trusted">{{ 'login.trusted' | t }}</p>
   </section>
 
   <section class="overlay" aria-labelledby="login-title">
     <div class="card" [class.wide]="step() === 'plans'">
-      <div class="steps" aria-label="Login progress">
+      <div class="steps" [attr.aria-label]="'login.progress' | t">
         <span class="active"></span>
         <span [class.active]="step() === 'otp' || step() === 'plans'"></span>
         <span [class.active]="step() === 'plans'"></span>
       </div>
 
       @if (step() === 'details') {
-        <p class="kicker">Welcome to Junction</p>
-        <h2 id="login-title">Let’s get you set up</h2>
-        <p class="subcopy">A few details, then we’ll verify your mobile number.</p>
+        <p class="kicker">{{ 'login.welcome' | t }}</p>
+        <h2 id="login-title">{{ 'login.setupTitle' | t }}</h2>
+        <p class="subcopy">{{ 'login.setupSub' | t }}</p>
         <form [formGroup]="details" (ngSubmit)="sendOtp()">
-          <label>Full name<input formControlName="display_name" autocomplete="name" placeholder="e.g. Aarav Kumar" /></label>
-          @if (details.controls.display_name.touched && details.controls.display_name.invalid) { <small>Please enter your name.</small> }
-          <label>Mobile number<div class="phone"><span>+91</span><input formControlName="phone_number" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="98765 43210" /></div></label>
-          @if (details.controls.phone_number.touched && details.controls.phone_number.invalid) { <small>Enter a valid 10-digit Indian mobile number.</small> }
+          <label>
+            {{ 'login.fullName' | t }}
+            <input formControlName="display_name" autocomplete="name" [placeholder]="'login.fullNamePh' | t" />
+          </label>
+          @if (details.controls.display_name.touched && details.controls.display_name.invalid) {
+            <small>{{ 'login.nameRequired' | t }}</small>
+          }
+          <label>
+            {{ 'login.mobile' | t }}
+            <div class="phone">
+              <span>+91</span>
+              <input
+                formControlName="phone_number"
+                inputmode="numeric"
+                maxlength="10"
+                autocomplete="tel"
+                placeholder="98765 43210"
+              />
+            </div>
+          </label>
+          @if (details.controls.phone_number.touched && details.controls.phone_number.invalid) {
+            <small>{{ 'login.mobileInvalid' | t }}</small>
+          }
 
           <label class="terms-check">
             <input
@@ -38,51 +67,69 @@
               (change)="onAcceptTermsChange($event)"
             />
             <span>
-              I have read the
-              <a href="#terms" (click)="openTermsModal($event)">Terms and Conditions</a>.
+              {{ 'login.termsAccept' | t }}
+              <a href="#terms" (click)="openTermsModal($event)">{{ 'login.termsLink' | t }}</a>{{ 'login.termsAcceptEnd' | t }}
               @if (!termsViewed()) {
-                <small class="terms-hint">Open the link to accept the terms.</small>
+                <small class="terms-hint">{{ 'login.termsHint' | t }}</small>
               }
             </span>
           </label>
 
-          @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+          @if (error()) {
+            <p class="error" role="alert">{{ error() }}</p>
+          }
           <button type="submit" [disabled]="!canSendOtp()">
-            {{ busy() ? 'Sending…' : 'Send OTP' }}
+            {{ busy() ? ('login.sending' | t) : ('login.sendOtp' | t) }}
           </button>
         </form>
       } @else if (step() === 'otp') {
-        <button class="back" type="button" (click)="editNumber()">← Edit details</button>
-        <p class="kicker">One quick check</p>
-        <h2 id="login-title">Enter your OTP</h2>
-        <p class="subcopy">We sent a 6-digit code to +91 {{ details.getRawValue().phone_number }}.</p>
+        <button class="back" type="button" (click)="editNumber()">{{ 'login.editDetails' | t }}</button>
+        <p class="kicker">{{ 'login.otpKicker' | t }}</p>
+        <h2 id="login-title">{{ 'login.otpTitle' | t }}</h2>
+        <p class="subcopy">{{ 'login.otpSub' | t: { phone: details.getRawValue().phone_number } }}</p>
         <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
-          <label>Verification code<input class="otp" formControlName="otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" /></label>
-          @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-          <button type="submit" [disabled]="busy()">{{ busy() ? 'Verifying…' : 'Verify & continue' }}</button>
+          <label>
+            {{ 'login.otpLabel' | t }}
+            <input
+              class="otp"
+              formControlName="otp"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              placeholder="000000"
+            />
+          </label>
+          @if (error()) {
+            <p class="error" role="alert">{{ error() }}</p>
+          }
+          <button type="submit" [disabled]="busy()">
+            {{ busy() ? ('login.verifying' | t) : ('login.verifyContinue' | t) }}
+          </button>
         </form>
       } @else {
-        <p class="kicker">Choose your plan</p>
-        <h2 id="login-title">Plans & free trial</h2>
+        <p class="kicker">{{ 'login.choosePlan' | t }}</p>
+        <h2 id="login-title">{{ 'login.plansTitle' | t }}</h2>
         <p class="subcopy">
           @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
-            Your {{ trialDays }}-day free trial is already running
+            {{ 'login.trialRunning' | t: { days: trialDays } }}
             @if (currentPlan()?.days_remaining != null) {
-              ({{ currentPlan()?.days_remaining }} days left)
-            }.
-            Continue, or pick Starter / Growth / Premium.
+              {{ 'login.daysLeft' | t: { n: currentPlan()?.days_remaining ?? 0 } }}
+            }
+            {{ 'login.trialRunningEnd' | t }}
           } @else {
-            Pick Starter, Growth, or Premium. New accounts start on a {{ trialDays }}-day free trial automatically.
+            {{ 'login.pickPlans' | t: { days: trialDays } }}
           }
         </p>
 
-        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        @if (error()) {
+          <p class="error" role="alert">{{ error() }}</p>
+        }
 
         @if (currentPlan()?.type === 'free_trial' && currentPlan()?.is_active) {
           <button type="button" class="trial" (click)="continueWithTrial()" [disabled]="busy()">
-            <span>Free trial</span>
-            <strong>Continue with free trial</strong>
-            <small>{{ currentPlan()?.days_remaining ?? trialDays }} days remaining · closes automatically</small>
+            <span>{{ 'login.freeTrial' | t }}</span>
+            <strong>{{ 'login.continueTrial' | t }}</strong>
+            <small>{{ 'login.trialRemaining' | t: { n: currentPlan()?.days_remaining ?? trialDays } }}</small>
           </button>
         }
 
@@ -92,9 +139,9 @@
               <span class="plan-name">{{ plan.name }}</span>
               <span class="plan-price">
                 @if (plan.price_inr === 0) {
-                  Free
+                  {{ 'common.free' | t }}
                 } @else {
-                  {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}/year
+                  {{ plan.price_inr | currency: 'INR':'symbol-narrow':'1.0-0' }}{{ 'common.perYear' | t }}
                 }
               </span>
               <span class="plan-limit">{{ productLimitLabel(plan) }}</span>
@@ -102,7 +149,9 @@
           }
         </div>
 
-        <button class="back later" type="button" (click)="skipToApp()" [disabled]="busy()">Manage later on Plans page →</button>
+        <button class="back later" type="button" (click)="skipToApp()" [disabled]="busy()">
+          {{ 'login.manageLater' | t }}
+        </button>
       }
     </div>
   </section>
@@ -110,31 +159,28 @@
 
 @if (plansModalOpen()) {
   <div class="modal-backdrop" (click)="closePlansModal()" role="presentation"></div>
-  <div
-    class="plans-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="plans-modal-title"
-  >
+  <div class="plans-modal" role="dialog" aria-modal="true" aria-labelledby="plans-modal-title">
     <header>
       <div>
-        <p class="kicker">PRICING</p>
-        <h2 id="plans-modal-title">Plans</h2>
-        <p>Simple yearly pricing for neighbourhood shops. New accounts get a {{ trialDays }}-day free trial.</p>
+        <p class="kicker">{{ 'login.pricing' | t }}</p>
+        <h2 id="plans-modal-title">{{ 'login.plansModalTitle' | t }}</h2>
+        <p>{{ 'login.plansModalSub' | t: { days: trialDays } }}</p>
       </div>
-      <button type="button" class="modal-close" (click)="closePlansModal()" aria-label="Close plans">×</button>
+      <button type="button" class="modal-close" (click)="closePlansModal()" [attr.aria-label]="'login.closePlans' | t">×</button>
     </header>
 
     <div class="modal-plans">
       @for (plan of modalPlans(); track plan.type) {
         <article [class.featured]="plan.type === 'premium' || plan.type === 'free_trial'">
-          <p class="plan-eyebrow">{{ plan.type === 'free_trial' ? 'TRIAL' : plan.type.toUpperCase() }}</p>
+          <p class="plan-eyebrow">
+            {{ plan.type === 'free_trial' ? ('login.trial' | t) : plan.type.toUpperCase() }}
+          </p>
           <h3>{{ plan.name }}</h3>
           <p class="modal-price">
             @if (plan.price_inr === 0) {
-              Free
+              {{ 'common.free' | t }}
             } @else {
-              {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/year</small>
+              {{ plan.price_inr | currency: 'INR':'symbol-narrow':'1.0-0' }}<small>{{ 'common.perYear' | t }}</small>
             }
           </p>
           <p class="modal-limit">{{ productLimitLabel(plan) }}</p>
@@ -143,29 +189,24 @@
       }
     </div>
 
-    <p class="modal-foot">Log in to join a plan waitlist or continue your free trial.</p>
+    <p class="modal-foot">{{ 'login.modalFoot' | t }}</p>
   </div>
 }
 
 @if (termsModalOpen()) {
   <div class="modal-backdrop" (click)="closeTermsModal()" role="presentation"></div>
-  <div
-    class="terms-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="terms-modal-title"
-  >
+  <div class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
     <header>
       <div>
-        <p class="kicker">LEGAL · v{{ terms()?.version || '—' }}</p>
-        <h2 id="terms-modal-title">{{ terms()?.title || 'Terms and Conditions' }}</h2>
+        <p class="kicker">{{ 'login.legal' | t: { version: terms()?.version || '—' } }}</p>
+        <h2 id="terms-modal-title">{{ terms()?.title || ('login.termsTitle' | t) }}</h2>
       </div>
-      <button type="button" class="modal-close" (click)="closeTermsModal()" aria-label="Close terms">×</button>
+      <button type="button" class="modal-close" (click)="closeTermsModal()" [attr.aria-label]="'login.closeTerms' | t">×</button>
     </header>
 
     <div class="terms-body">
       @if (!terms()) {
-        <p class="muted">Loading terms…</p>
+        <p class="muted">{{ 'login.loadingTerms' | t }}</p>
       } @else {
         @for (paragraph of termsParagraphs(); track $index) {
           <p>{{ paragraph }}</p>
@@ -173,6 +214,6 @@
       }
     </div>
 
-    <button type="button" class="terms-done" (click)="closeTermsModal()">I have read these terms</button>
+    <button type="button" class="terms-done" (click)="closeTermsModal()">{{ 'login.termsDone' | t }}</button>
   </div>
 }

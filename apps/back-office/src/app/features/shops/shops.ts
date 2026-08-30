@@ -13,6 +13,7 @@ import {
   ShopsApi,
 } from '../../core/shops.api';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 import {
   LocationPickerModalComponent,
@@ -44,6 +45,7 @@ function fallbackShopTypeOptions(): InlineSelectOption[] {
     ReactiveFormsModule,
     InlineSelectComponent,
     LocationPickerModalComponent,
+    TranslatePipe,
   ],
   templateUrl: './shops.html',
   styleUrl: './shops.scss',

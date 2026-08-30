@@ -13,6 +13,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize, from, Observable, of } from 'rxjs';
 import { concatMap, last, map, switchMap } from 'rxjs/operators';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import {
   ImageSearchResult,
   PRODUCT_PACK_PRICE_INR,
@@ -30,12 +32,6 @@ import {
 import { ProductsApi } from '../../core/products.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
-const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'discontinued', label: 'Discontinued' },
-];
-
 const MAX_PRODUCT_IMAGES = 5;
 const PEXELS_RESULT_COUNT = 10;
 
@@ -52,7 +48,14 @@ export interface ProductImageDraft {
 
 @Component({
   selector: 'app-products',
-  imports: [ReactiveFormsModule, CurrencyPipe, TitleCasePipe, InlineSelectComponent, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    CurrencyPipe,
+    TitleCasePipe,
+    InlineSelectComponent,
+    RouterLink,
+    TranslatePipe,
+  ],
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
@@ -61,10 +64,18 @@ export class ProductsPage implements OnInit, OnDestroy {
   private readonly bucketApi = inject(ProductBucketApi);
   private readonly paymentsApi = inject(PaymentsApi);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('localFileInput');
 
   readonly maxImages = MAX_PRODUCT_IMAGES;
-  readonly productStatusOptions = PRODUCT_STATUS_OPTIONS;
+  readonly productStatusOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
+    return [
+      { value: 'active', label: this.i18n.t('common.active') },
+      { value: 'inactive', label: this.i18n.t('common.inactive') },
+      { value: 'discontinued', label: this.i18n.t('common.discontinued') },
+    ];
+  });
   readonly products = signal<Product[]>([]);
   readonly storedImageUrls = signal<Record<string, string>>({});
   readonly bucket = signal<ProductBucket | null>(null);
@@ -101,18 +112,20 @@ export class ProductsPage implements OnInit, OnDestroy {
   });
 
   readonly categoryOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
     const catalog = this.categoryCatalog();
     return [
-      { value: '', label: 'All categories' },
+      { value: '', label: this.i18n.t('products.allCategories') },
       ...catalog.map((row) => ({ value: row.value, label: row.label })),
     ];
   });
 
   readonly formCategoryOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
     const catalog = this.categoryCatalog();
     return catalog.length
       ? catalog.map((row) => ({ value: row.value, label: row.label }))
-      : [{ value: 'other', label: 'Other' }];
+      : [{ value: 'other', label: this.i18n.t('common.other') }];
   });
 
   /** Tags shown above the list for filtering (product.tags only). */
@@ -159,15 +172,23 @@ export class ProductsPage implements OnInit, OnDestroy {
   });
 
   readonly capacityLabel = computed(() => {
+    this.i18n.lang();
     const bucket = this.bucket();
     if (!bucket) {
       return '';
     }
-    const planName = bucket.plan_name?.trim() || 'this plan';
+    const planName = bucket.plan_name?.trim() || this.i18n.t('products.thisPlan');
     if (bucket.capacity == null) {
-      return `${bucket.products_count} products · ${planName}`;
+      return this.i18n.t('products.capacitySimple', {
+        count: bucket.products_count,
+        plan: planName,
+      });
     }
-    return `${bucket.products_count}/${bucket.capacity} products · product bucket for ${planName}`;
+    return this.i18n.t('products.capacityFullLabel', {
+      count: bucket.products_count,
+      cap: bucket.capacity,
+      plan: planName,
+    });
   });
 
   /** True when plan + pack capacity is fully used. */

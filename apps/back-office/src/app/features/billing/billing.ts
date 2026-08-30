@@ -5,18 +5,12 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { downloadBillPdf } from '../../core/bill-pdf';
 import { CurrentShopService } from '../../core/current-shop.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Order, OrderLineItem, PaymentMethod, Product } from '../../core/models';
 import { OrdersApi } from '../../core/orders.api';
 import { ProductsApi } from '../../core/products.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
-
-const PAYMENT_METHOD_OPTIONS: InlineSelectOption[] = [
-  { value: 'cash', label: 'Cash' },
-  { value: 'upi', label: 'UPI' },
-  { value: 'card', label: 'Card' },
-  { value: 'bank_transfer', label: 'Bank transfer' },
-  { value: 'other', label: 'Other' },
-];
 
 interface BillLine {
   product: Product;
@@ -27,7 +21,7 @@ interface BillLine {
 
 @Component({
   selector: 'app-billing',
-  imports: [ReactiveFormsModule, CurrencyPipe, InlineSelectComponent],
+  imports: [ReactiveFormsModule, CurrencyPipe, InlineSelectComponent, TranslatePipe],
   templateUrl: './billing.html',
   styleUrl: './billing.scss',
 })
@@ -37,6 +31,7 @@ export class BillingPage implements OnInit {
   private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   readonly catalog = signal<Product[]>([]);
   readonly lines = signal<BillLine[]>([]);
@@ -45,7 +40,17 @@ export class BillingPage implements OnInit {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly success = signal('');
-  readonly paymentMethodOptions = PAYMENT_METHOD_OPTIONS;
+
+  readonly paymentMethodOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
+    return [
+      { value: 'cash', label: this.i18n.t('common.cash') },
+      { value: 'upi', label: this.i18n.t('common.upi') },
+      { value: 'card', label: this.i18n.t('common.card') },
+      { value: 'bank_transfer', label: this.i18n.t('common.bankTransfer') },
+      { value: 'other', label: this.i18n.t('common.other') },
+    ];
+  });
 
   readonly filteredProducts = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();

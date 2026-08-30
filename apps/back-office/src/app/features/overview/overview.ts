@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { catchError, finalize, of, switchMap } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
 import { EmployeesApi } from '../../core/employees.api';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { buildPlanCountdown, PlanCountdown } from '../../core/plan-countdown';
 import { Notice, NoticesApi } from '../../core/notices.api';
 import { OrdersApi } from '../../core/orders.api';
@@ -51,6 +53,7 @@ function fallbackShopTypeOptions(): InlineSelectOption[] {
     ReactiveFormsModule,
     InlineSelectComponent,
     LocationPickerModalComponent,
+    TranslatePipe,
   ],
   templateUrl: './overview.html',
   styleUrl: './overview.scss',
@@ -66,6 +69,7 @@ export class OverviewPage implements OnInit {
   private readonly noticesApi = inject(NoticesApi);
   private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
 
   readonly shopTypeSelectOptions = signal<InlineSelectOption[]>(fallbackShopTypeOptions());
   readonly productCount = signal(0);
@@ -119,7 +123,10 @@ export class OverviewPage implements OnInit {
     message: ['', [Validators.required, Validators.maxLength(1000)]],
   });
 
-  readonly greetingName = computed(() => this.profile()?.display_name?.trim() || 'there');
+  readonly greetingName = computed(() => {
+    this.i18n.lang();
+    return this.profile()?.display_name?.trim() || this.i18n.t('overview.helloThere');
+  });
   readonly cityPickerOptions = computed<LocationPickerOption[]>(() =>
     this.cities().map((city) => ({ id: city.toLowerCase(), label: city })),
   );
@@ -127,7 +134,10 @@ export class OverviewPage implements OnInit {
     this.localities().map((locality) => ({ id: locality.toLowerCase(), label: locality })),
   );
   readonly shopTypeLabelText = computed(() => shopTypeLabel(this.shopType()));
-  readonly shopStatusLabel = computed(() => (this.shopOpen() ? 'Open now' : 'Closed'));
+  readonly shopStatusLabel = computed(() => {
+    this.i18n.lang();
+    return this.shopOpen() ? this.i18n.t('overview.open') : this.i18n.t('overview.closed');
+  });
 
   readonly ownerPhone = computed(() => {
     const fromShop = this.shop()?.phone_number?.trim();
@@ -137,9 +147,10 @@ export class OverviewPage implements OnInit {
 
   readonly hasOwnerPhone = computed(() => !!this.ownerPhone());
 
-  readonly phoneStatusLabel = computed(() =>
-    this.phoneVisible() ? 'Phone shown' : 'Phone hidden',
-  );
+  readonly phoneStatusLabel = computed(() => {
+    this.i18n.lang();
+    return this.phoneVisible() ? this.i18n.t('overview.phoneOn') : this.i18n.t('overview.phoneOff');
+  });
 
   /** Shop exists in junctionBack (`GET /shops` returned a record). */
   readonly shopCreated = computed(() => !!this.shop()?.id?.trim());

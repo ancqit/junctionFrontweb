@@ -253,17 +253,18 @@ export class PlansPage implements OnInit {
   }
 
   productLimitLabel(plan: PlanOption | PlanSummary): string {
+    this.i18n.lang();
     if (plan.profile_only || plan.max_products === 0) {
-      return 'Profile only · yearly';
+      return this.i18n.t('plans.limit.profileOnly');
     }
     if (plan.max_products === null) {
-      return 'Unlimited products · yearly';
+      return this.i18n.t('plans.limit.unlimited');
     }
     if (plan.type === 'free_trial') {
       const days = 'duration_days' in plan ? (plan.duration_days ?? this.trialDays) : this.trialDays;
-      return `Up to ${plan.max_products} products for ${days} days`;
+      return this.i18n.t('plans.limit.trial', { count: plan.max_products, days });
     }
-    return `Up to ${plan.max_products} products · 1 year`;
+    return this.i18n.t('plans.limit.yearly', { count: plan.max_products });
   }
 
   isCurrent(planType: PlanType): boolean {

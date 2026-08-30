@@ -10,6 +10,8 @@ import {
   PlanSummary,
   resolveLoginRole,
 } from '../core/auth.models';
+import { I18nService } from '../core/i18n/i18n.service';
+import { TranslatePipe } from '../core/i18n/translate.pipe';
 import {
   FREE_TRIAL_DAYS,
   PLAN_CATALOG,
@@ -24,7 +26,7 @@ import { TokenService } from '../core/token.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, CurrencyPipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, TranslatePipe],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -37,6 +39,7 @@ export class Login implements OnInit {
   private readonly recaptcha = inject(RecaptchaService);
   private readonly router = inject(Router);
   private readonly tokens = inject(TokenService);
+  readonly i18n = inject(I18nService);
 
   readonly step = signal<'details' | 'otp' | 'plans'>('details');
   readonly busy = signal(false);

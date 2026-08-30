@@ -7,7 +7,7 @@
     aria-controls="office-nav"
   >
     <span class="menu-bars" aria-hidden="true"></span>
-    Menu
+    {{ 'common.menu' | t }}
   </button>
   @if (menuOpen()) {
     <div class="menu-backdrop" (click)="closeMenu()" role="presentation"></div>
@@ -17,48 +17,32 @@
     <div class="brand"><span>J</span> Junction</div>
     @if (access.locked()) {
       <nav>
-        <a routerLink="/back-office/activate" routerLinkActive="active" (click)="closeMenu()">Deactivated</a>
-        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">Plans</a>
-        <div class="nav-lang" role="group" aria-label="Language">
-          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">हिंदी</button>
-          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">EN</button>
+        <a routerLink="/back-office/activate" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.deactivated' | t }}</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.plans' | t }}</a>
+        <div class="nav-lang" role="group" [attr.aria-label]="'common.language' | t">
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">{{ 'common.lang.hi' | t }}</button>
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">{{ 'common.lang.en' | t }}</button>
         </div>
       </nav>
-      <p class="lock-note">
-        Viewer mode — plan and grace period ended. Activate a plan to become an owner again.
-      </p>
+      <p class="lock-note">{{ 'nav.lockNote' | t }}</p>
     } @else {
       <nav>
-        <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Overview</a>
-        <a routerLink="/back-office/shops" routerLinkActive="active" (click)="closeMenu()">Shops</a>
-        <a routerLink="/back-office/profile" routerLinkActive="active" (click)="closeMenu()">Profile</a>
-        <a routerLink="/back-office/employees" routerLinkActive="active" (click)="closeMenu()">Employees</a>
-        <a routerLink="/back-office/products" routerLinkActive="active" (click)="closeMenu()">Products</a>
-        <a routerLink="/back-office/billing" routerLinkActive="active" (click)="closeMenu()">Billing</a>
-        <a routerLink="/back-office/orders" routerLinkActive="active" (click)="closeMenu()">Orders</a>
-        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">Plans</a>
-        <div class="nav-lang" role="group" aria-label="Language">
-          <button
-            type="button"
-            class="lang-btn"
-            [class.active]="i18n.lang() === 'hi'"
-            (click)="i18n.setLang('hi')"
-          >
-            हिंदी
-          </button>
-          <button
-            type="button"
-            class="lang-btn"
-            [class.active]="i18n.lang() === 'en'"
-            (click)="i18n.setLang('en')"
-          >
-            EN
-          </button>
+        <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">{{ 'nav.overview' | t }}</a>
+        <a routerLink="/back-office/shops" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.shops' | t }}</a>
+        <a routerLink="/back-office/profile" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.profile' | t }}</a>
+        <a routerLink="/back-office/employees" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.employees' | t }}</a>
+        <a routerLink="/back-office/products" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.products' | t }}</a>
+        <a routerLink="/back-office/billing" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.billing' | t }}</a>
+        <a routerLink="/back-office/orders" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.orders' | t }}</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.plans' | t }}</a>
+        <div class="nav-lang" role="group" [attr.aria-label]="'common.language' | t">
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">{{ 'common.lang.hi' | t }}</button>
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">{{ 'common.lang.en' | t }}</button>
         </div>
       </nav>
     }
     <div class="aside-footer">
-      <button type="button" class="logout" (click)="logout()">Log out</button>
+      <button type="button" class="logout" (click)="logout()">{{ 'common.logout' | t }}</button>
       <button type="button" class="store" (click)="openProfileModal()" aria-haspopup="dialog">
         <div class="avatar">
           @if (profile()?.avatar_url) {
@@ -70,7 +54,7 @@
         <span>
           <strong>{{ storeTitle() }}</strong>
           <small>{{ storePlace() }}</small>
-          <small class="pct">Profile {{ completeness().percent }}%</small>
+          <small class="pct">{{ 'nav.profilePct' | t: { percent: completeness().percent } }}</small>
         </span>
       </button>
     </div>
@@ -90,13 +74,11 @@
   >
     <header>
       <div>
-        <p class="eyebrow">YOUR PROFILE</p>
-        <h2 id="profile-modal-title">Complete your Junction profile</h2>
-        <p class="sub">
-          Reach 100% using junctionBack profile, DigiLocker, and shop APIs.
-        </p>
+        <p class="eyebrow">{{ 'profileModal.eyebrow' | t }}</p>
+        <h2 id="profile-modal-title">{{ 'profileModal.title' | t }}</h2>
+        <p class="sub">{{ 'profileModal.sub' | t }}</p>
       </div>
-      <button type="button" class="modal-close" (click)="closeProfileModal()" aria-label="Close">×</button>
+      <button type="button" class="modal-close" (click)="closeProfileModal()" [attr.aria-label]="'common.close' | t">×</button>
     </header>
 
     <div class="progress" [attr.aria-valuenow]="completeness().percent" role="progressbar" aria-valuemin="0" aria-valuemax="100">
@@ -104,7 +86,7 @@
         <span [style.width.%]="completeness().percent"></span>
       </div>
       <strong>{{ completeness().percent }}%</strong>
-      <small>{{ completeness().doneCount }} of {{ completeness().total }} checks</small>
+      <small>{{ 'profileModal.checksOf' | t: { done: completeness().doneCount, total: completeness().total } }}</small>
     </div>
 
     <ul class="checks">
@@ -112,8 +94,8 @@
         <li [class.done]="item.done">
           <span class="mark" aria-hidden="true">{{ item.done ? '✓' : '○' }}</span>
           <div>
-            <strong>{{ item.label }}</strong>
-            <p>{{ item.detail }}</p>
+            <strong>{{ item.label | t }}</strong>
+            <p>{{ item.detail | t }}</p>
             <code>{{ item.api }}</code>
           </div>
           @if (item.id === 'digilocker' && !item.done) {
@@ -123,23 +105,23 @@
               (click)="connectDigiLocker()"
               [disabled]="connectingDigiLocker()"
             >
-              {{ connectingDigiLocker() ? 'Connecting…' : 'Verify DigiLocker' }}
+              {{ connectingDigiLocker() ? ('profileModal.connecting' | t) : ('profileModal.verifyDigilocker' | t) }}
             </button>
           }
           @if (item.id === 'shop' && !item.done) {
-            <a routerLink="/back-office/shops" class="ghost" (click)="closeProfileModal()">Open Shops</a>
+            <a routerLink="/back-office/shops" class="ghost" (click)="closeProfileModal()">{{ 'profileModal.openShops' | t }}</a>
           }
           @if (item.id === 'bio' && !item.done) {
-            <a routerLink="/back-office/profile" class="ghost" (click)="closeProfileModal()">Gemini Profile</a>
+            <a routerLink="/back-office/profile" class="ghost" (click)="closeProfileModal()">{{ 'profileModal.geminiProfile' | t }}</a>
           }
         </li>
       }
     </ul>
 
     <section class="edit" [formGroup]="profileForm">
-      <p class="eyebrow">UPDATE PROFILE</p>
-      <h3>Name, bio & avatar</h3>
-      <p class="sub">Saved with <code>PATCH /profile</code>.</p>
+      <p class="eyebrow">{{ 'profileModal.updateEyebrow' | t }}</p>
+      <h3>{{ 'profileModal.updateTitle' | t }}</h3>
+      <p class="sub">{{ 'profileModal.updateSub' | t }}</p>
 
       @if (error()) {
         <p class="error" role="alert">{{ error() }}</p>
@@ -149,24 +131,24 @@
       }
 
       <label>
-        Display name
+        {{ 'profileModal.displayName' | t }}
         <input formControlName="display_name" autocomplete="name" />
       </label>
       <label>
-        Bio
-        <textarea formControlName="bio" rows="3" placeholder="A short line about you or your shop"></textarea>
+        {{ 'profileModal.bio' | t }}
+        <textarea formControlName="bio" rows="3" [placeholder]="'profileModal.bioPh' | t"></textarea>
       </label>
       <label>
-        Avatar URL
-        <input formControlName="avatar_url" placeholder="https://…" />
+        {{ 'profileModal.avatarUrl' | t }}
+        <input formControlName="avatar_url" [placeholder]="'profileModal.avatarPh' | t" />
       </label>
 
       <div class="actions">
         <button type="button" class="primary" (click)="saveProfile()" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save profile' }}
+          {{ saving() ? ('common.saving' | t) : ('profileModal.save' | t) }}
         </button>
         @if (profile()?.phone_number) {
-          <span class="phone">Phone · {{ profile()?.phone_number }}</span>
+          <span class="phone">{{ 'profileModal.phone' | t: { phone: profile()?.phone_number ?? '' } }}</span>
         }
       </div>
     </section>
