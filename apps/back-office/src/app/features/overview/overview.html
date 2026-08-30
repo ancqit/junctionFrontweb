@@ -18,7 +18,7 @@
           <p class="plan-mini">
             {{ plan.planName }}
             @if (plan.endsAt) {
-              · {{ 'overview.expires' | t: { date: (plan.endsAt | date:'mediumDate') } }}
+              · {{ 'overview.expires' | t: { date: (plan.endsAt | date:'mediumDate') ?? '' } }}
             }
           </p>
         }

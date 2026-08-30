@@ -179,7 +179,7 @@
                   }
                 </ul>
                 @if (order.notes) {
-                  <p class="notes">{{ 'orders.notesLabel' | t: { notes: order.notes } }}</p>
+                  <p class="notes">{{ 'orders.notesLabel' | t: { notes: order.notes ?? '' } }}</p>
                 }
               </td>
             </tr>
