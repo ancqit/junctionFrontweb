@@ -19,9 +19,20 @@ export interface Shop {
   is_open?: boolean;
   /** When true, junction.today may show phone_number. */
   show_phone?: boolean;
+  shop_type?: string | null;
+  shop_type_label?: string | null;
   plan?: PlanSummary | null;
   created_at: string;
   updated_at: string;
+}
+
+/** junctionBack `ShopTypeInfo` from `GET /shops/types`. */
+export interface ShopTypeInfo {
+  value: string;
+  label: string;
+  category: string;
+  group?: string | null;
+  description: string;
 }
 
 /** junctionBack `ShopCreate` / `ShopUpdate` fields used by back office. */
@@ -63,6 +74,11 @@ export class ShopsApi {
 
   list(): Observable<Shop[]> {
     return this.api.get<Shop[]>('/shops');
+  }
+
+  /** Full shop-type catalog (`GET /shops/types`) for create/edit forms. */
+  listTypes(): Observable<ShopTypeInfo[]> {
+    return this.api.get<ShopTypeInfo[]>('/shops/types').pipe(catchError(() => of([])));
   }
 
   get(shopId: string): Observable<Shop> {

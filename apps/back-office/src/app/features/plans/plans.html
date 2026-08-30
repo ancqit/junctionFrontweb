@@ -1,13 +1,30 @@
 <header>
   <div>
-    <p class="eyebrow">SUBSCRIPTION</p>
-    <h1>Plans</h1>
-    <p class="sub">
-      Choose a plan to join the waitlist, or check whether you’re already on it.
-      Toggle between catalog and waitlist status anytime.
-    </p>
+    <p class="eyebrow">{{ 'plans.eyebrow' | t }}</p>
+    <h1>{{ 'plans.title' | t }}</h1>
+    <p class="sub">{{ 'plans.sub' | t }}</p>
   </div>
-  <button type="button" class="ghost" (click)="reload()">Refresh</button>
+  <div class="header-actions">
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button
+        type="button"
+        class="lang-btn"
+        [class.active]="i18n.lang() === 'hi'"
+        (click)="i18n.setLang('hi')"
+      >
+        {{ 'plans.lang.hi' | t }}
+      </button>
+      <button
+        type="button"
+        class="lang-btn"
+        [class.active]="i18n.lang() === 'en'"
+        (click)="i18n.setLang('en')"
+      >
+        {{ 'plans.lang.en' | t }}
+      </button>
+    </div>
+    <button type="button" class="ghost" (click)="reload()">{{ 'plans.refresh' | t }}</button>
+  </div>
 </header>
 
 <div class="view-toggle" role="tablist" aria-label="Plans or waitlist">
@@ -18,7 +35,7 @@
     [class.active]="viewMode() === 'plans'"
     (click)="setViewMode('plans')"
   >
-    Plans
+    {{ 'plans.tab.plans' | t }}
   </button>
   <button
     type="button"
@@ -27,7 +44,7 @@
     [class.active]="viewMode() === 'waitlist'"
     (click)="setViewMode('waitlist')"
   >
-    Waitlist
+    {{ 'plans.tab.waitlist' | t }}
     @if (onWaitlist()) {
       <span class="toggle-dot" aria-hidden="true"></span>
     }
@@ -42,7 +59,7 @@
 }
 
 @if (loading()) {
-  <p class="muted">Loading plans…</p>
+  <p class="muted">{{ 'plans.loading' | t }}</p>
 } @else if (viewMode() === 'waitlist') {
   @if (application(); as app) {
     <section class="forwarded" role="status">

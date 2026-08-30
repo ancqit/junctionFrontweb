@@ -33,10 +33,13 @@ const LOCALITY_GEOCODE_ERROR =
 
 type ActiveLocationPicker = 'city' | 'locality' | null;
 
-const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
-  { value: '', label: 'Select type' },
-  ...SHOP_TYPE_OPTIONS.map((row) => ({ value: row.value, label: row.label })),
-];
+function fallbackShopTypeOptions(): InlineSelectOption[] {
+  return SHOP_TYPE_OPTIONS.map((row) => ({
+    value: row.value,
+    label: row.label,
+    hint: row.description,
+  }));
+}
 
 @Component({
   selector: 'app-overview',
@@ -64,7 +67,7 @@ export class OverviewPage implements OnInit {
   private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
 
-  readonly shopTypeSelectOptions = SHOP_TYPE_SELECT_OPTIONS;
+  readonly shopTypeSelectOptions = signal<InlineSelectOption[]>(fallbackShopTypeOptions());
   readonly productCount = signal(0);
   readonly employeeCount = signal(0);
   readonly orderCount = signal(0);
@@ -148,6 +151,20 @@ export class OverviewPage implements OnInit {
     this.profileApi.me().subscribe({
       next: (profile) => this.profile.set(profile),
       error: () => this.profile.set(null),
+    });
+    this.shopsApi.listTypes().subscribe({
+      next: (rows) => {
+        if (!rows.length) {
+          return;
+        }
+        this.shopTypeSelectOptions.set(
+          rows.map((row) => ({
+            value: row.value,
+            label: row.label,
+            hint: row.description,
+          })),
+        );
+      },
     });
     this.loadShopForm();
   }

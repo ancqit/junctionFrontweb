@@ -15,6 +15,8 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/f
 export interface InlineSelectOption {
   value: string;
   label: string;
+  /** Optional secondary text (e.g. shop type description). */
+  hint?: string;
 }
 
 @Component({
@@ -58,7 +60,9 @@ export class InlineSelectComponent implements ControlValueAccessor {
     }
     return this.options.filter(
       (row) =>
-        row.label.toLowerCase().includes(query) || row.value.toLowerCase().includes(query),
+        row.label.toLowerCase().includes(query) ||
+        row.value.toLowerCase().includes(query) ||
+        (row.hint ?? '').toLowerCase().includes(query),
     );
   });
 

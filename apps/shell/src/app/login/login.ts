@@ -303,12 +303,27 @@ export class Login implements OnInit {
     if (error instanceof HttpErrorResponse) {
       const detail = error.error?.detail;
       if (typeof detail === 'string' && detail.trim()) {
-        return detail;
+        return this.sanitizePublicError(detail);
       }
     }
     if (error instanceof Error && error.message.trim()) {
-      return error.message;
+      return this.sanitizePublicError(error.message);
     }
     return fallback;
+  }
+
+  /** Hide infra/config wording (API keys, env vars) from the login UI. */
+  private sanitizePublicError(message: string): string {
+    const lower = message.toLowerCase();
+    if (
+      lower.includes('api key') ||
+      lower.includes('api_key') ||
+      lower.includes('gcp_identity') ||
+      lower.includes('identity_platform') ||
+      lower.includes('vercel')
+    ) {
+      return 'Sign-in is temporarily unavailable. Please try again shortly.';
+    }
+    return message;
   }
 }
