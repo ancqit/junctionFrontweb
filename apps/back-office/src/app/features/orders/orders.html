@@ -2,13 +2,67 @@
   <div>
     <p class="eyebrow">INBOX</p>
     <h1>Orders</h1>
-    <p class="sub">Incoming shop orders from junction.today and the billing counter</p>
+    <p class="sub">
+      Customers on junction.today place pay-at-store orders to show interest.
+      Confirm to acknowledge; cash stays pending until they pay you at the shop.
+    </p>
   </div>
   <a routerLink="/back-office/billing" class="primary">+ New bill</a>
 </header>
 
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
+}
+
+@if (incoming().length > 0) {
+  <section class="incoming" aria-labelledby="incoming-title">
+    <div class="incoming-head">
+      <div>
+        <p class="eyebrow">NEW</p>
+        <h2 id="incoming-title">Incoming interest</h2>
+        <p class="sub">
+          {{ incoming().length }} pending pay-at-store
+          {{ incoming().length === 1 ? 'order' : 'orders' }} — customer will pay cash at your shop.
+        </p>
+      </div>
+    </div>
+    <ul class="incoming-list">
+      @for (order of incoming(); track order.id) {
+        <li>
+          <div class="incoming-main">
+            <strong>{{ order.customer_name }}</strong>
+            <span>{{ order.order_number }}</span>
+            <small>
+              {{ itemCount(order) }} items ·
+              {{ order.billing.total_amount | currency: order.billing.currency:'symbol-narrow':'1.0-2' }}
+              · Cash pending
+            </small>
+            @if (order.notes) {
+              <p class="incoming-note">{{ order.notes }}</p>
+            }
+          </div>
+          <div class="incoming-actions">
+            <button
+              type="button"
+              class="primary compact"
+              [disabled]="updatingId() === order.id"
+              (click)="setStatus(order, 'confirmed')"
+            >
+              Confirm order
+            </button>
+            <button
+              type="button"
+              class="ghost compact"
+              [disabled]="updatingId() === order.id"
+              (click)="setStatus(order, 'cancelled')"
+            >
+              Decline
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
 }
 
 <section class="toolbar" [formGroup]="filters">
@@ -33,7 +87,7 @@
   } @else if (orders().length === 0) {
     <div class="empty">
       <strong>No orders yet</strong>
-      <p>Orders from junction.today and bills you create will show up here.</p>
+      <p>When a customer on junction.today places an order for your shop, it appears here as incoming interest.</p>
       <a routerLink="/back-office/billing" class="primary">Go to billing</a>
     </div>
   } @else {
@@ -52,7 +106,7 @@
       </thead>
       <tbody>
         @for (order of orders(); track order.id) {
-          <tr>
+          <tr [class.is-incoming]="order.status === 'pending'">
             <td>
               <strong>{{ order.order_number }}</strong>
               @if (order.source) {
@@ -80,7 +134,7 @@
               @if (canConfirm(order)) {
                 <button
                   type="button"
-                  class="ghost compact"
+                  class="primary compact"
                   [disabled]="updatingId() === order.id"
                   (click)="setStatus(order, 'confirmed')"
                 >
@@ -94,7 +148,7 @@
                   [disabled]="updatingId() === order.id"
                   (click)="setStatus(order, 'completed')"
                 >
-                  Complete
+                  Mark paid &amp; done
                 </button>
               }
               @if (canCancel(order)) {

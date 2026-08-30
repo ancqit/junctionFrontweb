@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -16,7 +16,7 @@ const ORDER_STATUS_OPTIONS: InlineSelectOption[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
-const POLL_MS = 20_000;
+const POLL_MS = 12_000;
 
 @Component({
   selector: 'app-orders',
@@ -35,6 +35,17 @@ export class OrdersPage implements OnInit {
   readonly error = signal('');
   readonly expandedId = signal<string | null>(null);
   readonly orderStatusOptions = ORDER_STATUS_OPTIONS;
+
+  /** Pending pay-at-store interest from junction.today (and any other pending). */
+  readonly incoming = computed(() =>
+    this.orders().filter(
+      (order) =>
+        order.status === 'pending' &&
+        (order.billing?.payment_status === 'pending' ||
+          order.billing?.payment_method === 'cash' ||
+          order.source === 'junction.today'),
+    ),
+  );
 
   readonly filters = this.fb.nonNullable.group({
     customer_name: [''],

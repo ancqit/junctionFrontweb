@@ -9,7 +9,25 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .primary { color: white; background: #1a6541; display: inline-flex; align-items: center; }
 .ghost { color: #1a6541; background: #eef3ef; }
 .danger { color: #8a2f2f; background: #f7ecec; }
-.ghost.compact, .danger.compact { padding: 7px 10px; font-size: 12px; }
+.ghost.compact, .danger.compact, .primary.compact { padding: 7px 10px; font-size: 12px; }
+.incoming {
+  margin: 0 0 22px; padding: 20px 22px; border-radius: 16px;
+  border: 1px solid #e4d7a8; background: #fbf7ea;
+}
+.incoming-head { margin-bottom: 14px; }
+.incoming h2 { margin: 6px 0 6px; font: 500 24px Georgia, serif; }
+.incoming-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.incoming-list li {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; border-radius: 12px; background: #fff; border: 1px solid #ece4c8;
+}
+.incoming-main { display: grid; gap: 4px; min-width: 0; }
+.incoming-main strong { font-size: 16px; color: #1a281f; }
+.incoming-main span { font-size: 13px; color: #667069; font-weight: 700; }
+.incoming-main small { color: #808780; font-size: 12px; }
+.incoming-note { margin: 6px 0 0; color: #7a6230; font-size: 13px; line-height: 1.4; }
+.incoming-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+tr.is-incoming td { background: #fcfaf3; }
 .actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 180px; }
 .source { color: #8a7340; font-weight: 600; }
 .link {
