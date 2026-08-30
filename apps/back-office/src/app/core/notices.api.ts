@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { catchError, Observable, of } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { BackOfficeApiService } from './api.service';
 
 /** junctionBack `Notice` (`GET /notices`, `POST /notices`). */
@@ -31,7 +31,15 @@ export class NoticesApi {
     if (!trimmed) {
       return of(null);
     }
-    return this.api.get<Notice>('/notices/today', { store_id: trimmed }).pipe(catchError(() => of(null)));
+    return this.api.get<Notice[] | Notice>('/notices/today', { store_id: trimmed }).pipe(
+      map((payload) => {
+        if (Array.isArray(payload)) {
+          return payload[0] ?? null;
+        }
+        return payload?.message != null ? payload : null;
+      }),
+      catchError(() => of(null)),
+    );
   }
 
   postToday(payload: NoticeCreate): Observable<Notice> {
