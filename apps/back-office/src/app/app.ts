@@ -4,7 +4,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CurrentShopService } from './core/current-shop.service';
 import { I18nService } from './core/i18n/i18n.service';
-import { TranslatePipe } from './core/i18n/translate.pipe';
 import { LogoutService } from './core/logout.service';
 import { PlanAccessService } from './core/plan-access.service';
 import { buildProfileCompleteness } from './core/profile-completeness';
@@ -13,7 +12,7 @@ import { UserProfile } from './core/models';
 
 @Component({
   selector: 'app-back-office',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ReactiveFormsModule, TranslatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ReactiveFormsModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
