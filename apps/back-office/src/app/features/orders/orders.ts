@@ -4,23 +4,25 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, interval, of, startWith, switchMap } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Order, OrderStatus } from '../../core/models';
 import { OrdersApi } from '../../core/orders.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
-
-const ORDER_STATUS_OPTIONS: InlineSelectOption[] = [
-  { value: '', label: 'All' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
 
 const POLL_MS = 12_000;
 
 @Component({
   selector: 'app-orders',
-  imports: [ReactiveFormsModule, RouterLink, CurrencyPipe, DatePipe, TitleCasePipe, InlineSelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    CurrencyPipe,
+    DatePipe,
+    TitleCasePipe,
+    InlineSelectComponent,
+    TranslatePipe,
+  ],
   templateUrl: './orders.html',
   styleUrl: './orders.scss',
 })
@@ -28,13 +30,24 @@ export class OrdersPage implements OnInit {
   private readonly api = inject(OrdersApi);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
 
   readonly orders = signal<Order[]>([]);
   readonly loading = signal(true);
   readonly updatingId = signal<string | null>(null);
   readonly error = signal('');
   readonly expandedId = signal<string | null>(null);
-  readonly orderStatusOptions = ORDER_STATUS_OPTIONS;
+
+  readonly orderStatusOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
+    return [
+      { value: '', label: this.i18n.t('common.all') },
+      { value: 'pending', label: this.i18n.t('common.pending') },
+      { value: 'confirmed', label: this.i18n.t('common.confirmed') },
+      { value: 'completed', label: this.i18n.t('common.completed') },
+      { value: 'cancelled', label: this.i18n.t('common.cancelled') },
+    ];
+  });
 
   /** Pending pay-at-store interest from junction.today (and any other pending). */
   readonly incoming = computed(() =>

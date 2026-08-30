@@ -1,42 +1,23 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { EmployeesApi } from '../../core/employees.api';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Employee, EmploymentStatus, EmploymentType } from '../../core/models';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
-const STATUS_FILTER_OPTIONS: InlineSelectOption[] = [
-  { value: '', label: 'All' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'on_leave', label: 'On leave' },
-  { value: 'terminated', label: 'Terminated' },
-];
-
-const EMPLOYMENT_TYPE_OPTIONS: InlineSelectOption[] = [
-  { value: 'full_time', label: 'Full time' },
-  { value: 'part_time', label: 'Part time' },
-  { value: 'contract', label: 'Contract' },
-  { value: 'temporary', label: 'Temporary' },
-];
-
-const EMPLOYEE_STATUS_OPTIONS: InlineSelectOption[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'on_leave', label: 'On leave' },
-  { value: 'terminated', label: 'Terminated' },
-];
-
 @Component({
   selector: 'app-employees',
-  imports: [ReactiveFormsModule, DatePipe, TitleCasePipe, InlineSelectComponent],
+  imports: [ReactiveFormsModule, DatePipe, TitleCasePipe, InlineSelectComponent, TranslatePipe],
   templateUrl: './employees.html',
   styleUrl: './employees.scss',
 })
 export class EmployeesPage implements OnInit {
   private readonly api = inject(EmployeesApi);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
 
   readonly employees = signal<Employee[]>([]);
   readonly loading = signal(true);
@@ -46,9 +27,36 @@ export class EmployeesPage implements OnInit {
   readonly editingId = signal<string | null>(null);
   readonly statusFilter = signal<EmploymentStatus | ''>('');
 
-  readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
-  readonly employmentTypeOptions = EMPLOYMENT_TYPE_OPTIONS;
-  readonly employeeStatusOptions = EMPLOYEE_STATUS_OPTIONS;
+  readonly statusFilterOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
+    return [
+      { value: '', label: this.i18n.t('common.all') },
+      { value: 'active', label: this.i18n.t('common.active') },
+      { value: 'inactive', label: this.i18n.t('common.inactive') },
+      { value: 'on_leave', label: this.i18n.t('common.onLeave') },
+      { value: 'terminated', label: this.i18n.t('common.terminated') },
+    ];
+  });
+
+  readonly employmentTypeOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
+    return [
+      { value: 'full_time', label: this.i18n.t('common.fullTime') },
+      { value: 'part_time', label: this.i18n.t('common.partTime') },
+      { value: 'contract', label: this.i18n.t('common.contract') },
+      { value: 'temporary', label: this.i18n.t('common.temporary') },
+    ];
+  });
+
+  readonly employeeStatusOptions = computed<InlineSelectOption[]>(() => {
+    this.i18n.lang();
+    return [
+      { value: 'active', label: this.i18n.t('common.active') },
+      { value: 'inactive', label: this.i18n.t('common.inactive') },
+      { value: 'on_leave', label: this.i18n.t('common.onLeave') },
+      { value: 'terminated', label: this.i18n.t('common.terminated') },
+    ];
+  });
 
   readonly form = this.fb.nonNullable.group({
     first_name: ['', [Validators.required, Validators.maxLength(80)]],

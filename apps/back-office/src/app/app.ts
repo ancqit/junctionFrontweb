@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CurrentShopService } from './core/current-shop.service';
 import { I18nService } from './core/i18n/i18n.service';
+import { TranslatePipe } from './core/i18n/translate.pipe';
 import { LogoutService } from './core/logout.service';
 import { PlanAccessService } from './core/plan-access.service';
 import { buildProfileCompleteness } from './core/profile-completeness';
@@ -12,7 +13,7 @@ import { UserProfile } from './core/models';
 
 @Component({
   selector: 'app-back-office',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ReactiveFormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ReactiveFormsModule, TranslatePipe],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -64,16 +65,22 @@ export class App implements OnInit {
     return name.slice(0, 2).toUpperCase();
   });
 
-  readonly storeTitle = computed(
-    () => this.shop()?.name?.trim() || this.profile()?.display_name?.trim() || 'Your shop',
-  );
+  readonly storeTitle = computed(() => {
+    this.i18n.lang();
+    return (
+      this.shop()?.name?.trim() ||
+      this.profile()?.display_name?.trim() ||
+      this.i18n.t('nav.yourShop')
+    );
+  });
 
   readonly storePlace = computed(() => {
+    this.i18n.lang();
     const shop = this.shop();
     if (shop?.locality?.trim() && shop?.city?.trim()) {
       return `${shop.locality} · ${shop.city}`;
     }
-    return shop?.city?.trim() || 'Add shop details';
+    return shop?.city?.trim() || this.i18n.t('common.addShopDetails');
   });
 
   ngOnInit(): void {
@@ -138,7 +145,7 @@ export class App implements OnInit {
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
-          this.success.set('Profile saved.');
+          this.success.set(this.i18n.t('profileModal.saved'));
         },
         error: (err: unknown) => {
           const detail = (err as { error?: { detail?: string } })?.error?.detail;

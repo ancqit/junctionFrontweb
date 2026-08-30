@@ -1,43 +1,37 @@
 <header>
   <div>
-    <p class="eyebrow">VIEWER · ACCOUNT DEACTIVATED</p>
-    <h1>Your plan and grace period have ended.</h1>
-    <p class="sub">
-      You are signed in as a <strong>viewer</strong>, not an owner. Premium (or trial) time is over and the
-      grace period has finished. You can still sign in and see what is locked, but store features stay off
-      until you activate a plan again.
-    </p>
+    <p class="eyebrow">{{ 'activate.eyebrow' | t }}</p>
+    <h1>{{ 'activate.title' | t }}</h1>
+    <p class="sub">{{ 'activate.sub' | t }}</p>
   </div>
 </header>
 
 <section class="gate">
   @if (loading()) {
-    <p class="muted">Checking your plan…</p>
+    <p class="muted">{{ 'activate.checking' | t }}</p>
   } @else {
     <div>
-      <p class="eyebrow">WHAT YOU CAN SEE</p>
-      <h2>Deactivated view</h2>
+      <p class="eyebrow">{{ 'activate.whatYouSee' | t }}</p>
+      <h2>{{ 'activate.deactivatedView' | t }}</h2>
       <p>
         @if (plan(); as current) {
-          {{ current.name }} is <strong>{{ current.status }}</strong>
+          {{ 'activate.planStatus' | t: { name: current.name, status: current.status } }}
           @if (current.in_grace_period) {
-            (grace still running)
-          }.
-          As a viewer you keep visibility of your Junction account status. Overview, products, employees,
-          orders, and billing stay locked until you activate.
+            {{ 'activate.graceRunning' | t }}
+          }
+          {{ 'activate.lockedHint' | t }}
         } @else {
-          As a viewer you can see this deactivated state. Choose a plan to become an owner again and unlock
-          the full back office.
+          {{ 'activate.noPlanHint' | t }}
         }
       </p>
       <ul class="locked-list">
-        <li>Overview</li>
-        <li>Employees</li>
-        <li>Products</li>
-        <li>Orders</li>
-        <li>Billing</li>
+        <li>{{ 'nav.overview' | t }}</li>
+        <li>{{ 'nav.employees' | t }}</li>
+        <li>{{ 'nav.products' | t }}</li>
+        <li>{{ 'nav.orders' | t }}</li>
+        <li>{{ 'nav.billing' | t }}</li>
       </ul>
     </div>
-    <a routerLink="/back-office/plans" class="primary">Activate account →</a>
+    <a routerLink="/back-office/plans" class="primary">{{ 'activate.cta' | t }}</a>
   }
 </section>

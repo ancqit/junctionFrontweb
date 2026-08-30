@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ImageSearchResult, UserProfile } from '../../core/models';
 import { ProfileApi } from '../../core/profile.api';
 import { QueriesApi } from '../../core/queries.api';
@@ -14,7 +16,7 @@ const MAX_AVATAR_OPTIONS = 10;
 
 @Component({
   selector: 'app-profile-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
@@ -23,6 +25,7 @@ export class ProfilePage implements OnInit {
   private readonly queriesApi = inject(QueriesApi);
   private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
 
   readonly step = signal<ProfileStep>('compose');
   readonly profile = signal<UserProfile | null>(null);
@@ -193,7 +196,8 @@ export class ProfilePage implements OnInit {
   }
 
   shopNameLabel(): string {
-    return this.profile()?.display_name?.trim() || this.defaultShopName() || 'Your shop';
+    this.i18n.lang();
+    return this.profile()?.display_name?.trim() || this.defaultShopName() || this.i18n.t('profile.yourShopFallback');
   }
 
   avatarInitials(): string {

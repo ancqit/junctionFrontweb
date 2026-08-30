@@ -7,6 +7,18 @@
 .story-top {
   position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 16px;
 }
+.story-actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;
+}
+.lang-toggle {
+  display: inline-flex; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; overflow: hidden;
+  background: rgba(255,255,255,.08);
+}
+.lang-btn {
+  border: 0; border-radius: 0; padding: 8px 12px; color: rgba(255,255,255,.8);
+  background: transparent; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.lang-btn.active { color: #194b31; background: #f3d782; }
 .plans-link {
   border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 9px 16px;
   color: white; background: rgba(255,255,255,.08); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;

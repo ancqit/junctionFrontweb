@@ -12,32 +12,32 @@
           <p class="meta type">{{ shopTypeLabelText() }}</p>
         }
         @if (ownerPhone()) {
-          <p class="meta phone-line">Mobile · {{ ownerPhone() }}</p>
+          <p class="meta phone-line">{{ 'overview.mobile' | t: { phone: ownerPhone() } }}</p>
         }
         @if (countdown(); as plan) {
           <p class="plan-mini">
             {{ plan.planName }}
             @if (plan.endsAt) {
-              · Expires {{ plan.endsAt | date:'mediumDate' }}
+              · {{ 'overview.expires' | t: { date: (plan.endsAt | date:'mediumDate') } }}
             }
           </p>
         }
-        <button type="button" class="ghost compact edit-btn" (click)="openShopEditor()">Edit shop</button>
+        <button type="button" class="ghost compact edit-btn" (click)="openShopEditor()">{{ 'overview.editShop' | t }}</button>
       }
     } @else if (shopCreated()) {
-      <h1>Edit shop details</h1>
-      <p class="meta">Save to return to Overview.</p>
+      <h1>{{ 'overview.editDetails' | t }}</h1>
+      <p class="meta">{{ 'overview.saveReturn' | t }}</p>
     } @else {
-      <h1>Hello, {{ greetingName() }}.</h1>
-      <p class="meta">Create or open a shop from Shops to unlock Overview.</p>
-      <a routerLink="/back-office/shops" class="ghost compact edit-btn">Go to Shops</a>
+      <h1>{{ 'overview.hello' | t: { name: greetingName() } }}</h1>
+      <p class="meta">{{ 'overview.unlockHint' | t }}</p>
+      <a routerLink="/back-office/shops" class="ghost compact edit-btn">{{ 'overview.goShops' | t }}</a>
     }
   </div>
   @if (shopReady()) {
     <div class="head-actions">
       <div class="open-toggle-wrap">
         <span class="status-pill" [class.is-open]="shopOpen()">{{ shopStatusLabel() }}</span>
-        <label class="open-toggle" [attr.aria-label]="shopOpen() ? 'Mark shop closed' : 'Mark shop open'">
+        <label class="open-toggle" [attr.aria-label]="shopOpen() ? ('overview.markClosed' | t) : ('overview.markOpen' | t)">
           <input type="checkbox" [checked]="shopOpen()" (change)="toggleShopOpen()" />
           <span class="slider"></span>
         </label>
@@ -47,11 +47,7 @@
           <span class="status-pill phone-pill" [class.is-visible]="phoneVisible()">{{ phoneStatusLabel() }}</span>
           <label
             class="open-toggle"
-            [attr.aria-label]="
-              phoneVisible()
-                ? 'Hide shop mobile on junction.today catalog'
-                : 'Show shop mobile on junction.today catalog'
-            "
+            [attr.aria-label]="phoneVisible() ? ('overview.hidePhone' | t) : ('overview.showPhone' | t)"
           >
             <input
               type="checkbox"
@@ -69,20 +65,20 @@
       @if (phoneError()) {
         <p class="error head-error" role="alert">{{ phoneError() }}</p>
       }
-      <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
+      <a routerLink="/back-office/billing" class="primary compact">{{ 'common.newBill' | t }}</a>
     </div>
   }
 </header>
 
 @if (!shopLoaded()) {
-  <p class="muted">Loading shop…</p>
+  <p class="muted">{{ 'overview.loadingShop' | t }}</p>
 } @else if (!shopReady()) {
   <section class="card shop-card" [formGroup]="shopForm">
     <div class="card-head">
-      <p class="eyebrow">SHOP PROFILE</p>
-      <h2>{{ shopCreated() ? 'Update shop details' : 'Create your shop' }}</h2>
+      <p class="eyebrow">{{ 'overview.shopProfile' | t }}</p>
+      <h2>{{ shopCreated() ? ('overview.updateShop' | t) : ('overview.createShop' | t) }}</h2>
       <p class="sub">
-        {{ shopCreated() ? 'Save changes to return to Overview.' : 'Save name, hours, and location to unlock Overview.' }}
+        {{ shopCreated() ? ('overview.saveReturn' | t) : ('overview.createShopSub' | t) }}
       </p>
     </div>
 
@@ -92,33 +88,33 @@
 
     <div class="field-grid two">
       <label>
-        Shop name
-        <input formControlName="name" placeholder="e.g. Main Road Store" autocomplete="organization" />
+        {{ 'shops.name' | t }}
+        <input formControlName="name" [placeholder]="'shops.namePh' | t" autocomplete="organization" />
       </label>
       <label>
-        Shop type
+        {{ 'shops.type' | t }}
         <app-inline-select
           formControlName="shop_type"
           [options]="shopTypeSelectOptions()"
-          placeholder="Select type"
+          [placeholder]="'common.selectType' | t"
           [searchable]="true"
-          searchPlaceholder="Search shop types…"
+          [searchPlaceholder]="'common.searchTypes' | t"
         />
       </label>
       <div class="picker-field">
-        <span class="field-label">City</span>
+        <span class="field-label">{{ 'common.city' | t }}</span>
         @if (shopForm.controls.city.value.trim()) {
           <p class="selected-value">{{ shopForm.controls.city.value }}</p>
         }
         <button type="button" class="add-action-button" (click)="openCityPicker()">
-          {{ shopForm.controls.city.value.trim() ? 'Change city' : 'Add your city' }}
+          {{ shopForm.controls.city.value.trim() ? ('common.changeCity' | t) : ('common.addCity' | t) }}
         </button>
         @if (shopForm.controls.city.touched && shopForm.controls.city.invalid) {
-          <small class="field-hint">Please choose a city.</small>
+          <small class="field-hint">{{ 'overview.chooseCity' | t }}</small>
         }
       </div>
       <div class="picker-field">
-        <span class="field-label">Locality</span>
+        <span class="field-label">{{ 'common.locality' | t }}</span>
         @if (shopForm.controls.locality.value.trim()) {
           <p class="selected-value">{{ shopForm.controls.locality.value }}</p>
         }
@@ -129,41 +125,41 @@
           (click)="openLocalityPicker()"
         >
           @if (localitiesLoading()) {
-            Loading localities…
+            {{ 'common.loadingLocalities' | t }}
           } @else if (shopForm.controls.locality.value.trim()) {
-            Change locality
+            {{ 'common.changeLocality' | t }}
           } @else {
-            Add your locality
+            {{ 'common.addLocality' | t }}
           }
         </button>
         @if (shopForm.controls.locality.touched && shopForm.controls.locality.invalid) {
-          <small class="field-hint">Please choose a locality.</small>
+          <small class="field-hint">{{ 'overview.chooseLocality' | t }}</small>
         }
       </div>
       <label class="full">
-        Address
+        {{ 'common.address' | t }}
         <input
           formControlName="address"
-          placeholder="Shop no., street, landmark"
+          [placeholder]="'shops.addressPh' | t"
           autocomplete="street-address"
         />
       </label>
       <label>
-        Entry time
+        {{ 'shops.openTime' | t }}
         <input type="time" formControlName="open_time" />
       </label>
       <label>
-        Closing time
+        {{ 'shops.closeTime' | t }}
         <input type="time" formControlName="closed_time" />
       </label>
     </div>
 
     <div class="actions">
       @if (editingShop() && shopCreated()) {
-        <button type="button" class="ghost compact" (click)="cancelShopEditor()">Cancel</button>
+        <button type="button" class="ghost compact" (click)="cancelShopEditor()">{{ 'common.cancel' | t }}</button>
       }
       <button type="button" class="primary compact" (click)="saveShop()" [disabled]="shopSaving()">
-        {{ shopSaving() ? 'Saving…' : 'Save shop details' }}
+        {{ shopSaving() ? ('common.saving' | t) : ('overview.saveShop' | t) }}
       </button>
     </div>
   </section>
@@ -175,15 +171,15 @@
   <div class="dashboard-grid">
     <section class="metrics">
       <article>
-        <p>Orders</p>
+        <p>{{ 'overview.orders' | t }}</p>
         <strong>{{ loading() ? '…' : orderCount() }}</strong>
       </article>
       <article>
-        <p>Employees</p>
+        <p>{{ 'overview.employees' | t }}</p>
         <strong>{{ loading() ? '…' : employeeCount() }}</strong>
       </article>
       <article>
-        <p>Products</p>
+        <p>{{ 'overview.products' | t }}</p>
         <strong>{{ loading() ? '…' : productCount() }}</strong>
       </article>
     </section>
@@ -191,24 +187,24 @@
     <section class="card notice-card" [formGroup]="noticeForm">
       <div class="card-head inline">
         <div>
-          <p class="eyebrow">TODAY’S NOTICE</p>
-          <h2>Share an update</h2>
-          <p class="sub">Posted notices appear above your orders.</p>
+          <p class="eyebrow">{{ 'overview.noticeEyebrow' | t }}</p>
+          <h2>{{ 'overview.noticeTitle' | t }}</h2>
+          <p class="sub">{{ 'overview.noticeSub' | t }}</p>
         </div>
         <span class="date-chip">{{ todayLabel() }}</span>
       </div>
 
       @if (noticeLoading()) {
-        <p class="muted small">Loading notice…</p>
+        <p class="muted small">{{ 'overview.loadingNotice' | t }}</p>
       }
 
       <label>
-        Notice for today
+        {{ 'overview.noticeLabel' | t }}
         <textarea
           formControlName="message"
           rows="2"
           maxlength="1000"
-          placeholder="e.g. Fresh stock arrived · 10% off till evening"
+          [placeholder]="'overview.noticePh' | t"
         ></textarea>
       </label>
 
@@ -226,10 +222,10 @@
           (click)="clearNotice()"
           [disabled]="!noticeForm.controls.message.value.trim()"
         >
-          Clear
+          {{ 'overview.clear' | t }}
         </button>
         <button type="button" class="primary compact" (click)="saveNotice()" [disabled]="noticeSaving()">
-          {{ noticeSaving() ? 'Posting…' : 'Post notice' }}
+          {{ noticeSaving() ? ('overview.posting' | t) : ('overview.postNotice' | t) }}
         </button>
       </div>
     </section>
@@ -237,26 +233,26 @@
     <section class="card orders-card">
       <div class="card-head inline">
         <div>
-          <p class="eyebrow">RECENT ORDERS</p>
-          <h2>Latest bills</h2>
+          <p class="eyebrow">{{ 'overview.recentEyebrow' | t }}</p>
+          <h2>{{ 'overview.latestBills' | t }}</h2>
         </div>
-        <a routerLink="/back-office/orders" class="ghost compact">View all</a>
+        <a routerLink="/back-office/orders" class="ghost compact">{{ 'overview.viewAll' | t }}</a>
       </div>
 
       @if (todayNotice(); as notice) {
-        <aside class="notice-banner" aria-label="Today’s notice">
-          <p class="eyebrow">NOTICE</p>
+        <aside class="notice-banner" [attr.aria-label]="'overview.noticeBanner' | t">
+          <p class="eyebrow">{{ 'overview.noticeShort' | t }}</p>
           <p class="notice-message">{{ notice.message }}</p>
         </aside>
       }
 
       @if (loading()) {
-        <p class="muted small">Loading orders…</p>
+        <p class="muted small">{{ 'overview.loadingOrders' | t }}</p>
       } @else if (recentOrders().length === 0) {
         <div class="orders-empty">
-          <strong>No orders yet</strong>
-          <p>Create your first bill from Billing. Notices you post stay pinned above this list.</p>
-          <a routerLink="/back-office/billing" class="primary compact">+ New bill</a>
+          <strong>{{ 'overview.noOrders' | t }}</strong>
+          <p>{{ 'overview.noOrdersSub' | t }}</p>
+          <a routerLink="/back-office/billing" class="primary compact">{{ 'common.newBill' | t }}</a>
         </div>
       } @else {
         <ul class="orders-list">
@@ -265,7 +261,7 @@
               <div>
                 <strong>{{ order.order_number }}</strong>
                 <span>{{ order.customer_name }}</span>
-                <small>{{ itemCount(order) }} items · {{ order.status | titlecase }}</small>
+                <small>{{ 'orders.itemsLine' | t: { count: itemCount(order) } }} · {{ order.status | titlecase }}</small>
               </div>
               <div class="order-meta">
                 <strong>{{
@@ -281,19 +277,19 @@
     </section>
 
     <section class="card next-card">
-      <p class="eyebrow">QUICK ACTIONS</p>
+      <p class="eyebrow">{{ 'overview.quickActions' | t }}</p>
       <div class="next-links three">
         <a routerLink="/back-office/billing" class="next-link">
-          <strong>Starter bill</strong>
-          <span>Search products and save orders</span>
+          <strong>{{ 'overview.starterBill' | t }}</strong>
+          <span>{{ 'overview.starterBillSub' | t }}</span>
         </a>
         <a routerLink="/back-office/orders" class="next-link">
-          <strong>Review orders</strong>
-          <span>See every bill you created</span>
+          <strong>{{ 'overview.reviewOrders' | t }}</strong>
+          <span>{{ 'overview.reviewOrdersSub' | t }}</span>
         </a>
         <a routerLink="/back-office/products" class="next-link">
-          <strong>Review products</strong>
-          <span>Browse and manage your catalog</span>
+          <strong>{{ 'overview.reviewProducts' | t }}</strong>
+          <span>{{ 'overview.reviewProductsSub' | t }}</span>
         </a>
       </div>
     </section>
@@ -302,10 +298,10 @@
 
 @if (activePicker() === 'city') {
   <app-location-picker-modal
-    title="Add your city"
-    addSectionLabel="Add a new city"
+    [title]="'shops.picker.cityTitle' | t"
+    [addSectionLabel]="'shops.picker.cityAdd' | t"
     [options]="cityPickerOptions()"
-    emptyMessage="No cities available."
+    [emptyMessage]="'shops.picker.cityEmpty' | t"
     (picked)="onCityPicked($event)"
     (dismissed)="closeLocationPicker()"
   />
@@ -313,13 +309,13 @@
 
 @if (activePicker() === 'locality') {
   <app-location-picker-modal
-    title="Add your locality"
-    addSectionLabel="Add a new locality"
+    [title]="'shops.picker.localityTitle' | t"
+    [addSectionLabel]="'shops.picker.localityAdd' | t"
     [options]="localityPickerOptions()"
     [loading]="localitiesLoading()"
     [validating]="localityValidating()"
     [errorMessage]="localityPickerError()"
-    emptyMessage="No localities available for this city."
+    [emptyMessage]="'shops.picker.localityEmpty' | t"
     (picked)="onLocalityPicked($event)"
     (dismissed)="closeLocationPicker()"
     (errorCleared)="clearLocalityPickerError()"

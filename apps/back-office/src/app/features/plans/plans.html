@@ -5,7 +5,7 @@
     <p class="sub">{{ 'plans.sub' | t }}</p>
   </div>
   <div class="header-actions">
-    <div class="lang-toggle" role="group" aria-label="Language">
+    <div class="lang-toggle" role="group" [attr.aria-label]="'common.language' | t">
       <button
         type="button"
         class="lang-btn"
@@ -27,7 +27,7 @@
   </div>
 </header>
 
-<div class="view-toggle" role="tablist" aria-label="Plans or waitlist">
+<div class="view-toggle" role="tablist" [attr.aria-label]="'plans.orWaitlist' | t">
   <button
     type="button"
     role="tab"
@@ -63,95 +63,100 @@
 } @else if (viewMode() === 'waitlist') {
   @if (application(); as app) {
     <section class="forwarded" role="status">
-      <p class="eyebrow">YOUR WAITLIST STATUS</p>
+      <p class="eyebrow">{{ 'plans.waitlistStatusEyebrow' | t }}</p>
       <h2>
         @if (app.status === 'pending') {
-          You’re on the waitlist for {{ requestedPlanName(app) }}.
+          {{ 'plans.waitlistPendingTitle' | t: { plan: requestedPlanName(app) } }}
         } @else {
-          Waitlist application · {{ app.status | titlecase }}
+          {{ 'plans.waitlistAppTitle' | t: { status: app.status } }}
         }
       </h2>
       <p>
         {{ app.switch_message }}
         @if (app.status === 'pending') {
-          An admin will approve your application. You can still browse plans with the toggle above.
+          {{ 'plans.waitlistPendingHint' | t }}
         }
       </p>
       <dl>
         <div>
-          <dt>Plan</dt>
+          <dt>{{ 'plans.dt.plan' | t }}</dt>
           <dd>{{ requestedPlanName(app) }}</dd>
         </div>
         <div>
-          <dt>Status</dt>
+          <dt>{{ 'plans.dt.status' | t }}</dt>
           <dd>{{ app.status | titlecase }}</dd>
         </div>
         <div>
-          <dt>Submitted</dt>
+          <dt>{{ 'plans.dt.submitted' | t }}</dt>
           <dd>{{ app.created_at | date:'medium' }}</dd>
         </div>
         <div>
-          <dt>Shop</dt>
+          <dt>{{ 'plans.dt.shop' | t }}</dt>
           <dd>{{ app.shop_name }}</dd>
         </div>
         <div>
-          <dt>City</dt>
+          <dt>{{ 'common.city' | t }}</dt>
           <dd>{{ app.location.city }}</dd>
         </div>
         <div>
-          <dt>Locality</dt>
+          <dt>{{ 'common.locality' | t }}</dt>
           <dd>{{ app.location.locality }}</dd>
         </div>
       </dl>
       <div class="forwarded-actions">
-        <button type="button" class="ghost" (click)="setViewMode('plans')">Browse plans</button>
+        <button type="button" class="ghost" (click)="setViewMode('plans')">{{ 'plans.browsePlans' | t }}</button>
       </div>
     </section>
   } @else {
     <section class="empty-waitlist" role="status">
-      <p class="eyebrow">WAITLIST</p>
-      <h2>You’re not on the waitlist yet.</h2>
-      <p>Pick a plan, confirm, and we’ll add you to the waitlist for that plan.</p>
-      <button type="button" class="primary" (click)="setViewMode('plans')">View plans</button>
+      <p class="eyebrow">{{ 'plans.waitlistEyebrow' | t }}</p>
+      <h2>{{ 'plans.waitlistEmptyTitle' | t }}</h2>
+      <p>{{ 'plans.waitlistEmptySub' | t }}</p>
+      <button type="button" class="primary" (click)="setViewMode('plans')">{{ 'plans.viewPlans' | t }}</button>
     </section>
   }
 } @else {
   @if (!shopReady()) {
     <section class="shop-needed" role="status">
       <div>
-        <p class="eyebrow">SHOP REQUIRED</p>
-        <h2>Set shop name, city, and locality first.</h2>
-        <p>
-          Joining a plan waitlist sends your shop name, city, and locality with the request.
-          Save them on Overview, then come back here.
-        </p>
+        <p class="eyebrow">{{ 'plans.shopRequiredEyebrow' | t }}</p>
+        <h2>{{ 'plans.shopRequiredTitle' | t }}</h2>
+        <p>{{ 'plans.shopRequiredSub' | t }}</p>
       </div>
-      <a routerLink="/back-office" class="primary">Open Overview</a>
+      <a routerLink="/back-office" class="primary">{{ 'plans.openOverview' | t }}</a>
     </section>
   }
 
   @if (current(); as plan) {
     <section class="status" [attr.data-status]="plan.status" [attr.data-type]="plan.type">
       <div>
-        <p class="eyebrow">YOUR PLAN</p>
+        <p class="eyebrow">{{ 'plans.yourPlan' | t }}</p>
         <h2>{{ plan.name }}</h2>
         <p>
           @if (plan.type === 'free_trial' && plan.is_active) {
-            Free trial active · {{ plan.days_remaining ?? 0 }} day{{ (plan.days_remaining ?? 0) === 1 ? '' : 's' }} left
+            {{
+              'plans.trialActive'
+                | t
+                  : {
+                      days: plan.days_remaining ?? 0,
+                      dayLabel:
+                        (plan.days_remaining ?? 0) === 1 ? ('plans.day' | t) : ('plans.days' | t),
+                    }
+            }}
             @if (plan.ends_at) {
-              · ends {{ plan.ends_at | date:'mediumDate' }}
+              {{ 'plans.trialEnds' | t: { date: (plan.ends_at | date:'mediumDate') } }}
             }
           } @else if (plan.is_active) {
-            Active · {{ productLimitLabel(plan) }}
+            {{ 'plans.activeLimit' | t: { limit: productLimitLabel(plan) } }}
           } @else if (plan.status === 'expired') {
-            Trial ended — choose Starter, Growth, or Premium to continue
+            {{ 'plans.trialEnded' | t }}
           } @else {
             {{ plan.description }}
           }
         </p>
       </div>
       @if (onWaitlist()) {
-        <button type="button" class="ghost" (click)="setViewMode('waitlist')">View waitlist</button>
+        <button type="button" class="ghost" (click)="setViewMode('waitlist')">{{ 'plans.viewWaitlist' | t }}</button>
       }
     </section>
   }
@@ -159,7 +164,7 @@
   @if (shopReady()) {
     @if (shop(); as shop) {
       <p class="shop-chip">
-        Waitlist will include <strong>{{ shop.name }}</strong>
+        {{ 'plans.waitlistInclude' | t }} <strong>{{ shop.name }}</strong>
         · {{ shop.locality }}, {{ shop.city }}
       </p>
     }
@@ -167,16 +172,13 @@
 
   @if (confirmPlan(); as pending) {
     <section class="confirm" role="dialog" aria-labelledby="waitlist-confirm-title">
-      <p class="eyebrow">CONFIRM WAITLIST</p>
-      <h2 id="waitlist-confirm-title">You’ll be added to the waitlist for {{ pending.name }}.</h2>
-      <p>
-        Approving sends your shop details for admin review. You won’t get the plan until an admin
-        approves your waitlist application.
-      </p>
+      <p class="eyebrow">{{ 'plans.confirmEyebrow' | t }}</p>
+      <h2 id="waitlist-confirm-title">{{ 'plans.confirmTitle' | t: { plan: pending.name } }}</h2>
+      <p>{{ 'plans.confirmSub' | t }}</p>
       <div class="confirm-actions">
-        <button type="button" class="ghost" (click)="cancelConfirm()" [disabled]="saving()">Cancel</button>
+        <button type="button" class="ghost" (click)="cancelConfirm()" [disabled]="saving()">{{ 'common.cancel' | t }}</button>
         <button type="button" class="primary" (click)="joinWaitlist()" [disabled]="saving()">
-          {{ saving() ? 'Joining…' : 'Approve · join waitlist' }}
+          {{ saving() ? ('plans.joining' | t) : ('plans.approveJoin' | t) }}
         </button>
       </div>
     </section>
@@ -189,24 +191,30 @@
         [class.current]="isCurrent(plan.type)"
         [class.trial]="plan.type === 'free_trial'"
       >
-        <p class="eyebrow">{{ plan.type === 'free_trial' ? 'TRIAL' : plan.type.toUpperCase() }}</p>
+        <p class="eyebrow">{{ plan.type === 'free_trial' ? ('plans.trial' | t) : plan.type.toUpperCase() }}</p>
         <h3>{{ plan.name }}</h3>
         <p class="price">
           @if (plan.price_inr === 0) {
-            Free
+            {{ 'common.free' | t }}
           } @else {
-            {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>/year</small>
+            {{ plan.price_inr | currency:'INR':'symbol-narrow':'1.0-0' }}<small>{{ 'common.perYear' | t }}</small>
           }
         </p>
         <p class="limit">{{ productLimitLabel(plan) }}</p>
         <p class="desc">{{ plan.description }}</p>
         @if (plan.type === 'free_trial') {
-          <p class="note">Starts automatically on signup. Backend closes it after {{ plan.duration_days ?? trialDays }} days.</p>
+          <p class="note">{{ 'plans.trialNote' | t: { days: plan.duration_days ?? trialDays } }}</p>
           <button type="button" class="primary" disabled>
-            {{ isCurrent(plan.type) ? 'Trial running' : (current()?.trial_used ? 'Trial used' : 'Auto-started') }}
+            {{
+              isCurrent(plan.type)
+                ? ('plans.trialRunning' | t)
+                : current()?.trial_used
+                  ? ('plans.trialUsed' | t)
+                  : ('plans.autoStarted' | t)
+            }}
           </button>
         } @else {
-          <p class="note">Selecting this plan adds you to the waitlist for admin approval.</p>
+          <p class="note">{{ 'plans.selectNote' | t }}</p>
           <button
             type="button"
             class="primary"
@@ -214,13 +222,13 @@
             [disabled]="saving() || !!confirmPlanType() || !canSelect(plan)"
           >
             @if (isCurrent(plan.type)) {
-              Current plan
+              {{ 'plans.currentPlan' | t }}
             } @else if (onWaitlist()) {
-              Already on waitlist
+              {{ 'plans.alreadyWaitlist' | t }}
             } @else if (!shopReady()) {
-              Set shop details first
+              {{ 'plans.setShopFirst' | t }}
             } @else {
-              Select {{ plan.name }}
+              {{ 'plans.selectPlan' | t: { name: plan.name } }}
             }
           </button>
         }
@@ -230,48 +238,46 @@
 
   <section class="product-pack" aria-labelledby="product-pack-title">
     <div>
-      <p class="eyebrow">PRODUCT BUCKET</p>
-      <h2 id="product-pack-title">Extra product pack</h2>
+      <p class="eyebrow">{{ 'plans.bucketEyebrow' | t }}</p>
+      <h2 id="product-pack-title">{{ 'plans.packTitle' | t }}</h2>
       <p>
-        After your shop plan allowance is used, add capacity in packs of
-        {{ packSize() }} products for
-        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }} each
-        (junctionBack product bucket). Packs <strong>append</strong> onto the
-        current plan capacity (stack / LIFO: latest packs extend remaining slots).
+        {{ 'plans.packSubPrefix' | t: { size: packSize() } }}
+        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}
+        {{ 'plans.packSubSuffix' | t }}
       </p>
       @if (bucket(); as bucket) {
         <dl class="pack-stats">
           <div>
-            <dt>Plan allowance</dt>
+            <dt>{{ 'plans.dt.planAllowance' | t }}</dt>
             <dd>{{ bucket.plan_limit ?? '—' }}</dd>
           </div>
           <div>
-            <dt>Listed products</dt>
+            <dt>{{ 'plans.dt.listed' | t }}</dt>
             <dd>{{ bucket.products_count }}</dd>
           </div>
           <div>
-            <dt>Extra slots</dt>
+            <dt>{{ 'plans.dt.extraSlots' | t }}</dt>
             <dd>{{ bucket.extra_slots }}</dd>
           </div>
           <div>
-            <dt>Total capacity</dt>
+            <dt>{{ 'plans.dt.totalCap' | t }}</dt>
             <dd>{{ bucket.capacity ?? '—' }}</dd>
           </div>
           <div>
-            <dt>Remaining</dt>
+            <dt>{{ 'plans.dt.remaining' | t }}</dt>
             <dd>{{ bucket.remaining ?? '—' }}</dd>
           </div>
         </dl>
       } @else if (shop()) {
-        <p class="muted">Could not load product capacity for this shop yet.</p>
+        <p class="muted">{{ 'plans.bucketLoadFail' | t }}</p>
       } @else {
-        <p class="muted">Select a shop to see product capacity.</p>
+        <p class="muted">{{ 'plans.selectShopCap' | t }}</p>
       }
     </div>
     <div class="pack-actions">
       <p class="pack-price">
         {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}
-        <small>+{{ packSize() }} products</small>
+        <small>{{ 'plans.packPlus' | t: { size: packSize() } }}</small>
       </p>
       <button
         type="button"
@@ -279,9 +285,9 @@
         (click)="purchaseProductPack()"
         [disabled]="bucketBusy() || !shop()?.id"
       >
-        {{ bucketBusy() ? 'Purchasing…' : 'Buy product pack' }}
+        {{ bucketBusy() ? ('plans.purchasing' | t) : ('plans.buyPack' | t) }}
       </button>
-      <a routerLink="/back-office/products" class="ghost">Open Products</a>
+      <a routerLink="/back-office/products" class="ghost">{{ 'plans.openProducts' | t }}</a>
     </div>
   </section>
 }

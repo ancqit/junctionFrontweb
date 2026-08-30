@@ -1,13 +1,10 @@
 <header>
   <div>
-    <p class="eyebrow">INBOX</p>
-    <h1>Orders</h1>
-    <p class="sub">
-      Customers on junction.today place pay-at-store orders to show interest.
-      Confirm to acknowledge; cash stays pending until they pay you at the shop.
-    </p>
+    <p class="eyebrow">{{ 'orders.eyebrow' | t }}</p>
+    <h1>{{ 'orders.title' | t }}</h1>
+    <p class="sub">{{ 'orders.sub' | t }}</p>
   </div>
-  <a routerLink="/back-office/billing" class="primary">+ New bill</a>
+  <a routerLink="/back-office/billing" class="primary">{{ 'common.newBill' | t }}</a>
 </header>
 
 @if (error()) {
@@ -18,11 +15,17 @@
   <section class="incoming" aria-labelledby="incoming-title">
     <div class="incoming-head">
       <div>
-        <p class="eyebrow">NEW</p>
-        <h2 id="incoming-title">Incoming interest</h2>
+        <p class="eyebrow">{{ 'orders.incomingEyebrow' | t }}</p>
+        <h2 id="incoming-title">{{ 'orders.incoming' | t }}</h2>
         <p class="sub">
-          {{ incoming().length }} pending pay-at-store
-          {{ incoming().length === 1 ? 'order' : 'orders' }} — customer will pay cash at your shop.
+          {{
+            'orders.incomingSub'
+              | t
+                : {
+                    count: incoming().length,
+                    label: incoming().length === 1 ? ('orders.order' | t) : ('orders.orders' | t),
+                  }
+          }}
         </p>
       </div>
     </div>
@@ -33,9 +36,9 @@
             <strong>{{ order.customer_name }}</strong>
             <span>{{ order.order_number }}</span>
             <small>
-              {{ itemCount(order) }} items ·
+              {{ 'orders.itemsLine' | t: { count: itemCount(order) } }} ·
               {{ order.billing.total_amount | currency: order.billing.currency:'symbol-narrow':'1.0-2' }}
-              · Cash pending
+              · {{ 'orders.cashPending' | t }}
             </small>
             @if (order.notes) {
               <p class="incoming-note">{{ order.notes }}</p>
@@ -48,7 +51,7 @@
               [disabled]="updatingId() === order.id"
               (click)="setStatus(order, 'confirmed')"
             >
-              Confirm order
+              {{ 'orders.confirm' | t }}
             </button>
             <button
               type="button"
@@ -56,7 +59,7 @@
               [disabled]="updatingId() === order.id"
               (click)="setStatus(order, 'cancelled')"
             >
-              Decline
+              {{ 'orders.decline' | t }}
             </button>
           </div>
         </li>
@@ -67,40 +70,40 @@
 
 <section class="toolbar" [formGroup]="filters">
   <label>
-    Customer
-    <input formControlName="customer_name" placeholder="Search by name" />
+    {{ 'orders.customer' | t }}
+    <input formControlName="customer_name" [placeholder]="'orders.searchName' | t" />
   </label>
   <label>
-    Status
+    {{ 'orders.status' | t }}
     <app-inline-select
       formControlName="status"
-      [options]="orderStatusOptions"
-      placeholder="All"
+      [options]="orderStatusOptions()"
+      [placeholder]="'common.all' | t"
     />
   </label>
-  <button type="button" class="ghost" (click)="reload()">Apply</button>
+  <button type="button" class="ghost" (click)="reload()">{{ 'common.apply' | t }}</button>
 </section>
 
 <section class="table-wrap">
   @if (loading() && orders().length === 0) {
-    <p class="muted">Loading orders…</p>
+    <p class="muted">{{ 'orders.loading' | t }}</p>
   } @else if (orders().length === 0) {
     <div class="empty">
-      <strong>No orders yet</strong>
-      <p>When a customer on junction.today places an order for your shop, it appears here as incoming interest.</p>
-      <a routerLink="/back-office/billing" class="primary">Go to billing</a>
+      <strong>{{ 'orders.emptyTitle' | t }}</strong>
+      <p>{{ 'orders.emptySub' | t }}</p>
+      <a routerLink="/back-office/billing" class="primary">{{ 'orders.goBilling' | t }}</a>
     </div>
   } @else {
     <table>
       <thead>
         <tr>
-          <th>Order</th>
-          <th>Customer</th>
-          <th>Items</th>
-          <th>Total</th>
-          <th>Payment</th>
-          <th>Status</th>
-          <th>Created</th>
+          <th>{{ 'orders.col.order' | t }}</th>
+          <th>{{ 'orders.customer' | t }}</th>
+          <th>{{ 'orders.items' | t }}</th>
+          <th>{{ 'orders.total' | t }}</th>
+          <th>{{ 'orders.payment' | t }}</th>
+          <th>{{ 'orders.status' | t }}</th>
+          <th>{{ 'orders.created' | t }}</th>
           <th></th>
         </tr>
       </thead>
@@ -113,7 +116,7 @@
                 <small class="source">{{ order.source }}</small>
               }
               <button type="button" class="link" (click)="toggle(order.id)">
-                {{ expandedId() === order.id ? 'Hide items' : 'View items' }}
+                {{ expandedId() === order.id ? ('orders.hideItems' | t) : ('orders.viewItems' | t) }}
               </button>
             </td>
             <td>
@@ -138,7 +141,7 @@
                   [disabled]="updatingId() === order.id"
                   (click)="setStatus(order, 'confirmed')"
                 >
-                  Confirm
+                  {{ 'orders.confirmShort' | t }}
                 </button>
               }
               @if (canComplete(order)) {
@@ -148,7 +151,7 @@
                   [disabled]="updatingId() === order.id"
                   (click)="setStatus(order, 'completed')"
                 >
-                  Mark paid &amp; done
+                  {{ 'orders.complete' | t }}
                 </button>
               }
               @if (canCancel(order)) {
@@ -158,10 +161,10 @@
                   [disabled]="updatingId() === order.id"
                   (click)="setStatus(order, 'cancelled')"
                 >
-                  Cancel
+                  {{ 'orders.cancel' | t }}
                 </button>
               }
-              <button type="button" class="danger compact" (click)="remove(order)">Delete</button>
+              <button type="button" class="danger compact" (click)="remove(order)">{{ 'common.delete' | t }}</button>
             </td>
           </tr>
           @if (expandedId() === order.id) {
@@ -176,7 +179,7 @@
                   }
                 </ul>
                 @if (order.notes) {
-                  <p class="notes">Notes: {{ order.notes }}</p>
+                  <p class="notes">{{ 'orders.notesLabel' | t: { notes: order.notes } }}</p>
                 }
               </td>
             </tr>
