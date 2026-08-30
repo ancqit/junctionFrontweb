@@ -7,12 +7,12 @@ const STORAGE_KEY = 'junction.website.lang';
 export class I18nService {
   readonly lang = signal<AppLang>(this.readInitial());
 
-  t(key: string, params?: Record<string, string | number>): string {
+  t(key: string, params?: Record<string, string | number | null | undefined>): string {
     const dict = TRANSLATIONS[this.lang()] ?? TRANSLATIONS.hi;
     let text = dict[key] ?? TRANSLATIONS.en[key] ?? key;
     if (params) {
       for (const [name, value] of Object.entries(params)) {
-        text = text.replaceAll(`{{${name}}}`, String(value));
+        text = text.replaceAll(`{{${name}}}`, value == null ? '' : String(value));
       }
     }
     return text;
