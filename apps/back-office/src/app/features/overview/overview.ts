@@ -11,7 +11,6 @@ import { OrdersApi } from '../../core/orders.api';
 import { PlansApi } from '../../core/plans.api';
 import { ProductsApi } from '../../core/products.api';
 import { ProfileApi } from '../../core/profile.api';
-import { SessionShopContact, SessionShopsApi } from '../../core/session-shops.api';
 import {
   DEFAULT_CLOSED_TIME,
   DEFAULT_OPEN_TIME,
@@ -59,7 +58,6 @@ export class OverviewPage implements OnInit {
   private readonly ordersApi = inject(OrdersApi);
   private readonly plansApi = inject(PlansApi);
   private readonly profileApi = inject(ProfileApi);
-  private readonly sessionShopsApi = inject(SessionShopsApi);
   private readonly shopsApi = inject(ShopsApi);
   private readonly locationsApi = inject(LocationsApi);
   private readonly noticesApi = inject(NoticesApi);
@@ -348,7 +346,7 @@ export class OverviewPage implements OnInit {
 
   togglePhoneVisible(): void {
     const shop = this.shop();
-    if (!shop?.id || !this.hasOwnerPhone()) {
+    if (!shop?.id || !shop.name?.trim() || !this.hasOwnerPhone()) {
       return;
     }
     const next = !this.phoneVisible();
@@ -356,12 +354,30 @@ export class OverviewPage implements OnInit {
     this.phoneVisible.set(next);
     this.phoneError.set('');
     this.phoneBusy.set(true);
-    this.sessionShopsApi
-      .getShop(shop.id, next)
+    this.shopsApi
+      .updatePhoneStatus({ name: shop.name.trim(), show_phone: next })
       .pipe(finalize(() => this.phoneBusy.set(false)))
       .subscribe({
-        next: (contact) => this.applyPhonePreference(shop.id, contact.show_phone),
+        next: (updated) => {
+          this.applyShopRecord(updated);
+          this.applyPhonePreference(shop.id, updated.show_phone === true);
+        },
         error: (err: unknown) => {
+          if (this.isUnprocessable(err)) {
+            this.shopsApi.update(shop.id, { show_phone: next }).subscribe({
+              next: (updated) => {
+                this.applyShopRecord(updated);
+                this.applyPhonePreference(shop.id, next);
+              },
+              error: (fallbackErr: unknown) => {
+                this.phoneVisible.set(previous);
+                this.phoneError.set(
+                  this.describeApiError(fallbackErr, 'Could not update phone visibility.'),
+                );
+              },
+            });
+            return;
+          }
           this.phoneVisible.set(previous);
           this.phoneError.set(this.describeApiError(err, 'Could not update phone visibility.'));
         },
@@ -480,26 +496,11 @@ export class OverviewPage implements OnInit {
       this.phoneVisible.set(false);
       return;
     }
-    const showPhone = this.currentShop.readPhoneVisible(shop.id);
-    this.phoneVisible.set(showPhone);
-    this.phoneBusy.set(true);
+    // Prefer persisted shop.show_phone from junctionBack; local overlay is fallback only.
+    const fromApi = shop.show_phone === true;
+    const fromLocal = this.currentShop.readPhoneVisible(shop.id);
+    this.phoneVisible.set(fromApi || fromLocal);
     this.phoneError.set('');
-    this.sessionShopsApi
-      .getShop(shop.id, showPhone)
-      .pipe(
-        catchError(() =>
-          of({
-            id: shop.id,
-            name: shop.name,
-            phone_number: null,
-            show_phone: showPhone,
-          } satisfies SessionShopContact),
-        ),
-        finalize(() => this.phoneBusy.set(false)),
-      )
-      .subscribe({
-        next: (contact) => this.applyPhonePreference(shop.id, contact.show_phone),
-      });
   }
 
   private syncShopFromApi(shop: Shop | null): void {

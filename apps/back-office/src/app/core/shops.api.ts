@@ -17,6 +17,8 @@ export interface Shop {
   open_time?: string | null;
   closed_time?: string | null;
   is_open?: boolean;
+  /** When true, junction.today may show phone_number. */
+  show_phone?: boolean;
   plan?: PlanSummary | null;
   created_at: string;
   updated_at: string;
@@ -31,12 +33,19 @@ export interface ShopWrite {
   open_time?: string;
   closed_time?: string;
   is_open?: boolean;
+  show_phone?: boolean;
 }
 
 /** junctionBack `ShopOpenStatusUpdate` — `PUT /shops/open-status`. */
 export interface ShopOpenStatusUpdate {
   name: string;
   is_open: boolean;
+}
+
+/** junctionBack `ShopPhoneStatusUpdate` — `PUT /shops/phone-status`. */
+export interface ShopPhoneStatusUpdate {
+  name: string;
+  show_phone: boolean;
 }
 
 interface CityListResponse {
@@ -74,6 +83,11 @@ export class ShopsApi {
 
   updateOpenStatus(payload: ShopOpenStatusUpdate): Observable<Shop> {
     return this.api.put<Shop>('/shops/open-status', payload);
+  }
+
+  /** Persist whether junction.today should show this shop's mobile number. */
+  updatePhoneStatus(payload: ShopPhoneStatusUpdate): Observable<Shop> {
+    return this.api.put<Shop>('/shops/phone-status', payload);
   }
 
   /** `GET /shops/{shop_id}/plan` — billing/limits are per shop. */
