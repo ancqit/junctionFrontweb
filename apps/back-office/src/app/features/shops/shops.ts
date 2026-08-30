@@ -144,7 +144,7 @@ export class ShopsPage implements OnInit {
   }
 
   removeShop(shop: Shop): void {
-    if (!confirm(`Delete shop “${shop.name}”? Products and employees for this shop stay on the server until cleaned up.`)) {
+    if (!confirm(`Delete shop “${shop.name}”? This permanently removes the shop profile, products, employees, and orders for this shop.`)) {
       return;
     }
     this.deletingId.set(shop.id);
@@ -154,6 +154,7 @@ export class ShopsPage implements OnInit {
         if (this.activeShopId() === shop.id) {
           this.currentShop.clearActiveShopId();
         }
+        this.currentShop.clearShopOverlays(shop.id);
         this.deletingId.set(null);
         this.success.set(`Deleted ${shop.name}`);
         this.reload();
@@ -194,6 +195,8 @@ export class ShopsPage implements OnInit {
             locality: payload.locality,
           });
           this.currentShop.setShop(shop);
+          this.shops.set(this.currentShop.shops());
+          this.activeShopId.set(shop.id);
           this.showForm.set(false);
           this.success.set(`Created ${shop.name} · now active`);
           this.reload();

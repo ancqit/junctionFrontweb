@@ -53,7 +53,7 @@ export class ShopsApi {
   private readonly api = inject(BackOfficeApiService);
 
   list(): Observable<Shop[]> {
-    return this.api.get<Shop[]>('/shops').pipe(catchError(() => of([])));
+    return this.api.get<Shop[]>('/shops');
   }
 
   get(shopId: string): Observable<Shop> {
