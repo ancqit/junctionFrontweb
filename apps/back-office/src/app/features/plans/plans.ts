@@ -1,8 +1,9 @@
 import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { finalize, forkJoin, of } from 'rxjs';
+import { finalize, forkJoin, map, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { CurrentShopService } from '../../core/current-shop.service';
 import {
   FREE_TRIAL_DAYS,
   PlanOption,
@@ -31,7 +32,7 @@ export type PlansViewMode = 'plans' | 'waitlist';
 })
 export class PlansPage implements OnInit {
   private readonly api = inject(PlansApi);
-  private readonly shopsApi = inject(ShopsApi);
+  private readonly currentShop = inject(CurrentShopService);
   private readonly bucketApi = inject(ProductBucketApi);
   private readonly paymentsApi = inject(PaymentsApi);
 
@@ -96,7 +97,10 @@ export class PlansPage implements OnInit {
     forkJoin({
       plans: this.api.list().pipe(catchError(() => of([] as PlanOption[]))),
       application: this.api.myApplication().pipe(catchError(() => of(null))),
-      shops: this.shopsApi.list().pipe(catchError(() => of([] as Shop[]))),
+      shops: this.currentShop.refresh().pipe(
+        map(() => this.currentShop.shops()),
+        catchError(() => of([] as Shop[])),
+      ),
       current: this.api.me().pipe(catchError(() => of(null as PlanSummary | null))),
       bucket: this.bucketApi.get().pipe(catchError(() => of(null as ProductBucket | null))),
     })

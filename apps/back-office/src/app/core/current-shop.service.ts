@@ -8,6 +8,7 @@ const SHOP_TYPE_STORAGE_KEY = 'junction.shopTypeById';
 const SHOP_PLACE_STORAGE_KEY = 'junction.shopPlaceById';
 const SHOP_PHONE_VISIBLE_KEY = 'junction.phoneVisibleById';
 const ACTIVE_SHOP_STORAGE_KEY = 'junction.activeShopId';
+const SESSION_KEY = 'junction.session';
 
 export interface ShopPlaceOverlay {
   city: string;
@@ -45,12 +46,13 @@ export class CurrentShopService {
       this.list$ = this.profileApi.me().pipe(
         catchError(() => of(null)),
         switchMap((profile) => {
-          const userId = profile?.id?.trim() || null;
-          const phoneNumber = profile?.phone_number?.trim() || null;
+          const sessionOwner = this.readSessionOwner();
+          const userId = profile?.id?.trim() || sessionOwner.userId;
+          const phoneNumber = profile?.phone_number?.trim() || sessionOwner.phoneNumber;
+          const isAdmin = this.readSessionRole() === 'admin';
           this.owner.set({ userId, phoneNumber });
           return this.shopsApi.list().pipe(
-            map((rows) => this.filterOwnedShops(rows, userId, phoneNumber)),
-            catchError(() => of([] as Shop[])),
+            map((rows) => this.filterOwnedShops(rows, userId, phoneNumber, isAdmin)),
           );
         }),
         tap((rows) => this.shops.set(rows)),
@@ -86,6 +88,7 @@ export class CurrentShopService {
       return of(this.shop());
     }
     this.writeActiveShopId(id);
+    this.list$ = undefined;
     this.load$ = undefined;
     return this.listMine().pipe(
       map((shops) => {
@@ -104,6 +107,7 @@ export class CurrentShopService {
       this.writeActiveShopId(merged.id);
     }
     this.applyActive(merged);
+    this.list$ = undefined;
     this.load$ = of(merged).pipe(shareReplay(1));
     if (merged) {
       this.shops.update((rows) => {
@@ -113,21 +117,39 @@ export class CurrentShopService {
     }
   }
 
+  /** Remove local overlays after a shop is deleted on the server. */
+  clearShopOverlays(shopId: string): void {
+    const id = shopId.trim();
+    if (!id) {
+      return;
+    }
+    this.removeStorageEntry(SHOP_TYPE_STORAGE_KEY, id);
+    this.removeStorageEntry(SHOP_PLACE_STORAGE_KEY, id);
+    this.removeStorageEntry(SHOP_PHONE_VISIBLE_KEY, id);
+  }
+
   /**
-   * Prefer shops owned by this user/phone.
-   * Owners already get only their shops from the API; admins get everyone,
-   * so filtering is required for “my shop”.
+   * Admins receive every shop from junctionBack; keep only shops they own.
+   * Owners already get an owner-scoped list — do not filter again.
    */
-  filterOwnedShops(shops: Shop[], userId: string | null, phoneNumber: string | null): Shop[] {
-    // Without a profile identity we cannot safely filter (admin would see everyone).
-    if (!userId && !phoneNumber) {
+  filterOwnedShops(
+    shops: Shop[],
+    userId: string | null,
+    phoneNumber: string | null,
+    isAdmin: boolean,
+  ): Shop[] {
+    if (!isAdmin) {
       return shops;
     }
+    if (!userId && !phoneNumber) {
+      return [];
+    }
+    const normalizedPhone = this.normalizePhone(phoneNumber);
     return shops.filter((shop) => {
       if (userId && shop.owner_user_id === userId) {
         return true;
       }
-      if (phoneNumber && shop.phone_number?.trim() === phoneNumber) {
+      if (normalizedPhone && this.normalizePhone(shop.phone_number) === normalizedPhone) {
         return true;
       }
       return false;
@@ -278,6 +300,54 @@ export class CurrentShopService {
       localStorage.removeItem(ACTIVE_SHOP_STORAGE_KEY);
     } catch {
       // ignore
+    }
+  }
+
+  private readSessionOwner(): ShopOwnerContext {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as {
+        user?: { id?: string; phone_number?: string | null };
+      } | null;
+      const user = parsed?.user;
+      return {
+        userId: user?.id?.trim() || null,
+        phoneNumber: user?.phone_number?.trim() || null,
+      };
+    } catch {
+      return { userId: null, phoneNumber: null };
+    }
+  }
+
+  private readSessionRole(): string | null {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as {
+        role?: string;
+      } | null;
+      return parsed?.role?.trim().toLowerCase() || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizePhone(phone: string | null | undefined): string {
+    const digits = (phone ?? '').replace(/\D/g, '');
+    return digits.length >= 10 ? digits.slice(-10) : digits;
+  }
+
+  private removeStorageEntry(key: string, shopId: string): void {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) {
+        return;
+      }
+      const map = JSON.parse(raw) as Record<string, unknown>;
+      if (!(shopId in map)) {
+        return;
+      }
+      delete map[shopId];
+      localStorage.setItem(key, JSON.stringify(map));
+    } catch {
+      // ignore storage failures
     }
   }
 
