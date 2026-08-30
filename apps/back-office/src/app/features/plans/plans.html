@@ -144,7 +144,7 @@
                     }
             }}
             @if (plan.ends_at) {
-              {{ 'plans.trialEnds' | t: { date: (plan.ends_at | date:'mediumDate') } }}
+              {{ 'plans.trialEnds' | t: { date: (plan.ends_at | date:'mediumDate') ?? '' } }}
             }
           } @else if (plan.is_active) {
             {{ 'plans.activeLimit' | t: { limit: productLimitLabel(plan) } }}
