@@ -64,3 +64,9 @@ The shell refreshes five minutes before expiry. The HTTP interceptor adds `Autho
 ```powershell
 npm run build
 ```
+
+## Shared shop orders (PR agent)
+
+Branch **`feature/shared-shop-orders`** adds the owner Orders inbox actions for customer orders from junction.today.
+
+Agent brief (push + `gh pr create` copy-paste): [docs/SHARED_SHOP_ORDERS_PR.md](./docs/SHARED_SHOP_ORDERS_PR.md)

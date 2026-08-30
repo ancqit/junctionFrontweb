@@ -28,6 +28,10 @@ export class OrdersApi {
     );
   }
 
+  updateStatus(id: string, status: OrderStatus): Observable<Order> {
+    return this.api.patch<Order>(`/orders/${id}`, { status });
+  }
+
   remove(id: string): Observable<void> {
     return this.api.delete(`/orders/${id}`);
   }

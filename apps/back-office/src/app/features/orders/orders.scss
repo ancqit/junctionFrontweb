@@ -9,6 +9,9 @@ h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 .primary { color: white; background: #1a6541; display: inline-flex; align-items: center; }
 .ghost { color: #1a6541; background: #eef3ef; }
 .danger { color: #8a2f2f; background: #f7ecec; }
+.ghost.compact, .danger.compact { padding: 7px 10px; font-size: 12px; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 180px; }
+.source { color: #8a7340; font-weight: 600; }
 .link {
   display: inline; margin-top: 6px; padding: 0; background: transparent; color: #1a6541; font-size: 12px;
 }

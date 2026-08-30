@@ -1,8 +1,8 @@
 <header>
   <div>
-    <p class="eyebrow">HISTORY</p>
+    <p class="eyebrow">INBOX</p>
     <h1>Orders</h1>
-    <p class="sub">Bills created from the billing counter</p>
+    <p class="sub">Incoming shop orders from junction.today and the billing counter</p>
   </div>
   <a routerLink="/back-office/billing" class="primary">+ New bill</a>
 </header>
@@ -28,12 +28,12 @@
 </section>
 
 <section class="table-wrap">
-  @if (loading()) {
+  @if (loading() && orders().length === 0) {
     <p class="muted">Loading orders…</p>
   } @else if (orders().length === 0) {
     <div class="empty">
       <strong>No orders yet</strong>
-      <p>Create your first bill from Billing.</p>
+      <p>Orders from junction.today and bills you create will show up here.</p>
       <a routerLink="/back-office/billing" class="primary">Go to billing</a>
     </div>
   } @else {
@@ -55,6 +55,9 @@
           <tr>
             <td>
               <strong>{{ order.order_number }}</strong>
+              @if (order.source) {
+                <small class="source">{{ order.source }}</small>
+              }
               <button type="button" class="link" (click)="toggle(order.id)">
                 {{ expandedId() === order.id ? 'Hide items' : 'View items' }}
               </button>
@@ -73,7 +76,39 @@
             </td>
             <td><span class="badge" [attr.data-status]="order.status">{{ order.status | titlecase }}</span></td>
             <td>{{ order.created_at | date:'medium' }}</td>
-            <td><button type="button" class="danger" (click)="remove(order)">Delete</button></td>
+            <td class="actions">
+              @if (canConfirm(order)) {
+                <button
+                  type="button"
+                  class="ghost compact"
+                  [disabled]="updatingId() === order.id"
+                  (click)="setStatus(order, 'confirmed')"
+                >
+                  Confirm
+                </button>
+              }
+              @if (canComplete(order)) {
+                <button
+                  type="button"
+                  class="ghost compact"
+                  [disabled]="updatingId() === order.id"
+                  (click)="setStatus(order, 'completed')"
+                >
+                  Complete
+                </button>
+              }
+              @if (canCancel(order)) {
+                <button
+                  type="button"
+                  class="danger compact"
+                  [disabled]="updatingId() === order.id"
+                  (click)="setStatus(order, 'cancelled')"
+                >
+                  Cancel
+                </button>
+              }
+              <button type="button" class="danger compact" (click)="remove(order)">Delete</button>
+            </td>
           </tr>
           @if (expandedId() === order.id) {
             <tr class="detail">
