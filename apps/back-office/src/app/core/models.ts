@@ -155,6 +155,7 @@ export interface Order {
   billing: BillingDetails;
   status: OrderStatus;
   notes?: string | null;
+  source?: string | null;
   created_at: string;
   updated_at: string;
 }
