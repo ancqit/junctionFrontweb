@@ -20,7 +20,7 @@ import {
   Product,
   ProductStatus,
 } from '../../core/models';
-import { PaymentsApi, ShopPayment } from '../../core/payments.api';
+import { paymentCompleteBucket, ShopPayment } from '../../core/payments.api';
 import {
   DEFAULT_PACK_PRICE_INR,
   DEFAULT_PACK_SIZE,
@@ -28,6 +28,7 @@ import {
   ProductBucketApi,
 } from '../../core/product-bucket.api';
 import { ProductsApi } from '../../core/products.api';
+import { ShopPaymentFlowService } from '../../core/shop-payment-flow.service';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 
 const PRODUCT_STATUS_OPTIONS: InlineSelectOption[] = [
@@ -59,7 +60,7 @@ export interface ProductImageDraft {
 export class ProductsPage implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
   private readonly bucketApi = inject(ProductBucketApi);
-  private readonly paymentsApi = inject(PaymentsApi);
+  private readonly paymentFlow = inject(ShopPaymentFlowService);
   private readonly fb = inject(FormBuilder);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('localFileInput');
 
@@ -241,7 +242,7 @@ export class ProductsPage implements OnInit, OnDestroy {
   }
 
   /**
-   * After plan allowance is used: buy one pack (payment) or go change plan.
+   * After plan allowance is used: buy one pack via Razorpay (or go change plan).
    * Admins may get capacity immediately from `/slots`.
    */
   addProductPack(): void {
@@ -265,12 +266,15 @@ export class ProductsPage implements OnInit, OnDestroy {
           }
           const payment = result as ShopPayment;
           if (payment.status === 'pending' && payment.id) {
-            this.paymentsApi
-              .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
+            this.bucketBusy.set(true);
+            this.paymentFlow
+              .collect(payment)
+              .pipe(finalize(() => this.bucketBusy.set(false)))
               .subscribe({
                 next: (done) => {
-                  if (done.bucket) {
-                    this.bucket.set(done.bucket);
+                  const nextBucket = paymentCompleteBucket(done);
+                  if (nextBucket) {
+                    this.bucket.set(nextBucket);
                   } else {
                     this.reloadBucket();
                   }
