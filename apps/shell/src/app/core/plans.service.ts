@@ -73,10 +73,10 @@ export const PLAN_CATALOG: PlanOption[] = [
   {
     type: 'premium',
     name: 'Premium',
-    price_inr: 599,
+    price_inr: 5999,
     max_products: 150,
     profile_only: false,
-    description: 'Shop profile with up to 150 products for 1 year (INR 599)',
+    description: 'Shop profile with up to 150 products for 1 year (INR 5999)',
     duration_days: PAID_PLAN_DAYS,
   },
 ];

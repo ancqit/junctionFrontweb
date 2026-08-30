@@ -24,10 +24,13 @@ const LOCALITY_GEOCODE_ERROR =
 
 type ActiveLocationPicker = 'city' | 'locality' | null;
 
-const SHOP_TYPE_SELECT_OPTIONS: InlineSelectOption[] = [
-  { value: '', label: 'Select type' },
-  ...SHOP_TYPE_OPTIONS.map((row) => ({ value: row.value, label: row.label })),
-];
+function fallbackShopTypeOptions(): InlineSelectOption[] {
+  return SHOP_TYPE_OPTIONS.map((row) => ({
+    value: row.value,
+    label: row.label,
+    hint: row.description,
+  }));
+}
 
 /**
  * Shops = projects for a phone/user.
@@ -51,7 +54,7 @@ export class ShopsPage implements OnInit {
   private readonly currentShop = inject(CurrentShopService);
   private readonly fb = inject(FormBuilder);
 
-  readonly shopTypeSelectOptions = SHOP_TYPE_SELECT_OPTIONS;
+  readonly shopTypeSelectOptions = signal<InlineSelectOption[]>(fallbackShopTypeOptions());
   readonly shops = signal<Shop[]>([]);
   readonly activeShopId = signal<string | null>(null);
   readonly loading = signal(true);
@@ -87,6 +90,20 @@ export class ShopsPage implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+    this.shopsApi.listTypes().subscribe({
+      next: (rows) => {
+        if (!rows.length) {
+          return;
+        }
+        this.shopTypeSelectOptions.set(
+          rows.map((row) => ({
+            value: row.value,
+            label: row.label,
+            hint: row.description,
+          })),
+        );
+      },
+    });
     this.locationsApi.cities().subscribe({
       next: (rows) => this.cities.set(rows),
       error: () => this.cities.set([]),

@@ -99,8 +99,10 @@
         Shop type
         <app-inline-select
           formControlName="shop_type"
-          [options]="shopTypeSelectOptions"
+          [options]="shopTypeSelectOptions()"
           placeholder="Select type"
+          [searchable]="true"
+          searchPlaceholder="Search shop types…"
         />
       </label>
       <div class="picker-field">

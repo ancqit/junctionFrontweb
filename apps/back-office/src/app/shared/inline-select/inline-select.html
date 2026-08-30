@@ -42,7 +42,10 @@
             [attr.aria-selected]="isSelected(option.value)"
             (click)="onOptionClick($event, option.value)"
           >
-            {{ option.label }}
+            <span class="option-label">{{ option.label }}</span>
+            @if (option.hint) {
+              <span class="option-hint">{{ option.hint }}</span>
+            }
           </li>
         } @empty {
           <li class="empty-option" role="presentation">No matches</li>

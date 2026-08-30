@@ -1,7 +1,7 @@
 /**
  * Local shop-type options shaped like junctionBack `GET /shops/types`
  * (`ShopTypeInfo`: value, label, category, group?, description).
- * Full catalog will load from the API when integration is enabled.
+ * Used as fallback when the API catalog is unavailable.
  */
 export type ShopTypeCategory =
   | 'retail'
@@ -25,7 +25,7 @@ export interface ShopTypeInfo {
   description: string;
 }
 
-/** Compact starter list for the Profile UI until `GET /shops/types` is wired. */
+/** Compact starter list for the Profile UI when `GET /shops/types` is unavailable. */
 export const SHOP_TYPE_OPTIONS: ShopTypeInfo[] = [
   {
     value: 'kirana_grocery',

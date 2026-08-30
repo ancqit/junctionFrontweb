@@ -138,3 +138,25 @@
   color: #1a6541;
   font-weight: 600;
 }
+
+.menu li[role='option'] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  white-space: normal;
+  min-height: auto;
+  padding: 10px 12px;
+}
+
+.option-label {
+  display: block;
+}
+
+.option-hint {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #778078;
+  font-weight: 500;
+}

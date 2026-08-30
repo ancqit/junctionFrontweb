@@ -112,9 +112,10 @@ export class RecaptchaService {
     // 3) Browser → Identity Toolkit using public web API key from config.
     const apiKey = IDENTITY_PLATFORM_WEB_API_KEY.trim();
     if (!apiKey) {
-      throw new Error(
-        'reCAPTCHA is not configured. Fastest fix: set GCP_IDENTITY_PLATFORM_API_KEY in Vercel (same value as Render) and redeploy. Or set IDENTITY_PLATFORM_WEB_API_KEY in identity-platform.config.ts.',
+      console.error(
+        'reCAPTCHA missing web API key. Set GCP_IDENTITY_PLATFORM_API_KEY on Vercel (same as Render) or IDENTITY_PLATFORM_WEB_API_KEY in identity-platform.config.ts.',
       );
+      throw new Error('Sign-in is temporarily unavailable. Please try again shortly.');
     }
 
     const params = await firstValueFrom(

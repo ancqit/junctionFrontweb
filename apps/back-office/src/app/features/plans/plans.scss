@@ -1,5 +1,16 @@
 :host { display: block; }
 header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 28px; }
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.lang-toggle {
+  display: inline-flex; padding: 3px; border-radius: 999px;
+  background: #e8ebe6; border: 1px solid #d7dbd5;
+}
+.lang-btn {
+  border: 0; background: transparent; color: #556057;
+  font-size: 12px; font-weight: 800; letter-spacing: .02em;
+  padding: 7px 11px; border-radius: 999px; cursor: pointer;
+}
+.lang-btn.active { background: #1a6541; color: #fff; }
 .eyebrow { margin: 0; color: #d5bd6b; font-size: 11px; font-weight: 800; letter-spacing: .13em; }
 h1 { margin: 8px 0 6px; font: 500 36px Georgia, serif; }
 h2 { margin: 8px 0 6px; font: 500 28px Georgia, serif; }

@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { finalize, forkJoin, map, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CurrentShopService } from '../../core/current-shop.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import {
   FREE_TRIAL_DAYS,
   PlanOption,
@@ -26,7 +28,7 @@ export type PlansViewMode = 'plans' | 'waitlist';
 
 @Component({
   selector: 'app-plans',
-  imports: [CurrencyPipe, DatePipe, TitleCasePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, TitleCasePipe, RouterLink, TranslatePipe],
   templateUrl: './plans.html',
   styleUrl: './plans.scss',
 })
@@ -35,6 +37,7 @@ export class PlansPage implements OnInit {
   private readonly currentShop = inject(CurrentShopService);
   private readonly bucketApi = inject(ProductBucketApi);
   private readonly paymentsApi = inject(PaymentsApi);
+  readonly i18n = inject(I18nService);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
