@@ -19,6 +19,10 @@ export interface Shop {
   is_open?: boolean;
   /** When true, junction.today may show phone_number. */
   show_phone?: boolean;
+  /** When true, back-office runs in viewer mode for this shop. */
+  is_locked?: boolean;
+  /** Why the shop is locked (`manual` toggle or `plan_expired`). */
+  lock_reason?: 'manual' | 'plan_expired' | null;
   shop_type?: string | null;
   shop_type_label?: string | null;
   plan?: PlanSummary | null;
@@ -45,6 +49,8 @@ export interface ShopWrite {
   closed_time?: string;
   is_open?: boolean;
   show_phone?: boolean;
+  is_locked?: boolean;
+  lock_reason?: 'manual' | 'plan_expired' | null;
 }
 
 /** junctionBack `ShopOpenStatusUpdate` — `PUT /shops/open-status`. */
@@ -57,6 +63,13 @@ export interface ShopOpenStatusUpdate {
 export interface ShopPhoneStatusUpdate {
   name: string;
   show_phone: boolean;
+}
+
+/** junctionBack `ShopLockStatusUpdate` — `PUT /shops/lock-status`. */
+export interface ShopLockStatusUpdate {
+  name: string;
+  is_locked: boolean;
+  lock_reason?: 'manual' | 'plan_expired' | null;
 }
 
 interface CityListResponse {
@@ -104,6 +117,11 @@ export class ShopsApi {
   /** Persist whether junction.today should show this shop's mobile number. */
   updatePhoneStatus(payload: ShopPhoneStatusUpdate): Observable<Shop> {
     return this.api.put<Shop>('/shops/phone-status', payload);
+  }
+
+  /** Persist owner vs viewer (partial lock) for a shop. */
+  updateLockStatus(payload: ShopLockStatusUpdate): Observable<Shop> {
+    return this.api.put<Shop>('/shops/lock-status', payload);
   }
 
   /** `GET /shops/{shop_id}/plan` — billing/limits are per shop. */

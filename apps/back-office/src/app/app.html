@@ -1,4 +1,4 @@
-<div class="office" [class.locked]="access.locked()" [class.menu-open]="menuOpen()">
+<div class="office" [class.locked]="access.locked() || shopLock.activeLocked()" [class.menu-open]="menuOpen()">
   <button
     type="button"
     class="menu-toggle"
@@ -17,7 +17,8 @@
     <div class="brand"><span>J</span> Junction</div>
     @if (access.locked()) {
       <nav>
-        <a routerLink="/back-office/activate" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.deactivated' | t }}</a>
+        <a routerLink="/back-office/activate" routerLinkActive="active" [queryParams]="{ scope: 'account' }" (click)="closeMenu()">{{ 'nav.deactivated' | t }}</a>
+        <a routerLink="/back-office/shops" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.shops' | t }}</a>
         <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.plans' | t }}</a>
         <div class="nav-lang" role="group" [attr.aria-label]="'common.language' | t">
           <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">{{ 'common.lang.hi' | t }}</button>
@@ -25,6 +26,17 @@
         </div>
       </nav>
       <p class="lock-note">{{ 'nav.lockNote' | t }}</p>
+    } @else if (shopLock.activeLocked()) {
+      <nav>
+        <a routerLink="/back-office/activate" routerLinkActive="active" [queryParams]="{ scope: 'shop' }" (click)="closeMenu()">{{ 'nav.shopLocked' | t }}</a>
+        <a routerLink="/back-office/shops" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.shops' | t }}</a>
+        <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.plans' | t }}</a>
+        <div class="nav-lang" role="group" [attr.aria-label]="'common.language' | t">
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">{{ 'common.lang.hi' | t }}</button>
+          <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'en'" (click)="i18n.setLang('en')">{{ 'common.lang.en' | t }}</button>
+        </div>
+      </nav>
+      <p class="lock-note">{{ 'nav.shopLockNote' | t }}</p>
     } @else {
       <nav>
         <a routerLink="/back-office" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">{{ 'nav.overview' | t }}</a>

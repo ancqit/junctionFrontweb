@@ -1,0 +1,56 @@
+diff --git a/app/shops.py b/app/shops.py
+--- a/app/shops.py
++++ b/app/shops.py
+@@ -80,6 +80,8 @@ class Shop(BaseModel):
+     closed_time: str | None = None
+     is_open: bool = True
+     show_phone: bool = False
++    is_locked: bool = False
++    lock_reason: Literal["manual", "plan_expired"] | None = None
+     shop_type: str | None = None
+     created_at: datetime
+     updated_at: datetime
+@@ -120,6 +122,16 @@ class ShopPhoneStatusUpdate(BaseModel):
+     show_phone: bool
+ 
+ 
++class ShopLockStatusUpdate(BaseModel):
++    name: str
++    is_locked: bool
++    lock_reason: Literal["manual", "plan_expired"] | None = None
++
++
+ def shop_from_doc(doc: dict) -> Shop:
+     ...
+ 
+@@ -350,6 +362,28 @@ def update_phone_status(
+     return shop_from_doc(updated)
+ 
+ 
++@router.put("/lock-status", response_model=Shop)
++def update_lock_status(
++    payload: ShopLockStatusUpdate,
++    current_user: Annotated[dict, Depends(get_current_user)],
++):
++    """Owner toggles shop between owner and viewer (partial lock)."""
++    shop = find_shop_by_name_for_user(payload.name.strip(), current_user)
++    if shop is None:
++        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shop not found")
++    ensure_shop_access(current_user, shop)
++    lock_reason = payload.lock_reason if payload.is_locked else None
++    shops.update_one(
++        {"_id": shop["_id"]},
++        {
++            "$set": {
++                "is_locked": payload.is_locked,
++                "lock_reason": lock_reason,
++                "updated_at": datetime.now(timezone.utc),
++            }
++        },
++    )
++    updated = shops.find_one({"_id": shop["_id"]})
++    return shop_from_doc(updated)
++
++
+ @router.delete("/{shop_id}", status_code=status.HTTP_204_NO_CONTENT)
+ def delete_shop(shop_id: str, current_user: Annotated[dict, Depends(get_current_user)]):

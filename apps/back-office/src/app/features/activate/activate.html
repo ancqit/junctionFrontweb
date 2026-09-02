@@ -1,8 +1,30 @@
 <header>
   <div>
-    <p class="eyebrow">{{ 'activate.eyebrow' | t }}</p>
-    <h1>{{ 'activate.title' | t }}</h1>
-    <p class="sub">{{ 'activate.sub' | t }}</p>
+    <p class="eyebrow">
+      @if (isShopScope()) {
+        {{ 'activate.shopEyebrow' | t }}
+      } @else {
+        {{ 'activate.eyebrow' | t }}
+      }
+    </p>
+    <h1>
+      @if (isShopScope()) {
+        {{ 'activate.shopTitle' | t: { name: shop()?.name ?? '' } }}
+      } @else {
+        {{ 'activate.title' | t }}
+      }
+    </h1>
+    <p class="sub">
+      @if (isShopScope()) {
+        @if (lockReason() === 'plan_expired') {
+          {{ 'activate.shopPlanExpiredSub' | t }}
+        } @else {
+          {{ 'activate.shopLockedSub' | t }}
+        }
+      } @else {
+        {{ 'activate.sub' | t }}
+      }
+    </p>
   </div>
 </header>
 
@@ -14,7 +36,17 @@
       <p class="eyebrow">{{ 'activate.whatYouSee' | t }}</p>
       <h2>{{ 'activate.deactivatedView' | t }}</h2>
       <p>
-        @if (plan(); as current) {
+        @if (isShopScope()) {
+          @if (shop()?.plan; as current) {
+            {{ 'activate.planStatus' | t: { name: current.name, status: current.status } }}
+            @if (current.in_grace_period) {
+              {{ 'activate.graceRunning' | t }}
+            }
+            {{ 'activate.shopLockedHint' | t }}
+          } @else {
+            {{ 'activate.shopLockedHint' | t }}
+          }
+        } @else if (plan(); as current) {
           {{ 'activate.planStatus' | t: { name: current.name, status: current.status } }}
           @if (current.in_grace_period) {
             {{ 'activate.graceRunning' | t }}
@@ -34,6 +66,13 @@
         <li>{{ 'nav.junctionToday' | t }}</li>
       </ul>
     </div>
-    <a routerLink="/back-office/plans" class="primary">{{ 'activate.cta' | t }}</a>
+    @if (isShopScope()) {
+      <div class="cta-row">
+        <a routerLink="/back-office/shops" class="ghost">{{ 'activate.goShops' | t }}</a>
+        <a routerLink="/back-office/plans" class="primary">{{ 'activate.shopCta' | t }}</a>
+      </div>
+    } @else {
+      <a routerLink="/back-office/plans" class="primary">{{ 'activate.cta' | t }}</a>
+    }
   }
 </section>

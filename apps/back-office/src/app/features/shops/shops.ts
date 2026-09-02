@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import {
   DEFAULT_CLOSED_TIME,
   DEFAULT_OPEN_TIME,
@@ -12,6 +13,7 @@ import {
   Shop,
   ShopsApi,
 } from '../../core/shops.api';
+import { ShopLockService } from '../../core/shop-lock.service';
 import { SHOP_TYPE_OPTIONS, shopTypeLabel } from '../../core/shop-types.catalog';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
@@ -54,6 +56,8 @@ export class ShopsPage implements OnInit {
   private readonly shopsApi = inject(ShopsApi);
   private readonly locationsApi = inject(LocationsApi);
   private readonly currentShop = inject(CurrentShopService);
+  private readonly shopLock = inject(ShopLockService);
+  private readonly i18n = inject(I18nService);
   private readonly fb = inject(FormBuilder);
 
   readonly shopTypeSelectOptions = signal<InlineSelectOption[]>(fallbackShopTypeOptions());
@@ -65,6 +69,8 @@ export class ShopsPage implements OnInit {
   readonly error = signal('');
   readonly success = signal('');
   readonly showForm = signal(false);
+  readonly toggleBusyId = signal<string | null>(null);
+  readonly toggleError = signal('');
 
   readonly cities = signal<string[]>([]);
   readonly localities = signal<string[]>([]);
@@ -120,8 +126,18 @@ export class ShopsPage implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (active) => {
-          this.shops.set(this.currentShop.shops());
+          const rows = this.currentShop.shops().map((shop) => this.shopLock.applyLockFromRecord(shop));
+          this.shops.set(rows);
           this.activeShopId.set(active?.id ?? null);
+          rows.forEach((shop) => {
+            this.shopLock.ensurePlanExpiredLock(shop).subscribe({
+              next: (updated) => {
+                if (updated) {
+                  this.patchShop(updated);
+                }
+              },
+            });
+          });
         },
         error: () => {
           this.shops.set([]);
@@ -156,6 +172,7 @@ export class ShopsPage implements OnInit {
     this.currentShop.selectShop(shop.id).subscribe({
       next: () => {
         this.activeShopId.set(shop.id);
+        this.shopLock.syncActiveShopPlanLock().subscribe();
         this.success.set(`Active shop · ${shop.name}`);
       },
       error: () => this.error.set('Could not switch shop.'),
@@ -234,6 +251,141 @@ export class ShopsPage implements OnInit {
 
   isActive(shop: Shop): boolean {
     return this.activeShopId() === shop.id;
+  }
+
+  shopOpen(shop: Shop): boolean {
+    return shop.is_open !== false;
+  }
+
+  phoneVisible(shop: Shop): boolean {
+    if (shop.show_phone === true) {
+      return true;
+    }
+    if (shop.show_phone === false) {
+      return false;
+    }
+    return this.currentShop.readPhoneVisible(shop.id);
+  }
+
+  hasPhone(shop: Shop): boolean {
+    return Boolean(shop.phone_number?.trim());
+  }
+
+  isOwnerMode(shop: Shop): boolean {
+    return this.shopLock.isOwnerMode(shop);
+  }
+
+  ownerStatusLabel(shop: Shop): string {
+    return this.isOwnerMode(shop) ? this.i18n.t('shops.ownerMode') : this.i18n.t('shops.viewerMode');
+  }
+
+  lockToggleDisabled(shop: Shop): boolean {
+    return this.toggleBusyId() === shop.id || !this.shopLock.canManualUnlock(shop);
+  }
+
+  toggleShopOpen(shop: Shop): void {
+    if (!shop.id || !shop.name?.trim()) {
+      return;
+    }
+    const next = !this.shopOpen(shop);
+    this.patchShop({ ...shop, is_open: next });
+    this.toggleBusyId.set(shop.id);
+    this.toggleError.set('');
+    this.shopsApi.updateOpenStatus({ name: shop.name.trim(), is_open: next }).subscribe({
+      next: (updated) => {
+        this.patchShop(updated);
+        this.toggleBusyId.set(null);
+      },
+      error: (err: unknown) => {
+        if (this.isUnprocessable(err)) {
+          this.shopsApi.update(shop.id, { is_open: next }).subscribe({
+            next: (updated) => {
+              this.patchShop(updated);
+              this.toggleBusyId.set(null);
+            },
+            error: (fallbackErr: unknown) => {
+              this.patchShop({ ...shop, is_open: !next });
+              this.toggleBusyId.set(null);
+              this.toggleError.set(this.readError(fallbackErr, 'Could not update shop status.'));
+            },
+          });
+          return;
+        }
+        this.patchShop({ ...shop, is_open: !next });
+        this.toggleBusyId.set(null);
+        this.toggleError.set(this.readError(err, 'Could not update shop status.'));
+      },
+    });
+  }
+
+  togglePhoneVisible(shop: Shop): void {
+    if (!shop.id || !shop.name?.trim() || !this.hasPhone(shop)) {
+      return;
+    }
+    const next = !this.phoneVisible(shop);
+    this.patchShop({ ...shop, show_phone: next });
+    this.currentShop.writePhoneVisible(shop.id, next);
+    this.toggleBusyId.set(shop.id);
+    this.toggleError.set('');
+    this.shopsApi.updatePhoneStatus({ name: shop.name.trim(), show_phone: next }).subscribe({
+      next: (updated) => {
+        this.patchShop(updated);
+        this.currentShop.writePhoneVisible(shop.id, updated.show_phone === true);
+        this.toggleBusyId.set(null);
+      },
+      error: (err: unknown) => {
+        if (this.isUnprocessable(err)) {
+          this.shopsApi.update(shop.id, { show_phone: next }).subscribe({
+            next: (updated) => {
+              this.patchShop(updated);
+              this.currentShop.writePhoneVisible(shop.id, next);
+              this.toggleBusyId.set(null);
+            },
+            error: (fallbackErr: unknown) => {
+              this.patchShop({ ...shop, show_phone: !next });
+              this.currentShop.writePhoneVisible(shop.id, !next);
+              this.toggleBusyId.set(null);
+              this.toggleError.set(this.readError(fallbackErr, 'Could not update phone visibility.'));
+            },
+          });
+          return;
+        }
+        this.patchShop({ ...shop, show_phone: !next });
+        this.currentShop.writePhoneVisible(shop.id, !next);
+        this.toggleBusyId.set(null);
+        this.toggleError.set(this.readError(err, 'Could not update phone visibility.'));
+      },
+    });
+  }
+
+  toggleOwnerMode(shop: Shop): void {
+    if (!shop.id || this.lockToggleDisabled(shop)) {
+      return;
+    }
+    const nextLocked = this.isOwnerMode(shop);
+    const previous = { ...shop };
+    const optimistic = this.shopLock.applyLockFromRecord({
+      ...shop,
+      is_locked: nextLocked,
+      lock_reason: nextLocked ? 'manual' : null,
+    });
+    this.patchShop(optimistic);
+    this.toggleBusyId.set(shop.id);
+    this.toggleError.set('');
+    this.shopLock.setManualLock(shop, nextLocked).subscribe({
+      next: (updated) => {
+        this.patchShop(updated);
+        this.toggleBusyId.set(null);
+        if (this.isActive(updated)) {
+          this.currentShop.setShop(updated);
+        }
+      },
+      error: (err: unknown) => {
+        this.patchShop(previous);
+        this.toggleBusyId.set(null);
+        this.toggleError.set(this.readError(err, 'Could not update shop access.'));
+      },
+    });
   }
 
   openCityPicker(): void {
@@ -329,5 +481,18 @@ export class ShopsPage implements OnInit {
   private readError(error: unknown, fallback: string): string {
     const detail = (error as { error?: { detail?: string } })?.error?.detail;
     return typeof detail === 'string' && detail.trim() ? detail : fallback;
+  }
+
+  private patchShop(shop: Shop): void {
+    const merged = this.shopLock.applyLockFromRecord(shop);
+    this.shops.update((rows) => rows.map((row) => (row.id === merged.id ? merged : row)));
+    if (this.isActive(merged)) {
+      this.currentShop.setShop(merged);
+    }
+  }
+
+  private isUnprocessable(err: unknown): boolean {
+    const status = (err as { status?: number })?.status;
+    return status === 404 || status === 405 || status === 422;
   }
 }

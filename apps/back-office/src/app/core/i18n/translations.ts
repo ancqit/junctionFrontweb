@@ -81,8 +81,11 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'nav.junctionToday': 'Junction Today',
     'nav.plans': 'प्लान',
     'nav.deactivated': 'निष्क्रिय',
+    'nav.shopLocked': 'दुकान लॉक',
     'nav.lockNote':
       'व्यूअर मोड — प्लान और ग्रेस अवधि समाप्त। फिर से ओनर बनने के लिए प्लान सक्रिय करें।',
+    'nav.shopLockNote':
+      'इस दुकान पर व्यूअर मोड — ओवरव्यू और संपादन बंद। दुकानें पेज से अनलॉक करें या प्लान नवीनीकरण करें।',
     'nav.yourShop': 'आपकी दुकान',
     'nav.profilePct': 'प्रोफ़ाइल {{percent}}%',
 
@@ -216,6 +219,10 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'shops.emptySub': 'उत्पाद और ऑर्डर जोड़ने के लिए दुकान बनाएँ।',
     'shops.openShop': 'दुकान खोलें',
     'shops.goOverview': 'ओवरव्यू पर जाएँ',
+    'shops.ownerMode': 'ओनर',
+    'shops.viewerMode': 'व्यूअर',
+    'shops.lockViewer': 'व्यूअर मोड में लॉक करें',
+    'shops.unlockOwner': 'ओनर मोड में अनलॉक करें',
     'shops.picker.cityTitle': 'अपना शहर जोड़ें',
     'shops.picker.cityAdd': 'नया शहर जोड़ें',
     'shops.picker.cityEmpty': 'कोई शहर उपलब्ध नहीं।',
@@ -497,6 +504,16 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
       'व्यूअर के रूप में आप Junction खाता स्थिति देख सकते हैं। सक्रिय होने तक ओवरव्यू, उत्पाद, कर्मचारी, ऑर्डर और बिलिंग लॉक रहेंगे।',
     'activate.noPlanHint':
       'व्यूअर के रूप में यह निष्क्रिय स्थिति देख सकते हैं। फिर से ओनर बनने और बैक ऑफ़िस खोलने के लिए प्लान चुनें।',
+    'activate.shopEyebrow': 'व्यूअर · दुकान लॉक',
+    'activate.shopTitle': '“{{name}}” व्यूअर मोड में है',
+    'activate.shopLockedSub':
+      'आपने इस दुकान को आंशिक रूप से लॉक किया है। ओवरव्यू, उत्पाद, कर्मचारी और बिलिंग बंद रहेंगे जब तक आप ओनर मोड में वापस नहीं जाते।',
+    'activate.shopPlanExpiredSub':
+      'इस दुकान का प्लान और ग्रेस अवधि समाप्त हो गई है। नवीनीकरण तक दुकान व्यूअर मोड में रहेगी।',
+    'activate.shopLockedHint':
+      'दुकानें पेज से ओनर मोड वापस चालू करें, या प्लान नवीनीकरण करें।',
+    'activate.shopCta': 'प्लान नवीनीकरण →',
+    'activate.goShops': 'दुकानें',
   },
   en: {
     'common.cancel': 'Cancel',
@@ -573,8 +590,11 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'nav.junctionToday': 'Junction Today',
     'nav.plans': 'Plans',
     'nav.deactivated': 'Deactivated',
+    'nav.shopLocked': 'Shop locked',
     'nav.lockNote':
       'Viewer mode — plan and grace period ended. Activate a plan to become an owner again.',
+    'nav.shopLockNote':
+      'This shop is in viewer mode — overview and editing are off. Unlock from Shops or renew the plan.',
     'nav.yourShop': 'Your shop',
     'nav.profilePct': 'Profile {{percent}}%',
 
@@ -706,6 +726,10 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'shops.emptySub': 'Create a shop to start adding products and orders.',
     'shops.openShop': 'Open shop',
     'shops.goOverview': 'Go to Overview',
+    'shops.ownerMode': 'Owner',
+    'shops.viewerMode': 'Viewer',
+    'shops.lockViewer': 'Lock to viewer mode',
+    'shops.unlockOwner': 'Unlock to owner mode',
     'shops.picker.cityTitle': 'Add your city',
     'shops.picker.cityAdd': 'Add a new city',
     'shops.picker.cityEmpty': 'No cities available.',
@@ -981,5 +1005,15 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
       'As a viewer you keep visibility of your Junction account status. Overview, products, employees, orders, and billing stay locked until you activate.',
     'activate.noPlanHint':
       'As a viewer you can see this deactivated state. Choose a plan to become an owner again and unlock the full back office.',
+    'activate.shopEyebrow': 'VIEWER · SHOP LOCKED',
+    'activate.shopTitle': '“{{name}}” is in viewer mode',
+    'activate.shopLockedSub':
+      'You partially locked this shop. Overview, products, employees, and billing stay off until you switch back to owner mode.',
+    'activate.shopPlanExpiredSub':
+      'This shop’s plan and grace period have ended. It stays in viewer mode until you renew.',
+    'activate.shopLockedHint':
+      'Turn owner mode back on from Shops, or renew the plan.',
+    'activate.shopCta': 'Renew plan →',
+    'activate.goShops': 'Shops',
   },
 };
