@@ -7,6 +7,21 @@ export interface DigiLockerConnectResponse {
   authorization_url: string;
 }
 
+export interface GstCaptchaResponse {
+  session_id: string;
+  image: string;
+}
+
+export interface GstVerifyResponse {
+  gstin: string;
+  gst_verified: boolean;
+  legal_name?: string | null;
+  trade_name?: string | null;
+  status?: string | null;
+  taxpayer_type?: string | null;
+  message: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProfileApi {
   private readonly api = inject(BackOfficeApiService);
@@ -31,5 +46,19 @@ export class ProfileApi {
     return this.api.get<DigiLockerConnectResponse>('/auth/digilocker/connect').pipe(
       catchError(() => of(null)),
     );
+  }
+
+  /** Free GST portal captcha — `GET /gst/captcha`. */
+  gstCaptcha(): Observable<GstCaptchaResponse> {
+    return this.api.get<GstCaptchaResponse>('/gst/captcha');
+  }
+
+  /** Verify GSTIN with captcha — `POST /gst/verify`. */
+  verifyGst(payload: {
+    session_id: string;
+    gstin: string;
+    captcha: string;
+  }): Observable<GstVerifyResponse> {
+    return this.api.post<GstVerifyResponse>('/gst/verify', payload);
   }
 }

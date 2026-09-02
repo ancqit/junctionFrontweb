@@ -214,6 +214,25 @@ main {
   min-width: 0;
 }
 
+.gst-verify {
+  margin-bottom: 18px;
+}
+
+.gst-captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gst-captcha {
+  height: 48px;
+  width: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line, #dedbd2);
+  background: #fff;
+}
+
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 40; background: rgba(16, 28, 22, .55); backdrop-filter: blur(2px);
 }

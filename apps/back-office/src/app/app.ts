@@ -32,6 +32,10 @@ export class App implements OnInit {
   readonly menuOpen = signal(false);
   readonly saving = signal(false);
   readonly connectingDigiLocker = signal(false);
+  readonly gstLoading = signal(false);
+  readonly gstVerifying = signal(false);
+  readonly gstCaptchaImage = signal<string | null>(null);
+  readonly gstSessionId = signal<string | null>(null);
   readonly error = signal('');
   readonly success = signal('');
 
@@ -39,6 +43,11 @@ export class App implements OnInit {
     display_name: ['', [Validators.required, Validators.minLength(2)]],
     bio: [''],
     avatar_url: [''],
+  });
+
+  readonly gstForm = this.fb.nonNullable.group({
+    gstin: ['', [Validators.required, Validators.minLength(15), Validators.maxLength(15)]],
+    captcha: ['', [Validators.required, Validators.minLength(1)]],
   });
 
   readonly shop = this.currentShop.shop;
@@ -52,6 +61,7 @@ export class App implements OnInit {
       bio: profile?.bio,
       avatarUrl: profile?.avatar_url,
       digilockerVerified: profile?.digilocker_verified,
+      gstVerified: profile?.gst_verified,
       shopName: shop?.name,
       shopCity: shop?.city,
       shopLocality: shop?.locality,
@@ -123,10 +133,17 @@ export class App implements OnInit {
       bio: profile?.bio ?? '',
       avatar_url: profile?.avatar_url ?? '',
     });
+    this.gstForm.patchValue({
+      gstin: profile?.gstin ?? '',
+      captcha: '',
+    });
     this.error.set('');
     this.success.set('');
     this.profileModalOpen.set(true);
     this.reloadProfile();
+    if (!profile?.gst_verified) {
+      this.refreshGstCaptcha();
+    }
   }
 
   closeProfileModal(): void {
@@ -179,6 +196,73 @@ export class App implements OnInit {
           this.error.set(
             'DigiLocker is not configured on the server yet. Ask Junction to enable partner credentials.',
           );
+        },
+      });
+  }
+
+  refreshGstCaptcha(): void {
+    this.gstLoading.set(true);
+    this.error.set('');
+    this.profileApi
+      .gstCaptcha()
+      .pipe(finalize(() => this.gstLoading.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.gstSessionId.set(res.session_id);
+          this.gstCaptchaImage.set(res.image);
+          this.gstForm.patchValue({ captcha: '' });
+        },
+        error: (err: unknown) => {
+          const detail = (err as { error?: { detail?: string } })?.error?.detail;
+          this.error.set(
+            typeof detail === 'string' && detail.trim()
+              ? detail
+              : 'Could not load GST captcha from the portal.',
+          );
+        },
+      });
+  }
+
+  verifyGst(): void {
+    if (this.gstForm.invalid) {
+      this.gstForm.markAllAsTouched();
+      return;
+    }
+    const sessionId = this.gstSessionId();
+    if (!sessionId) {
+      this.error.set('Refresh the GST captcha first.');
+      return;
+    }
+    const raw = this.gstForm.getRawValue();
+    this.gstVerifying.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.profileApi
+      .verifyGst({
+        session_id: sessionId,
+        gstin: raw.gstin.trim().toUpperCase(),
+        captcha: raw.captcha.trim(),
+      })
+      .pipe(finalize(() => this.gstVerifying.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.success.set(
+            res.legal_name
+              ? this.i18n.t('profileModal.gstVerifiedNamed', { name: res.legal_name })
+              : this.i18n.t('profileModal.gstVerified'),
+          );
+          this.reloadProfile();
+          this.gstCaptchaImage.set(null);
+          this.gstSessionId.set(null);
+        },
+        error: (err: unknown) => {
+          const detail = (err as { error?: { detail?: string } })?.error?.detail;
+          this.error.set(
+            typeof detail === 'string' && detail.trim()
+              ? detail
+              : 'GST verification failed. Check GSTIN/captcha and try again.',
+          );
+          this.refreshGstCaptcha();
         },
       });
   }

@@ -122,6 +122,11 @@
               {{ connectingDigiLocker() ? ('profileModal.connecting' | t) : ('profileModal.verifyDigilocker' | t) }}
             </button>
           }
+          @if (item.id === 'gst' && !item.done) {
+            <button type="button" class="ghost" (click)="refreshGstCaptcha()" [disabled]="gstLoading()">
+              {{ gstLoading() ? ('profileModal.gstLoading' | t) : ('profileModal.verifyGst' | t) }}
+            </button>
+          }
           @if (item.id === 'shop' && !item.done) {
             <a routerLink="/back-office/shops" class="ghost" (click)="closeProfileModal()">{{ 'profileModal.openShops' | t }}</a>
           }
@@ -131,6 +136,57 @@
         </li>
       }
     </ul>
+
+    @if (!profile()?.gst_verified && (gstCaptchaImage() || gstLoading())) {
+      <section class="edit gst-verify" [formGroup]="gstForm">
+        <p class="eyebrow">{{ 'profileModal.gstEyebrow' | t }}</p>
+        <h3>{{ 'profileModal.gstTitle' | t }}</h3>
+        <p class="sub">{{ 'profileModal.gstSub' | t }}</p>
+
+        @if (gstCaptchaImage(); as captchaSrc) {
+          <div class="gst-captcha-row">
+            <img [src]="captchaSrc" alt="GST captcha" class="gst-captcha" />
+            <button type="button" class="ghost" (click)="refreshGstCaptcha()" [disabled]="gstLoading()">
+              {{ 'profileModal.gstRefresh' | t }}
+            </button>
+          </div>
+        }
+
+        <label>
+          {{ 'profileModal.gstin' | t }}
+          <input formControlName="gstin" maxlength="15" autocomplete="off" placeholder="22AAAAA0000A1Z5" />
+        </label>
+        <label>
+          {{ 'profileModal.gstCaptcha' | t }}
+          <input formControlName="captcha" autocomplete="off" />
+        </label>
+
+        <div class="actions">
+          <button type="button" class="primary" (click)="verifyGst()" [disabled]="gstVerifying() || gstLoading()">
+            {{ gstVerifying() ? ('profileModal.gstVerifying' | t) : ('profileModal.gstSubmit' | t) }}
+          </button>
+          @if (profile()?.gst_legal_name) {
+            <span class="phone">{{ profile()?.gst_legal_name }}</span>
+          }
+        </div>
+      </section>
+    }
+
+    @if (profile()?.gst_verified) {
+      <section class="edit">
+        <p class="eyebrow">{{ 'profileModal.gstEyebrow' | t }}</p>
+        <h3>{{ 'profileModal.gstDoneTitle' | t }}</h3>
+        <p class="sub">
+          {{ profile()?.gstin }}
+          @if (profile()?.gst_legal_name) {
+            · {{ profile()?.gst_legal_name }}
+          }
+          @if (profile()?.gst_status) {
+            · {{ profile()?.gst_status }}
+          }
+        </p>
+      </section>
+    }
 
     <section class="edit" [formGroup]="profileForm">
       <p class="eyebrow">{{ 'profileModal.updateEyebrow' | t }}</p>

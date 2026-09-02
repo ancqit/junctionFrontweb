@@ -251,6 +251,11 @@ export interface UserProfile {
   /** From junctionBack GET /profile (main). */
   digilocker_verified?: boolean | null;
   digilocker_name?: string | null;
+  gstin?: string | null;
+  gst_verified?: boolean | null;
+  gst_legal_name?: string | null;
+  gst_trade_name?: string | null;
+  gst_status?: string | null;
   created_at: string;
   updated_at: string;
 }

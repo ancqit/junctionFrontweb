@@ -1,8 +1,9 @@
 /**
  * Profile completeness checklist used by the back-office sidebar modal.
  * Maps to junctionBack APIs:
- * - GET/PATCH /profile (display_name, bio, avatar_url, phone, email)
- * - GET /auth/digilocker/connect (+ callback sets digilocker_verified)
+ * - GET/PATCH /profile (display_name, bio, avatar_url, phone, email, gst_*)
+ * - GET /auth/digilocker/connect (+ callback sets digilocker_verified / Aadhaar-linked ID)
+ * - GET /gst/captcha + POST /gst/verify (free public GST portal)
  * - GET/POST/PUT /shops (name, city, locality)
  *
  * label/detail are i18n keys (see translations.ts profileModal.check.*).
@@ -14,6 +15,7 @@ export type ProfileCheckId =
   | 'bio'
   | 'avatar'
   | 'digilocker'
+  | 'gst'
   | 'shop';
 
 export interface ProfileCheckItem {
@@ -37,6 +39,7 @@ export function buildProfileCompleteness(input: {
   bio?: string | null;
   avatarUrl?: string | null;
   digilockerVerified?: boolean | null;
+  gstVerified?: boolean | null;
   shopName?: string | null;
   shopCity?: string | null;
   shopLocality?: string | null;
@@ -82,6 +85,13 @@ export function buildProfileCompleteness(input: {
       detail: 'profileModal.check.digilocker.detail',
       done: !!input.digilockerVerified,
       api: 'GET /auth/digilocker/connect',
+    },
+    {
+      id: 'gst',
+      label: 'profileModal.check.gst.label',
+      detail: 'profileModal.check.gst.detail',
+      done: !!input.gstVerified,
+      api: 'GET /gst/captcha + POST /gst/verify',
     },
     {
       id: 'shop',
