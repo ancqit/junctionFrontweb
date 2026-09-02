@@ -13,6 +13,9 @@
 @if (success()) {
   <p class="success" role="status">{{ success() }}</p>
 }
+@if (toggleError()) {
+  <p class="error" role="alert">{{ toggleError() }}</p>
+}
 
 @if (showForm()) {
   <section class="panel" [formGroup]="form">
@@ -116,11 +119,62 @@
           </div>
           <p class="hours">
             {{ shop.open_time || '09:00' }} – {{ shop.closed_time || '21:00' }}
-            ·
-            <span [class.open]="shop.is_open !== false">
-              {{ shop.is_open === false ? ('common.closed' | t) : ('common.open' | t) }}
-            </span>
           </p>
+          <div class="shop-toggles">
+            <div class="open-toggle-wrap">
+              <span class="status-pill" [class.is-open]="shopOpen(shop)">
+                {{ shopOpen(shop) ? ('common.open' | t) : ('common.closed' | t) }}
+              </span>
+              <label
+                class="open-toggle"
+                [attr.aria-label]="shopOpen(shop) ? ('overview.markClosed' | t) : ('overview.markOpen' | t)"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="shopOpen(shop)"
+                  [disabled]="toggleBusyId() === shop.id"
+                  (change)="toggleShopOpen(shop)"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+            @if (hasPhone(shop)) {
+              <div class="open-toggle-wrap phone-toggle-wrap">
+                <span class="status-pill phone-pill" [class.is-visible]="phoneVisible(shop)">
+                  {{ phoneVisible(shop) ? ('overview.phoneOn' | t) : ('overview.phoneOff' | t) }}
+                </span>
+                <label
+                  class="open-toggle"
+                  [attr.aria-label]="phoneVisible(shop) ? ('overview.hidePhone' | t) : ('overview.showPhone' | t)"
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="phoneVisible(shop)"
+                    [disabled]="toggleBusyId() === shop.id"
+                    (change)="togglePhoneVisible(shop)"
+                  />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            }
+            <div class="open-toggle-wrap owner-toggle-wrap">
+              <span class="status-pill owner-pill" [class.is-owner]="isOwnerMode(shop)">
+                {{ ownerStatusLabel(shop) }}
+              </span>
+              <label
+                class="open-toggle"
+                [attr.aria-label]="isOwnerMode(shop) ? ('shops.lockViewer' | t) : ('shops.unlockOwner' | t)"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="isOwnerMode(shop)"
+                  [disabled]="lockToggleDisabled(shop)"
+                  (change)="toggleOwnerMode(shop)"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
           @if (shop.created_at) {
             <p class="created">Created {{ shop.created_at | date: 'mediumDate' }}</p>
           }

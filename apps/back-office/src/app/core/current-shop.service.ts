@@ -7,6 +7,7 @@ import { Shop, ShopsApi } from './shops.api';
 const SHOP_TYPE_STORAGE_KEY = 'junction.shopTypeById';
 const SHOP_PLACE_STORAGE_KEY = 'junction.shopPlaceById';
 const SHOP_PHONE_VISIBLE_KEY = 'junction.phoneVisibleById';
+const SHOP_LOCKED_KEY = 'junction.shopLockedById';
 const ACTIVE_SHOP_STORAGE_KEY = 'junction.activeShopId';
 const SESSION_KEY = 'junction.session';
 
@@ -126,6 +127,7 @@ export class CurrentShopService {
     this.removeStorageEntry(SHOP_TYPE_STORAGE_KEY, id);
     this.removeStorageEntry(SHOP_PLACE_STORAGE_KEY, id);
     this.removeStorageEntry(SHOP_PHONE_VISIBLE_KEY, id);
+    this.removeStorageEntry(SHOP_LOCKED_KEY, id);
   }
 
   /**
@@ -274,6 +276,34 @@ export class CurrentShopService {
       const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
       map[shopId] = visible;
       localStorage.setItem(SHOP_PHONE_VISIBLE_KEY, JSON.stringify(map));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  /** Viewer lock overlay until junctionBack `is_locked` is deployed. */
+  readShopLocked(shopId: string | null | undefined): boolean {
+    if (!shopId) {
+      return false;
+    }
+    try {
+      const raw = localStorage.getItem(SHOP_LOCKED_KEY);
+      if (!raw) {
+        return false;
+      }
+      const map = JSON.parse(raw) as Record<string, boolean>;
+      return map[shopId] === true;
+    } catch {
+      return false;
+    }
+  }
+
+  writeShopLocked(shopId: string, locked: boolean): void {
+    try {
+      const raw = localStorage.getItem(SHOP_LOCKED_KEY);
+      const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      map[shopId] = locked;
+      localStorage.setItem(SHOP_LOCKED_KEY, JSON.stringify(map));
     } catch {
       // ignore storage failures
     }

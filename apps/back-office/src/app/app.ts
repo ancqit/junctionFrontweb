@@ -7,6 +7,7 @@ import { I18nService } from './core/i18n/i18n.service';
 import { TranslatePipe } from './core/i18n/translate.pipe';
 import { LogoutService } from './core/logout.service';
 import { PlanAccessService } from './core/plan-access.service';
+import { ShopLockService } from './core/shop-lock.service';
 import { buildProfileCompleteness } from './core/profile-completeness';
 import { ProfileApi } from './core/profile.api';
 import { UserProfile } from './core/models';
@@ -19,6 +20,7 @@ import { UserProfile } from './core/models';
 })
 export class App implements OnInit {
   readonly access = inject(PlanAccessService);
+  readonly shopLock = inject(ShopLockService);
   readonly i18n = inject(I18nService);
   private readonly logoutService = inject(LogoutService);
   private readonly profileApi = inject(ProfileApi);
@@ -86,7 +88,13 @@ export class App implements OnInit {
   ngOnInit(): void {
     this.access.refresh().subscribe();
     this.reloadProfile();
-    this.currentShop.ensureShop().subscribe();
+    this.currentShop.ensureShop().subscribe({
+      next: (shop) => {
+        if (shop) {
+          this.shopLock.syncActiveShopPlanLock().subscribe();
+        }
+      },
+    });
   }
 
   @HostListener('document:keydown.escape')
