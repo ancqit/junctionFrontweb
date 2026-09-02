@@ -34,6 +34,8 @@
         <a routerLink="/back-office/products" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.products' | t }}</a>
         <a routerLink="/back-office/billing" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.billing' | t }}</a>
         <a routerLink="/back-office/orders" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.orders' | t }}</a>
+        <a routerLink="/back-office/complaints" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.complaints' | t }}</a>
+        <a routerLink="/back-office/junction-today" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.junctionToday' | t }}</a>
         <a routerLink="/back-office/plans" routerLinkActive="active" (click)="closeMenu()">{{ 'nav.plans' | t }}</a>
         <div class="nav-lang" role="group" [attr.aria-label]="'common.language' | t">
           <button type="button" class="lang-btn" [class.active]="i18n.lang() === 'hi'" (click)="i18n.setLang('hi')">{{ 'common.lang.hi' | t }}</button>

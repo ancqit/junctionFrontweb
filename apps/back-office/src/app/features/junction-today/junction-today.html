@@ -1,0 +1,14 @@
+<header>
+  <div>
+    <p class="eyebrow">{{ 'junctionToday.eyebrow' | t }}</p>
+    <h1>{{ 'junctionToday.title' | t }}</h1>
+    <p class="sub">{{ 'junctionToday.sub' | t }}</p>
+  </div>
+</header>
+
+<app-external-embed
+  [src]="embedUrl()"
+  [title]="'junctionToday.title' | t"
+  [subtitle]="embedSubtitle()"
+  [emptyMessage]="'junctionToday.empty' | t"
+/>

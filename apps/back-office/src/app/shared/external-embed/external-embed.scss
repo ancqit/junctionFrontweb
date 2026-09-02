@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+.embed-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.embed-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.embed-sub {
+  margin: 0;
+  color: #667069;
+  font-size: 13px;
+}
+
+.ghost {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #1a6541;
+  background: #eef3ef;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.embed-frame {
+  width: 100%;
+  min-height: min(72vh, 900px);
+  border: 1px solid #d8d4c8;
+  border-radius: 16px;
+  background: white;
+}
+
+.empty {
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px dashed #d8d4c8;
+  background: #faf9f6;
+  color: #667069;
+}
+
+.empty strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #1a281f;
+  font-size: 16px;
+}
+
+.empty p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.empty a {
+  color: #1a6541;
+  font-weight: 700;
+}
