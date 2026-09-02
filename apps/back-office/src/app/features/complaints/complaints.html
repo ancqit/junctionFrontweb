@@ -1,0 +1,14 @@
+<header>
+  <div>
+    <p class="eyebrow">{{ 'complaints.eyebrow' | t }}</p>
+    <h1>{{ 'complaints.title' | t }}</h1>
+    <p class="sub">{{ 'complaints.sub' | t }}</p>
+  </div>
+</header>
+
+<app-external-embed
+  [src]="embedUrl()"
+  [title]="'complaints.title' | t"
+  [subtitle]="embedSubtitle()"
+  [emptyMessage]="'complaints.empty' | t"
+/>

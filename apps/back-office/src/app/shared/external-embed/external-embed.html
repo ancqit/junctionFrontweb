@@ -1,0 +1,24 @@
+@if (safeSrc(); as frameUrl) {
+  <section class="embed-shell">
+    <div class="embed-toolbar">
+      @if (subtitle()) {
+        <p class="embed-sub">{{ subtitle() }}</p>
+      }
+      <a class="ghost" [href]="src()!" target="_blank" rel="noopener noreferrer">
+        {{ openLabel() || ('common.openInNewTab' | t) }}
+      </a>
+    </div>
+    <iframe
+      class="embed-frame"
+      [src]="frameUrl"
+      [title]="title()"
+      loading="lazy"
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+  </section>
+} @else {
+  <section class="empty">
+    <strong>{{ emptyMessage() }}</strong>
+    <p>{{ 'embed.needShop' | t }} <a routerLink="/back-office/shops">{{ 'nav.shops' | t }}</a>.</p>
+  </section>
+}

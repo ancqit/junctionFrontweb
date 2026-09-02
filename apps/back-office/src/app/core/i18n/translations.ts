@@ -29,6 +29,7 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'common.language': 'भाषा',
     'common.lang.hi': 'हिंदी',
     'common.lang.en': 'EN',
+    'common.openInNewTab': 'नई टैब में खोलें',
     'common.city': 'शहर',
     'common.locality': 'इलाका',
     'common.addCity': 'अपना शहर जोड़ें',
@@ -76,6 +77,8 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'nav.products': 'उत्पाद',
     'nav.billing': 'बिलिंग',
     'nav.orders': 'ऑर्डर',
+    'nav.complaints': 'शिकायतें',
+    'nav.junctionToday': 'Junction Today',
     'nav.plans': 'प्लान',
     'nav.deactivated': 'निष्क्रिय',
     'nav.lockNote':
@@ -253,6 +256,20 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'orders.hideItems': 'आइटम छिपाएँ',
     'orders.notesLabel': 'नोट्स: {{notes}}',
     'orders.col.order': 'ऑर्डर',
+
+    'complaints.eyebrow': 'सहायता',
+    'complaints.title': 'शिकायतें और मुद्दे',
+    'complaints.sub':
+      'अपनी दुकान के लिए junction.blog पर प्रविष्टि बनाएँ और देखें — ग्राहक मुद्दे, अपडेट और नोट्स।',
+    'complaints.empty': 'शिकायतें देखने के लिए पहले एक दुकान चुनें या बनाएँ।',
+
+    'junctionToday.eyebrow': 'कैटलॉग',
+    'junctionToday.title': 'Junction Today',
+    'junctionToday.sub':
+      'ग्राहकों को junction.today पर आपकी दुकान कैसी दिखती है — सीधे अपने शहर और इलाके में।',
+    'junctionToday.empty': 'Junction Today पूर्वावलोकन के लिए पहले एक दुकान चुनें या बनाएँ।',
+
+    'embed.needShop': 'इस दृश्य के लिए',
 
     // Overview
     'overview.editShop': 'दुकान संपादित करें',
@@ -505,6 +522,7 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'common.language': 'Language',
     'common.lang.hi': 'हिंदी',
     'common.lang.en': 'EN',
+    'common.openInNewTab': 'Open in new tab',
     'common.city': 'City',
     'common.locality': 'Locality',
     'common.addCity': 'Add your city',
@@ -551,6 +569,8 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'nav.products': 'Products',
     'nav.billing': 'Billing',
     'nav.orders': 'Orders',
+    'nav.complaints': 'Complaints',
+    'nav.junctionToday': 'Junction Today',
     'nav.plans': 'Plans',
     'nav.deactivated': 'Deactivated',
     'nav.lockNote':
@@ -726,6 +746,20 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'orders.hideItems': 'Hide items',
     'orders.notesLabel': 'Notes: {{notes}}',
     'orders.col.order': 'Order',
+
+    'complaints.eyebrow': 'SUPPORT',
+    'complaints.title': 'Complaints & issues',
+    'complaints.sub':
+      'Create and view blog entries for your shop on junction.blog — customer issues, updates, and notes.',
+    'complaints.empty': 'Select or create a shop first to view complaints.',
+
+    'junctionToday.eyebrow': 'CATALOG',
+    'junctionToday.title': 'Junction Today',
+    'junctionToday.sub':
+      'See how customers find your shop on junction.today in your city and locality.',
+    'junctionToday.empty': 'Select or create a shop first to preview Junction Today.',
+
+    'embed.needShop': 'To use this view, open',
 
     'overview.editShop': 'Edit shop',
     'overview.editDetails': 'Edit shop details',
