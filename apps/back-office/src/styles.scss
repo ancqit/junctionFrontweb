@@ -1,3 +1,31 @@
 @use 'disabled-theme';
 
-html, body { margin: 0; min-height: 100%; }
+:root {
+  --ink: #0f1f17;
+  --ink-soft: #3d5248;
+  --mute: #6b7c72;
+  --forest: #194b31;
+  --forest-mid: #17633e;
+  --forest-bright: #1f7a4c;
+  --forest-deep: #103d29;
+  --gold: #f3d782;
+  --gold-soft: #f7e9b8;
+  --gold-deep: #d4b75e;
+  --paper: #f5f3ee;
+  --paper-deep: #ebe4d4;
+  --surface: #fffdf8;
+  --line: #dedbd2;
+  --shadow: 0 16px 40px rgba(15, 31, 23, 0.1);
+  --font-ui: 'DM Sans', 'Segoe UI', sans-serif;
+  --font-display: Georgia, 'Times New Roman', serif;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--font-ui);
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
