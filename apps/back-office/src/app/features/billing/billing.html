@@ -137,7 +137,7 @@
       </div>
 
       <div class="actions">
-        <button type="submit" class="primary" [disabled]="saving() || lines().length === 0">
+        <button type="submit" class="primary" [disabled]="customerForm.invalid || saving() || lines().length === 0">
           {{ saving() ? ('common.creating' | t) : ('billing.createOrder' | t) }}
         </button>
       </div>

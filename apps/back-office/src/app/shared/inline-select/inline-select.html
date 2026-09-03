@@ -12,13 +12,16 @@
   </button>
 
   @if (open()) {
-    <div class="menu" (mousedown)="$event.preventDefault()" (click)="$event.stopPropagation()">
+    <div class="menu" (click)="$event.stopPropagation()">
       @if (searchable) {
         <div class="search-row">
           <input
+            #searchInput
             type="search"
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearchInput($event)"
+            (mousedown)="$event.stopPropagation()"
+            (click)="$event.stopPropagation()"
             [placeholder]="searchPlaceholder"
             autocomplete="off"
           />
@@ -30,6 +33,7 @@
             role="option"
             class="clear-option"
             [class.selected]="!selectedValue()"
+            (mousedown)="$event.preventDefault()"
             (click)="clear($event)"
           >
             {{ placeholder }}
@@ -40,6 +44,7 @@
             role="option"
             [class.selected]="isSelected(option.value)"
             [attr.aria-selected]="isSelected(option.value)"
+            (mousedown)="$event.preventDefault()"
             (click)="onOptionClick($event, option.value)"
           >
             <span class="option-label">{{ option.label }}</span>
@@ -54,6 +59,7 @@
           <li
             role="option"
             class="custom-option"
+            (mousedown)="$event.preventDefault()"
             (click)="addCustomFromSearch($event)"
           >
             Use “{{ searchQuery().trim() }}”
