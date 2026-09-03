@@ -182,6 +182,14 @@
         <p>{{ 'overview.products' | t }}</p>
         <strong>{{ loading() ? '…' : productCount() }}</strong>
       </article>
+      <article>
+        <p>{{ 'overview.inventoryValue' | t }}</p>
+        <strong>{{ loading() ? '…' : (inventoryValue() | currency: 'INR' : 'symbol-narrow' : '1.0-0') }}</strong>
+      </article>
+      <article>
+        <p>{{ 'overview.expenditure' | t }}</p>
+        <strong>{{ loading() ? '…' : (expenditure() | currency: 'INR' : 'symbol-narrow' : '1.0-0') }}</strong>
+      </article>
     </section>
 
     <section class="card notice-card" [formGroup]="noticeForm">

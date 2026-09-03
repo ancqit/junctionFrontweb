@@ -27,7 +27,7 @@
   </div>
 </header>
 
-<div class="view-toggle" role="tablist" [attr.aria-label]="'plans.orWaitlist' | t">
+<div class="view-toggle" role="tablist" [attr.aria-label]="'plans.orPayments' | t">
   <button
     type="button"
     role="tab"
@@ -40,12 +40,12 @@
   <button
     type="button"
     role="tab"
-    [attr.aria-selected]="viewMode() === 'waitlist'"
-    [class.active]="viewMode() === 'waitlist'"
-    (click)="setViewMode('waitlist')"
+    [attr.aria-selected]="viewMode() === 'payments'"
+    [class.active]="viewMode() === 'payments'"
+    (click)="setViewMode('payments')"
   >
-    {{ 'plans.tab.waitlist' | t }}
-    @if (onWaitlist()) {
+    {{ 'plans.tab.payments' | t }}
+    @if (pendingPayment()) {
       <span class="toggle-dot" aria-hidden="true"></span>
     }
   </button>
@@ -60,58 +60,50 @@
 
 @if (loading()) {
   <p class="muted">{{ 'plans.loading' | t }}</p>
-} @else if (viewMode() === 'waitlist') {
-  @if (application(); as app) {
+} @else if (viewMode() === 'payments') {
+  @if (paymentPlan(); as plan) {
     <section class="forwarded" role="status">
-      <p class="eyebrow">{{ 'plans.waitlistStatusEyebrow' | t }}</p>
-      <h2>
-        @if (app.status === 'pending') {
-          {{ 'plans.waitlistPendingTitle' | t: { plan: requestedPlanName(app) } }}
-        } @else {
-          {{ 'plans.waitlistAppTitle' | t: { status: app.status } }}
-        }
-      </h2>
-      <p>
-        {{ app.switch_message }}
-        @if (app.status === 'pending') {
-          {{ 'plans.waitlistPendingHint' | t }}
-        }
-      </p>
+      <p class="eyebrow">{{ 'plans.paymentsEyebrow' | t }}</p>
+      <h2>{{ 'plans.paymentsTitle' | t: { plan: plan.name } }}</h2>
+      <p>{{ 'plans.paymentsPending' | t }}</p>
       <dl>
         <div>
-          <dt>{{ 'plans.dt.plan' | t }}</dt>
-          <dd>{{ requestedPlanName(app) }}</dd>
+          <dt>{{ 'plans.paymentsPlan' | t }}</dt>
+          <dd>{{ plan.name }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'plans.paymentsAmount' | t }}</dt>
+          <dd>{{ paymentAmount() | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
         </div>
         <div>
           <dt>{{ 'plans.dt.status' | t }}</dt>
-          <dd>{{ app.status | titlecase }}</dd>
+          <dd>{{ (pendingPayment()?.status || 'pending') | titlecase }}</dd>
         </div>
-        <div>
-          <dt>{{ 'plans.dt.submitted' | t }}</dt>
-          <dd>{{ app.created_at | date:'medium' }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'plans.dt.shop' | t }}</dt>
-          <dd>{{ app.shop_name }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'common.city' | t }}</dt>
-          <dd>{{ app.location.city }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'common.locality' | t }}</dt>
-          <dd>{{ app.location.locality }}</dd>
-        </div>
+        @if (shop(); as shop) {
+          <div>
+            <dt>{{ 'plans.dt.shop' | t }}</dt>
+            <dd>{{ shop.name }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'common.city' | t }}</dt>
+            <dd>{{ shop.city }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'common.locality' | t }}</dt>
+            <dd>{{ shop.locality }}</dd>
+          </div>
+        }
       </dl>
       <div class="forwarded-actions">
         <button type="button" class="ghost" (click)="setViewMode('plans')">{{ 'plans.browsePlans' | t }}</button>
+        <button type="button" class="primary" disabled>{{ 'plans.paymentsLater' | t }}</button>
       </div>
     </section>
   } @else {
     <section class="empty-waitlist" role="status">
-      <p class="eyebrow">{{ 'plans.waitlistEyebrow' | t }}</p>
-      <h2>{{ 'plans.waitlistEmptyTitle' | t }}</h2>
-      <p>{{ 'plans.waitlistEmptySub' | t }}</p>
+      <p class="eyebrow">{{ 'plans.paymentsEyebrow' | t }}</p>
+      <h2>{{ 'plans.paymentsEmptyTitle' | t }}</h2>
+      <p>{{ 'plans.paymentsEmptySub' | t }}</p>
       <button type="button" class="primary" (click)="setViewMode('plans')">{{ 'plans.viewPlans' | t }}</button>
     </section>
   }
@@ -155,8 +147,8 @@
           }
         </p>
       </div>
-      @if (onWaitlist()) {
-        <button type="button" class="ghost" (click)="setViewMode('waitlist')">{{ 'plans.viewWaitlist' | t }}</button>
+      @if (pendingPayment()) {
+        <button type="button" class="ghost" (click)="setViewMode('payments')">{{ 'plans.viewPayments' | t }}</button>
       }
     </section>
   }

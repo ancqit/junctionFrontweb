@@ -75,10 +75,14 @@ export class OverviewPage implements OnInit {
   readonly productCount = signal(0);
   readonly employeeCount = signal(0);
   readonly orderCount = signal(0);
+  readonly inventoryValue = signal(0);
+  readonly expenditure = signal(0);
   readonly recentOrders = signal<Order[]>([]);
   readonly loading = signal(true);
   readonly profile = signal<UserProfile | null>(null);
   readonly countdown = signal<PlanCountdown | null>(null);
+  /** Plan price treated as an employee-like cost for expenditure. */
+  private planExpenditure = 0;
 
   readonly shop = signal<Shop | null>(null);
   readonly shopType = signal<string | null>(null);
@@ -612,17 +616,47 @@ export class OverviewPage implements OnInit {
   private loadDashboard(): void {
     this.loading.set(true);
     this.plansApi.me().subscribe({
-      next: (plan) => this.countdown.set(buildPlanCountdown(plan)),
-      error: () => this.countdown.set(null),
+      next: (plan) => {
+        this.countdown.set(buildPlanCountdown(plan));
+        this.planExpenditure = Number(plan.price_inr) || 0;
+        this.recomputeExpenditure();
+      },
+      error: () => {
+        this.countdown.set(null);
+        this.planExpenditure = 0;
+        this.recomputeExpenditure();
+      },
     });
     this.loadTodayNotice();
     this.productsApi.list().subscribe({
-      next: (products) => this.productCount.set(products.length),
-      error: () => this.productCount.set(0),
+      next: (products) => {
+        this.productCount.set(products.length);
+        this.inventoryValue.set(
+          products.reduce(
+            (sum, product) => sum + Number(product.price || 0) * Number(product.stock_quantity || 0),
+            0,
+          ),
+        );
+      },
+      error: () => {
+        this.productCount.set(0);
+        this.inventoryValue.set(0);
+      },
     });
     this.employeesApi.list().subscribe({
-      next: (employees) => this.employeeCount.set(employees.length),
-      error: () => this.employeeCount.set(0),
+      next: (employees) => {
+        this.employeeCount.set(employees.length);
+        this.employeeSalaryTotal = employees.reduce(
+          (sum, employee) => sum + Number(employee.salary || 0),
+          0,
+        );
+        this.recomputeExpenditure();
+      },
+      error: () => {
+        this.employeeCount.set(0);
+        this.employeeSalaryTotal = 0;
+        this.recomputeExpenditure();
+      },
     });
     this.ordersApi
       .list()
@@ -640,6 +674,12 @@ export class OverviewPage implements OnInit {
           this.recentOrders.set([]);
         },
       });
+  }
+
+  private employeeSalaryTotal = 0;
+
+  private recomputeExpenditure(): void {
+    this.expenditure.set(this.employeeSalaryTotal + this.planExpenditure);
   }
 
   private loadTodayNotice(): void {

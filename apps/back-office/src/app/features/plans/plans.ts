@@ -24,7 +24,7 @@ import {
 } from '../../core/product-bucket.api';
 import { Shop, ShopsApi } from '../../core/shops.api';
 
-export type PlansViewMode = 'plans' | 'waitlist';
+export type PlansViewMode = 'plans' | 'payments';
 
 @Component({
   selector: 'app-plans',
@@ -37,6 +37,7 @@ export class PlansPage implements OnInit {
   private readonly currentShop = inject(CurrentShopService);
   private readonly bucketApi = inject(ProductBucketApi);
   private readonly paymentsApi = inject(PaymentsApi);
+  private readonly shopsApi = inject(ShopsApi);
   readonly i18n = inject(I18nService);
 
   readonly plans = signal<PlanOption[]>([]);
@@ -44,6 +45,7 @@ export class PlansPage implements OnInit {
   readonly application = signal<PlanApplication | null>(null);
   readonly shop = signal<Shop | null>(null);
   readonly bucket = signal<ProductBucket | null>(null);
+  readonly pendingPayment = signal<ShopPayment | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly bucketBusy = signal(false);
@@ -51,9 +53,9 @@ export class PlansPage implements OnInit {
   readonly success = signal('');
   readonly trialDays = FREE_TRIAL_DAYS;
 
-  /** Toggle: browse plans vs your waitlist status. */
+  /** Toggle: browse plans vs payments landing. */
   readonly viewMode = signal<PlansViewMode>('plans');
-  /** Plan the user is confirming before joining the waitlist. */
+  /** Plan the user is confirming before opening Payments. */
   readonly confirmPlanType = signal<PlanType | null>(null);
 
   readonly packSize = computed(
@@ -71,6 +73,22 @@ export class PlansPage implements OnInit {
   readonly onWaitlist = computed(() => {
     const app = this.application();
     return !!app && String(app.status).toLowerCase() === 'pending';
+  });
+
+  readonly paymentPlan = computed(() => {
+    const payment = this.pendingPayment();
+    if (!payment?.plan_type) {
+      return this.confirmPlan();
+    }
+    return this.plans().find((plan) => plan.type === payment.plan_type) ?? this.confirmPlan();
+  });
+
+  readonly paymentAmount = computed(() => {
+    const payment = this.pendingPayment();
+    if (payment && typeof payment.amount_inr === 'number') {
+      return payment.amount_inr;
+    }
+    return this.paymentPlan()?.price_inr ?? 0;
   });
 
   readonly confirmPlan = computed(() => {
@@ -120,15 +138,16 @@ export class PlansPage implements OnInit {
           this.shop.set(active ?? shops[0] ?? null);
           this.current.set(current);
           this.bucket.set(bucket);
-          this.viewMode.set(application?.status === 'pending' ? 'waitlist' : 'plans');
+          if (this.pendingPayment()) {
+            this.viewMode.set('payments');
+          }
         },
         error: (err: unknown) => this.error.set(this.readError(err, 'Could not load plans.')),
       });
   }
 
   /**
-   * First step: tell the user they will be added to the waitlist.
-   * Confirm → `joinWaitlist()` posts to `/waitlist`.
+   * First step: confirm plan before opening Payments with amount.
    */
   requestJoinWaitlist(planType: PlanType): void {
     if (planType === 'free_trial') {
@@ -148,21 +167,22 @@ export class PlansPage implements OnInit {
     this.confirmPlanType.set(null);
   }
 
-  /** User approved the waitlist message — join via API and toggle to waitlist view. */
+  /** User approved — open Payments with selected plan + amount (gateway later). */
   joinWaitlist(): void {
     const planType = this.confirmPlanType();
     if (!planType || planType === 'free_trial') {
       return;
     }
     const shop = this.shop();
+    const plan = this.plans().find((row) => row.type === planType);
     if (!shop?.id) {
-      this.error.set('Add your shop name, city, and locality on Overview before joining a plan waitlist.');
+      this.error.set('Add your shop name, city, and locality on Overview before choosing a plan.');
       this.confirmPlanType.set(null);
       return;
     }
     if (!shop.city?.trim() || !shop.locality?.trim()) {
       this.error.set(
-        'Your shop needs a city and locality before you can join the waitlist. Update them on Overview.',
+        'Your shop needs a city and locality before you can open Payments. Update them on Overview.',
       );
       this.confirmPlanType.set(null);
       return;
@@ -171,28 +191,39 @@ export class PlansPage implements OnInit {
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
-    this.api
-      .apply(planType, shop.id)
+    this.shopsApi
+      .purchasePlan(shop.id, planType)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: (app) => {
-          this.application.set(app);
+        next: (payment) => {
+          this.pendingPayment.set(payment);
           this.confirmPlanType.set(null);
-          this.viewMode.set('waitlist');
-          const name = this.requestedPlanName(app);
+          this.viewMode.set('payments');
           this.success.set(
-            `You’re on the waitlist for ${name}. Shop forwarded: ${app.shop_name} · ${app.location.locality}, ${app.location.city}.`,
+            `Payments opened for ${plan?.name ?? planType} · ₹${payment.amount_inr ?? plan?.price_inr ?? 0}.`,
           );
-          this.api.me().subscribe({
-            next: (state) => this.current.set(state),
-            error: () => undefined,
-          });
-          this.api.myApplication().subscribe({
-            next: (latest) => this.application.set(latest ?? app),
-          });
         },
-        error: (err: unknown) =>
-          this.error.set(this.readError(err, 'Could not join the plan waitlist.')),
+        error: () => {
+          // Fallback when purchase endpoint is unavailable — still land on Payments with amount.
+          const amount = plan?.price_inr ?? 0;
+          const now = new Date().toISOString();
+          this.pendingPayment.set({
+            id: `local-${planType}`,
+            store_id: shop.id,
+            owner_user_id: '',
+            kind: 'plan',
+            plan_type: planType,
+            amount_inr: amount,
+            currency: 'INR',
+            status: 'pending',
+            description: `${plan?.name ?? planType} plan`,
+            created_at: now,
+            updated_at: now,
+          });
+          this.confirmPlanType.set(null);
+          this.viewMode.set('payments');
+          this.success.set(`Payments opened for ${plan?.name ?? planType} · ₹${amount}.`);
+        },
       });
   }
 
@@ -274,9 +305,6 @@ export class PlansPage implements OnInit {
 
   canSelect(plan: PlanOption | undefined): boolean {
     if (!plan || plan.type === 'free_trial') {
-      return false;
-    }
-    if (this.onWaitlist()) {
       return false;
     }
     if (!this.shopReady()) {
