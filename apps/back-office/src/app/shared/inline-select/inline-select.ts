@@ -1,14 +1,16 @@
 import {
+  AfterViewChecked,
   Component,
   ElementRef,
-  forwardRef,
+  EventEmitter,
   HostListener,
   Input,
   Output,
-  EventEmitter,
+  computed,
+  forwardRef,
   inject,
   signal,
-  computed,
+  viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -32,8 +34,10 @@ export interface InlineSelectOption {
     },
   ],
 })
-export class InlineSelectComponent implements ControlValueAccessor {
+export class InlineSelectComponent implements ControlValueAccessor, AfterViewChecked {
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private focusSearchPending = false;
 
   @Input() options: InlineSelectOption[] = [];
   @Input() placeholder = 'Select…';
@@ -69,6 +73,18 @@ export class InlineSelectComponent implements ControlValueAccessor {
   private usingFormControl = false;
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
+
+  ngAfterViewChecked(): void {
+    if (!this.focusSearchPending) {
+      return;
+    }
+    const input = this.searchInput()?.nativeElement;
+    if (!input) {
+      return;
+    }
+    this.focusSearchPending = false;
+    input.focus();
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -122,6 +138,7 @@ export class InlineSelectComponent implements ControlValueAccessor {
     this.open.update((state) => !state);
     if (this.open()) {
       this.searchQuery.set('');
+      this.focusSearchPending = this.searchable;
       this.onTouched();
     }
   }
@@ -163,6 +180,7 @@ export class InlineSelectComponent implements ControlValueAccessor {
   close(): void {
     this.open.set(false);
     this.searchQuery.set('');
+    this.focusSearchPending = false;
   }
 
   isSelected(value: string): boolean {
