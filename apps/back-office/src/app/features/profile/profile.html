@@ -176,12 +176,12 @@
     <div class="actions">
       @if (step() === 'edit') {
         <button type="button" class="ghost" (click)="cancelEdit()">{{ 'common.cancel' | t }}</button>
-        <button type="button" class="primary" (click)="updateProfile()" [disabled]="saving()">
+        <button type="button" class="primary" (click)="updateProfile()" [disabled]="promptsForm.invalid || saving()">
           {{ saving() ? ('common.saving' | t) : ('common.saveChanges' | t) }}
         </button>
       } @else {
         <a routerLink="/back-office" class="ghost">{{ 'profile.backOverview' | t }}</a>
-        <button type="button" class="primary" (click)="saveProfile()" [disabled]="saving()">
+        <button type="button" class="primary" (click)="saveProfile()" [disabled]="promptsForm.invalid || saving()">
           {{ saving() ? ('common.saving' | t) : ('profile.saveProfile' | t) }}
         </button>
       }

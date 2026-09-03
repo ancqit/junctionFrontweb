@@ -158,7 +158,7 @@
       @if (editingShop() && shopCreated()) {
         <button type="button" class="ghost compact" (click)="cancelShopEditor()">{{ 'common.cancel' | t }}</button>
       }
-      <button type="button" class="primary compact" (click)="saveShop()" [disabled]="shopSaving()">
+      <button type="button" class="primary compact" (click)="saveShop()" [disabled]="shopForm.invalid || shopSaving()">
         {{ shopSaving() ? ('common.saving' | t) : ('overview.saveShop' | t) }}
       </button>
     </div>

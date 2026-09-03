@@ -170,7 +170,7 @@
 
       <div class="actions full">
         <button type="button" class="ghost" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
-        <button type="submit" class="primary" [disabled]="saving()">
+        <button type="submit" class="primary" [disabled]="form.invalid || saving()">
           {{ saving() ? ('common.saving' | t) : editingId() ? ('common.saveChanges' | t) : ('products.saveProduct' | t) }}
         </button>
       </div>

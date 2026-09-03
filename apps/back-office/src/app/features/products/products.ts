@@ -35,7 +35,7 @@ import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-s
 const MAX_PRODUCT_IMAGES = 5;
 const PEXELS_RESULT_COUNT = 10;
 
-export type ProductImageDraftSource = 'pexels' | 'local';
+export type ProductImageDraftSource = 'pexels' | 'local' | 'existing';
 
 export interface ProductImageDraft {
   id: string;
@@ -43,6 +43,7 @@ export interface ProductImageDraft {
   previewUrl: string;
   cdnUrl?: string;
   file?: File;
+  storedImageId?: string;
   alt: string;
 }
 
@@ -358,6 +359,7 @@ export class ProductsPage implements OnInit, OnDestroy {
       low_stock_threshold:
         product.low_stock_threshold != null ? String(product.low_stock_threshold) : '',
     });
+    this.loadExistingImagesIntoPicker(product);
   }
 
   closeForm(): void {
@@ -475,7 +477,7 @@ export class ProductsPage implements OnInit, OnDestroy {
 
   removeSelectedImage(id: string): void {
     const target = this.selectedImages().find((row) => row.id === id);
-    if (target?.source === 'local' && target.previewUrl.startsWith('blob:')) {
+    if (target?.previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(target.previewUrl);
     }
     this.selectedImages.update((rows) => rows.filter((row) => row.id !== id));
@@ -615,11 +617,12 @@ export class ProductsPage implements OnInit, OnDestroy {
     productId: string,
     drafts: ProductImageDraft[],
   ): Observable<void> {
-    if (drafts.length === 0) {
+    const pending = drafts.filter((draft) => draft.source !== 'existing');
+    if (pending.length === 0) {
       return of(undefined);
     }
 
-    return from(drafts).pipe(
+    return from(pending).pipe(
       concatMap((draft) => {
         if (draft.source === 'pexels' && draft.cdnUrl) {
           return this.api.useImageFromCdn(productId, draft.cdnUrl);
@@ -634,6 +637,104 @@ export class ProductsPage implements OnInit, OnDestroy {
     );
   }
 
+  private loadExistingImagesIntoPicker(product: Product): void {
+    const images = this.collectExistingProductImages(product).slice(0, MAX_PRODUCT_IMAGES);
+    const drafts: ProductImageDraft[] = images.map((image, index) => {
+      const cdn = image.cdn?.trim() || '';
+      if (cdn) {
+        return {
+          id: `existing-cdn-${index}-${cdn}`,
+          source: 'existing' as const,
+          previewUrl: cdn,
+          cdnUrl: cdn,
+          alt: 'Product image',
+        };
+      }
+      const storedImageId = String(image.stored_image_id);
+      return {
+        id: `existing-stored-${storedImageId}`,
+        source: 'existing' as const,
+        previewUrl: '',
+        storedImageId,
+        alt: 'Product image',
+      };
+    });
+
+    this.selectedImages.set(drafts);
+
+    for (const draft of drafts) {
+      if (!draft.storedImageId || draft.previewUrl) {
+        continue;
+      }
+      const draftId = draft.id;
+      const storedImageId = draft.storedImageId;
+      this.api.fetchStoredImage(storedImageId).subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          let attached = false;
+          this.selectedImages.update((rows) =>
+            rows.map((row) => {
+              if (row.id === draftId && !row.previewUrl) {
+                attached = true;
+                return { ...row, previewUrl: objectUrl };
+              }
+              return row;
+            }),
+          );
+          if (!attached) {
+            URL.revokeObjectURL(objectUrl);
+          }
+        },
+      });
+    }
+  }
+
+  /** Deduped gallery for edit picker: CDN wins over stored for the same image. */
+  private collectExistingProductImages(product: Product): Array<{
+    cdn?: string | null;
+    stored_image_id?: string | null;
+  }> {
+    const rows: Array<{ cdn?: string | null; stored_image_id?: string | null }> = [];
+    const seenCdn = new Set<string>();
+    const seenStored = new Set<string>();
+
+    const push = (image: { cdn?: string | null; stored_image_id?: string | null } | null | undefined) => {
+      if (!image) {
+        return;
+      }
+      const cdn = image.cdn?.trim() || '';
+      const stored = image.stored_image_id?.trim() || '';
+      if (cdn) {
+        if (seenCdn.has(cdn)) {
+          return;
+        }
+        seenCdn.add(cdn);
+        if (stored) {
+          seenStored.add(stored);
+        }
+        rows.push({ cdn });
+        return;
+      }
+      if (stored) {
+        if (seenStored.has(stored)) {
+          return;
+        }
+        seenStored.add(stored);
+        rows.push({ stored_image_id: stored });
+      }
+    };
+
+    for (const image of product.images ?? []) {
+      push(image);
+    }
+    push(product.image);
+    if (product.image_cdn?.trim()) {
+      push({ cdn: product.image_cdn.trim() });
+    }
+
+    return rows;
+  }
+
   private localDraftFromFile(file: File): ProductImageDraft {
     return {
       id: `local-${crypto.randomUUID()}`,
@@ -646,7 +747,10 @@ export class ProductsPage implements OnInit, OnDestroy {
 
   private resetImagePicker(): void {
     for (const row of this.selectedImages()) {
-      if (row.source === 'local' && row.previewUrl.startsWith('blob:')) {
+      if (
+        (row.source === 'local' || row.source === 'existing') &&
+        row.previewUrl.startsWith('blob:')
+      ) {
         URL.revokeObjectURL(row.previewUrl);
       }
     }
