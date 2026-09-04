@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { EmployeesApi } from '../../core/employees.api';
+import { EmployeesStore } from '../../core/employees.store';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Employee, EmploymentStatus, EmploymentType } from '../../core/models';
@@ -16,6 +17,7 @@ import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-s
 })
 export class EmployeesPage implements OnInit {
   private readonly api = inject(EmployeesApi);
+  private readonly employeesStore = inject(EmployeesStore);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(I18nService);
 
@@ -77,15 +79,26 @@ export class EmployeesPage implements OnInit {
   }
 
   reload(): void {
-    this.loading.set(true);
-    this.error.set('');
     const status = this.statusFilter();
-    this.api
-      .list(status ? { status } : undefined)
+    const filters = status ? { status } : undefined;
+    const cached = this.employeesStore.getSnapshot();
+    if (cached.length > 0 && !status) {
+      this.employees.set(cached);
+      this.loading.set(false);
+    } else {
+      this.loading.set(true);
+    }
+    this.error.set('');
+    this.employeesStore
+      .refresh(filters)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (rows) => this.employees.set(rows),
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not load employees.')),
+        error: (err: unknown) => {
+          if (this.employees().length === 0) {
+            this.error.set(this.readError(err, 'Could not load employees.'));
+          }
+        },
       });
   }
 

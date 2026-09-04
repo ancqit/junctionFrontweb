@@ -4,10 +4,6 @@ import { catchError, map, shareReplay, switchMap } from 'rxjs/operators';
 import { ProfileApi } from './profile.api';
 import { Shop, ShopsApi } from './shops.api';
 
-const SHOP_TYPE_STORAGE_KEY = 'junction.shopTypeById';
-const SHOP_PLACE_STORAGE_KEY = 'junction.shopPlaceById';
-const SHOP_PHONE_VISIBLE_KEY = 'junction.phoneVisibleById';
-const SHOP_LOCKED_KEY = 'junction.shopLockedById';
 const ACTIVE_SHOP_STORAGE_KEY = 'junction.activeShopId';
 const SESSION_KEY = 'junction.session';
 
@@ -103,7 +99,7 @@ export class CurrentShopService {
   }
 
   setShop(shop: Shop | null): void {
-    const merged = this.applyPlaceOverlay(shop);
+    const merged = shop;
     if (merged?.id) {
       this.writeActiveShopId(merged.id);
     }
@@ -118,16 +114,9 @@ export class CurrentShopService {
     }
   }
 
-  /** Remove local overlays after a shop is deleted on the server. */
-  clearShopOverlays(shopId: string): void {
-    const id = shopId.trim();
-    if (!id) {
-      return;
-    }
-    this.removeStorageEntry(SHOP_TYPE_STORAGE_KEY, id);
-    this.removeStorageEntry(SHOP_PLACE_STORAGE_KEY, id);
-    this.removeStorageEntry(SHOP_PHONE_VISIBLE_KEY, id);
-    this.removeStorageEntry(SHOP_LOCKED_KEY, id);
+  /** No-op: shop overlays are API-backed (no localStorage). */
+  clearShopOverlays(_shopId: string): void {
+    // intentionally empty
   }
 
   /**
@@ -166,147 +155,58 @@ export class CurrentShopService {
     if (savedId) {
       const saved = shops.find((row) => row.id === savedId);
       if (saved) {
-        return this.applyPlaceOverlay(saved);
+        return saved;
       }
     }
     // Prefer an open shop as the default “active project”.
     const open = shops.find((row) => row.is_open !== false);
-    return this.applyPlaceOverlay(open ?? shops[0]);
+    return open ?? shops[0];
   }
 
   applyPlaceOverlay(shop: Shop | null): Shop | null {
-    if (!shop?.id) {
-      return shop;
-    }
-    const place = this.readShopPlace(shop.id);
-    if (!place) {
-      return shop;
-    }
-    return {
-      ...shop,
-      city: shop.city?.trim() || place.city,
-      locality: shop.locality?.trim() || place.locality,
-    };
+    return shop;
   }
 
   readShopType(shopId: string | null | undefined): string | null {
     if (!shopId) {
       return null;
     }
-    try {
-      const raw = localStorage.getItem(SHOP_TYPE_STORAGE_KEY);
-      if (!raw) {
-        return null;
-      }
-      const map = JSON.parse(raw) as Record<string, string>;
-      return map[shopId]?.trim() || null;
-    } catch {
-      return null;
-    }
+    return this.shops().find((row) => row.id === shopId)?.shop_type?.trim() || null;
   }
 
-  writeShopType(shopId: string, shopType: string): void {
-    try {
-      const raw = localStorage.getItem(SHOP_TYPE_STORAGE_KEY);
-      const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
-      map[shopId] = shopType.trim();
-      localStorage.setItem(SHOP_TYPE_STORAGE_KEY, JSON.stringify(map));
-    } catch {
-      // ignore storage failures
-    }
+  writeShopType(_shopId: string, _shopType: string): void {
+    // Persisted via shops API shop_type field — no localStorage.
   }
 
-  readShopPlace(shopId: string | null | undefined): ShopPlaceOverlay | null {
-    if (!shopId) {
-      return null;
-    }
-    try {
-      const raw = localStorage.getItem(SHOP_PLACE_STORAGE_KEY);
-      if (!raw) {
-        return null;
-      }
-      const map = JSON.parse(raw) as Record<string, ShopPlaceOverlay>;
-      const row = map[shopId];
-      const city = row?.city?.trim() ?? '';
-      const locality = row?.locality?.trim() ?? '';
-      if (!city || !locality) {
-        return null;
-      }
-      return { city, locality };
-    } catch {
-      return null;
-    }
+  readShopPlace(_shopId: string | null | undefined): ShopPlaceOverlay | null {
+    return null;
   }
 
-  writeShopPlace(shopId: string, place: ShopPlaceOverlay): void {
-    try {
-      const raw = localStorage.getItem(SHOP_PLACE_STORAGE_KEY);
-      const map = raw ? (JSON.parse(raw) as Record<string, ShopPlaceOverlay>) : {};
-      map[shopId] = {
-        city: place.city.trim(),
-        locality: place.locality.trim(),
-      };
-      localStorage.setItem(SHOP_PLACE_STORAGE_KEY, JSON.stringify(map));
-    } catch {
-      // ignore storage failures
-    }
+  writeShopPlace(_shopId: string, _place: ShopPlaceOverlay): void {
+    // Persisted via shops API city/locality — no localStorage.
   }
 
-  /** Whether the owner chose to show shop mobile on session catalog (`show_phone` query). */
+  /** Prefer API `show_phone` on the shop record. */
   readPhoneVisible(shopId: string | null | undefined): boolean {
     if (!shopId) {
       return false;
     }
-    try {
-      const raw = localStorage.getItem(SHOP_PHONE_VISIBLE_KEY);
-      if (!raw) {
-        return false;
-      }
-      const map = JSON.parse(raw) as Record<string, boolean>;
-      const value = map[shopId];
-      return value === true;
-    } catch {
-      return false;
-    }
+    return this.shops().find((row) => row.id === shopId)?.show_phone === true;
   }
 
-  writePhoneVisible(shopId: string, visible: boolean): void {
-    try {
-      const raw = localStorage.getItem(SHOP_PHONE_VISIBLE_KEY);
-      const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-      map[shopId] = visible;
-      localStorage.setItem(SHOP_PHONE_VISIBLE_KEY, JSON.stringify(map));
-    } catch {
-      // ignore storage failures
-    }
+  writePhoneVisible(_shopId: string, _visible: boolean): void {
+    // Persisted via PUT /shops/phone-status — no localStorage.
   }
 
-  /** Viewer lock overlay until junctionBack `is_locked` is deployed. */
   readShopLocked(shopId: string | null | undefined): boolean {
     if (!shopId) {
       return false;
     }
-    try {
-      const raw = localStorage.getItem(SHOP_LOCKED_KEY);
-      if (!raw) {
-        return false;
-      }
-      const map = JSON.parse(raw) as Record<string, boolean>;
-      return map[shopId] === true;
-    } catch {
-      return false;
-    }
+    return this.shops().find((row) => row.id === shopId)?.is_locked === true;
   }
 
-  writeShopLocked(shopId: string, locked: boolean): void {
-    try {
-      const raw = localStorage.getItem(SHOP_LOCKED_KEY);
-      const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-      map[shopId] = locked;
-      localStorage.setItem(SHOP_LOCKED_KEY, JSON.stringify(map));
-    } catch {
-      // ignore storage failures
-    }
+  writeShopLocked(_shopId: string, _locked: boolean): void {
+    // Persisted via PUT /shops/lock-status — no localStorage.
   }
 
   readActiveShopId(): string | null {
@@ -362,23 +262,6 @@ export class CurrentShopService {
   private normalizePhone(phone: string | null | undefined): string {
     const digits = (phone ?? '').replace(/\D/g, '');
     return digits.length >= 10 ? digits.slice(-10) : digits;
-  }
-
-  private removeStorageEntry(key: string, shopId: string): void {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) {
-        return;
-      }
-      const map = JSON.parse(raw) as Record<string, unknown>;
-      if (!(shopId in map)) {
-        return;
-      }
-      delete map[shopId];
-      localStorage.setItem(key, JSON.stringify(map));
-    } catch {
-      // ignore storage failures
-    }
   }
 
   private applyActive(shop: Shop | null): void {
