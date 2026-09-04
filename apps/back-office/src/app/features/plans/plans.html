@@ -161,9 +161,13 @@
         </label>
       </div>
 
-      @if (selectedBucketSlots() === 100) {
-        <p class="prep-note" role="note">{{ 'plans.prep.bucket100Note' | t }}</p>
-      }
+      <!--
+        UX follow-ups (review):
+        1) Show each plan’s included max_products next to the plan dropdown option (not only as hint).
+        2) Separate “Buy / change plan” from “Buy bucket add-on only” CTAs so owners don’t mix intents.
+        3) Surface current capacity (listed / remaining) above the add-on chips before purchase.
+        4) After prepare payment, confirm billed slots + pack count in one line on the pending card.
+      -->
 
       <div class="price-summary" aria-live="polite">
         <p class="eyebrow">{{ 'plans.prep.summaryEyebrow' | t }}</p>
@@ -393,11 +397,7 @@
             [class.active]="isBucketSlotSelected(slots)"
             (click)="selectBucketSlots(slots)"
           >
-            @if (slots === 100) {
-              {{ 'plans.pack.chip100Btn' | t }}
-            } @else {
-              {{ slots }}
-            }
+            {{ slots }}
           </button>
         }
       </div>

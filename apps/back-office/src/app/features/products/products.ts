@@ -31,6 +31,7 @@ import {
 } from '../../core/product-bucket.api';
 import { ProductsApi } from '../../core/products.api';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
+import { normalizeSelectValue } from '../../shared/normalize-select-value';
 
 const MAX_PRODUCT_IMAGES = 5;
 const PEXELS_RESULT_COUNT = 10;
@@ -210,8 +211,20 @@ export class ProductsPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.api.categories().subscribe({
-      next: (rows) =>
-        this.categoryCatalog.set(rows.map((row) => ({ value: row.value, label: row.label }))),
+      next: (rows) => {
+        const options = rows.map((row) => ({ value: row.value, label: row.label }));
+        this.categoryCatalog.set(options);
+        const current = this.form.controls.category.value;
+        const normalized = normalizeSelectValue(current, options);
+        if (normalized && normalized !== current) {
+          this.form.controls.category.setValue(normalized);
+        }
+        const filter = this.categoryFilter();
+        const normalizedFilter = normalizeSelectValue(filter, options);
+        if (normalizedFilter && normalizedFilter !== filter) {
+          this.categoryFilter.set(normalizedFilter);
+        }
+      },
       error: () => this.categoryCatalog.set([]),
     });
     this.reload();

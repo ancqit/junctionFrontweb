@@ -163,7 +163,7 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'plans.paymentsLater': 'भुगतान जारी रखें (जल्द)',
     'plans.prep.title': 'भुगतान तैयार करें',
     'plans.prep.sub':
-      'कैटलॉग से प्लान चुनें और ज़रूरत हो तो अतिरिक्त उत्पाद स्लॉट (40 / 80 / 100)। कुल तुरंत अपडेट होता है।',
+      'कैटलॉग से प्लान चुनें और ज़रूरत हो तो अतिरिक्त उत्पाद स्लॉट (40 / 80 / 120)। कुल तुरंत अपडेट होता है।',
     'plans.prep.planLabel': 'प्लान',
     'plans.prep.planPlaceholder': 'प्लान चुनें (या छोड़ें)',
     'plans.prep.searchPlans': 'प्लान खोजें…',
@@ -176,12 +176,7 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'plans.prep.bucketNone': 'कोई ऐड-ऑन नहीं',
     'plans.prep.bucketNoneHint': 'अतिरिक्त उत्पाद स्लॉट न खरीदें',
     'plans.prep.bucketLabel': '{{slots}} स्लॉट · {{packs}} पैक · {{amount}}',
-    'plans.prep.bucket100Label':
-      '100 अनुरोध → {{packs}} पैक / {{billed}} स्लॉट · {{amount}}',
     'plans.prep.bucketHint': '{{packs}} पैक × {{packSize}} स्लॉट = {{billed}} बिल्ड',
-    'plans.prep.bucket100Note':
-      '100 अनुरोध → 3 पैक / 120 स्लॉट बिल्ड होते हैं (प्रत्येक पैक 40 स्लॉट)।',
-    'plans.prep.bucket100Short': '100 अनुरोध → {{packs}} पैक / {{billed}} स्लॉट',
     'plans.prep.bucketShort': '{{slots}} स्लॉट · {{packs}} पैक',
     'plans.prep.summaryEyebrow': 'मूल्य सारांश',
     'plans.prep.planPrice': 'प्लान कीमत',
@@ -195,12 +190,10 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'plans.pack.explain':
       'हर प्लान में उत्पाद बकेट आकार (max_products) शामिल है। अतिरिक्त क्षमता {{size}} स्लॉट के पैक में मिलती है।',
     'plans.pack.explainAddOn':
-      'भुगतान से पहले मालिक 40 / 80 / 100 ऐड-ऑन चुन सकते हैं।',
+      'भुगतान से पहले मालिक 40 / 80 / 120 ऐड-ऑन चुन सकते हैं।',
     'plans.pack.chipGroup': 'बकेट ऐड-ऑन आकार',
-    'plans.pack.chipHint': 'भुगतान पर इस्तेमाल के लिए 40, 80 या 100 चुनें।',
+    'plans.pack.chipHint': 'भुगतान पर इस्तेमाल के लिए 40, 80 या 120 चुनें।',
     'plans.pack.chipSelected': '{{slots}} स्लॉट · {{packs}} पैक ({{billed}} बिल्ड)',
-    'plans.pack.chip100': '100 अनुरोध → {{packs}} पैक / {{billed}} स्लॉट',
-    'plans.pack.chip100Btn': '100 → 3 पैक',
     'plans.pack.goPayments': 'भुगतान पर जाएँ',
     'plans.packPlusSelected': '+{{packs}} पैक · {{billed}} स्लॉट',
     'plans.viewPayments': 'भुगतान देखें',
@@ -763,7 +756,7 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'plans.paymentsLater': 'Continue to pay (coming soon)',
     'plans.prep.title': 'Prepare payment',
     'plans.prep.sub':
-      'Pick a plan from the catalog and optionally extra product slots (40 / 80 / 100). Totals update live.',
+      'Pick a plan from the catalog and optionally extra product slots (40 / 80 / 120). Totals update live.',
     'plans.prep.planLabel': 'Plan',
     'plans.prep.planPlaceholder': 'Select a plan (or skip)',
     'plans.prep.searchPlans': 'Search plans…',
@@ -776,12 +769,7 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'plans.prep.bucketNone': 'No add-on',
     'plans.prep.bucketNoneHint': 'Do not buy extra product slots',
     'plans.prep.bucketLabel': '{{slots}} slots · {{packs}} pack(s) · {{amount}}',
-    'plans.prep.bucket100Label':
-      '100 request → {{packs}} packs / {{billed}} slots · {{amount}}',
     'plans.prep.bucketHint': '{{packs}} pack(s) × {{packSize}} slots = {{billed}} billed',
-    'plans.prep.bucket100Note':
-      '100 request → 3 packs / 120 slots billed (each pack is 40 slots).',
-    'plans.prep.bucket100Short': '100 request → {{packs}} packs / {{billed}} slots',
     'plans.prep.bucketShort': '{{slots}} slots · {{packs}} pack(s)',
     'plans.prep.summaryEyebrow': 'PRICE SUMMARY',
     'plans.prep.planPrice': 'Plan price',
@@ -795,12 +783,10 @@ export const TRANSLATIONS: Record<AppLang, TranslationDict> = {
     'plans.pack.explain':
       'Each plan includes a product bucket size (max_products). Extra capacity is sold in packs of {{size}}.',
     'plans.pack.explainAddOn':
-      'Owners can pick a 40 / 80 / 100 add-on before payment.',
+      'Owners can pick a 40 / 80 / 120 add-on before payment.',
     'plans.pack.chipGroup': 'Bucket add-on size',
-    'plans.pack.chipHint': 'Select 40, 80, or 100 to use on Payments.',
+    'plans.pack.chipHint': 'Select 40, 80, or 120 to use on Payments.',
     'plans.pack.chipSelected': '{{slots}} slots · {{packs}} pack(s) ({{billed}} billed)',
-    'plans.pack.chip100': '100 request → {{packs}} packs / {{billed}} slots',
-    'plans.pack.chip100Btn': '100 → 3 packs',
     'plans.pack.goPayments': 'Go to Payments',
     'plans.packPlusSelected': '+{{packs}} pack(s) · {{billed}} slots',
     'plans.viewPayments': 'View payments',
