@@ -30,6 +30,7 @@ import {
   ProductBucketApi,
 } from '../../core/product-bucket.api';
 import { ProductsApi } from '../../core/products.api';
+import { ProductsStore } from '../../core/products.store';
 import { InlineSelectComponent, InlineSelectOption } from '../../shared/inline-select/inline-select';
 import { normalizeSelectValue } from '../../shared/normalize-select-value';
 
@@ -63,6 +64,7 @@ export interface ProductImageDraft {
 })
 export class ProductsPage implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
+  private readonly productsStore = inject(ProductsStore);
   private readonly bucketApi = inject(ProductBucketApi);
   private readonly paymentsApi = inject(PaymentsApi);
   private readonly fb = inject(FormBuilder);
@@ -235,10 +237,17 @@ export class ProductsPage implements OnInit, OnDestroy {
   }
 
   reload(): void {
-    this.loading.set(true);
+    const cached = this.productsStore.getSnapshot();
+    if (cached.length > 0) {
+      this.products.set(cached);
+      this.hydrateStoredImages(cached);
+      this.loading.set(false);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set('');
-    this.api
-      .list()
+    this.productsStore
+      .refresh()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (rows) => {
@@ -246,7 +255,11 @@ export class ProductsPage implements OnInit, OnDestroy {
           this.hydrateStoredImages(rows);
           this.reloadBucket();
         },
-        error: (err: unknown) => this.error.set(this.readError(err, 'Could not load products.')),
+        error: (err: unknown) => {
+          if (this.products().length === 0) {
+            this.error.set(this.readError(err, 'Could not load products.'));
+          }
+        },
       });
   }
 
