@@ -233,6 +233,7 @@ export class ShopsPage implements OnInit, OnDestroy {
       return;
     }
     const raw = this.form.getRawValue();
+    const shopType = raw.shop_type.trim();
     const payload = {
       name: raw.name.trim(),
       city: raw.city.trim(),
@@ -241,8 +242,8 @@ export class ShopsPage implements OnInit, OnDestroy {
       open_time: normalizeShopTime(raw.open_time) ?? DEFAULT_OPEN_TIME,
       closed_time: normalizeShopTime(raw.closed_time) ?? DEFAULT_CLOSED_TIME,
       is_open: true,
+      shop_type: shopType || null,
     };
-    const shopType = raw.shop_type.trim();
     this.saving.set(true);
     this.error.set('');
     this.shopsApi
