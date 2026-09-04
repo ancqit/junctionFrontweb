@@ -49,6 +49,8 @@ export interface ShopWrite {
   closed_time?: string;
   is_open?: boolean;
   show_phone?: boolean;
+  /** Catalog shop type value from `GET /shops/types`. */
+  shop_type?: string | null;
   is_locked?: boolean;
   lock_reason?: 'manual' | 'plan_expired' | null;
 }

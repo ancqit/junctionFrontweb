@@ -303,6 +303,12 @@ export class OverviewPage implements OnInit {
       return;
     }
     const raw = this.shopForm.getRawValue();
+    const shopType = raw.shop_type.trim();
+    if (!shopType) {
+      this.shopForm.controls.shop_type.markAsTouched();
+      this.shopError.set('Select a shop type before saving.');
+      return;
+    }
     const payload = {
       name: raw.name.trim(),
       city: raw.city.trim(),
@@ -311,13 +317,8 @@ export class OverviewPage implements OnInit {
       open_time: normalizeShopTime(raw.open_time) ?? DEFAULT_OPEN_TIME,
       closed_time: normalizeShopTime(raw.closed_time) ?? DEFAULT_CLOSED_TIME,
       is_open: this.shopOpen(),
+      shop_type: shopType,
     };
-    const shopType = raw.shop_type.trim();
-    if (!shopType) {
-      this.shopForm.controls.shop_type.markAsTouched();
-      this.shopError.set('Select a shop type before saving.');
-      return;
-    }
 
     this.shopSaving.set(true);
     this.shopError.set('');
@@ -351,6 +352,7 @@ export class OverviewPage implements OnInit {
           city: payload.city,
           locality: payload.locality,
           address: payload.address,
+          shop_type: shopType,
         };
         const placeOnly$ = existing
           ? this.shopsApi.update(existing.id, placePayload)
