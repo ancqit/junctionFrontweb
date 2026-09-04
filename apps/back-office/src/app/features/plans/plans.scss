@@ -60,8 +60,51 @@ h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
   margin-bottom: 22px; padding: 22px; border-radius: 16px; border: 1px solid #dedbd1; background: white;
 }
 .status[data-type='free_trial'] { border-color: #d5bd6b; background: #fbf8ef; }
-.status[data-status='expired'] { border-color: #e2c4c4; background: #fbf4f4; }
+.status[data-status='expired'],
+.status[data-status='deactivated'] { border-color: #e2c4c4; background: #fbf4f4; }
+.status[data-status='grace_period'] { border-color: #e2d6b8; background: #fbf8ef; }
 .status p:last-child { margin: 0; color: #667069; font-size: 14px; }
+.status-badge {
+  display: inline-block; margin: 0 0 8px; padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  background: #eef3ef; color: #1a6541;
+}
+.status-badge[data-status='grace_period'] { background: #f5ecd4; color: #7a5a12; }
+.status-badge[data-status='expired'],
+.status-badge[data-status='deactivated'] { background: #f8ecec; color: #7a2a2a; }
+.queue-card {
+  margin-bottom: 22px; padding: 22px; border-radius: 16px;
+  border: 1px solid #dedbd1; background: white;
+}
+.queue-head h2 { margin: 8px 0 6px; font: 500 24px Georgia, serif; }
+.queue-head .sub { margin: 0 0 16px; color: #667069; font-size: 13px; max-width: 36rem; }
+.queue-empty { margin: 0; }
+.fifo-queue {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+}
+.fifo-queue li {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  padding: 12px 14px; border-radius: 12px; border: 1px solid #e5e7e3; background: #f8f9f7;
+}
+.fifo-queue li.is-front {
+  border-color: #1a6541; background: #f4faf6;
+}
+.queue-pos {
+  width: 28px; height: 28px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 12px; font-weight: 800;
+  background: #e8ebe6; color: #556057;
+}
+.fifo-queue li.is-front .queue-pos { background: #1a6541; color: #fff; }
+.queue-body { display: grid; gap: 4px; min-width: 0; }
+.queue-body strong { font-size: 14px; color: #1a281f; }
+.queue-meta {
+  display: flex; flex-wrap: wrap; gap: 8px 12px; color: #667069; font-size: 12px;
+}
+.queue-status { font-weight: 700; color: #1a6541; }
+.queue-front-tag {
+  flex-shrink: 0; padding: 4px 8px; border-radius: 999px;
+  background: #dff3e8; color: #1a6541; font-size: 11px; font-weight: 800;
+}
 .plan-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
 }
@@ -103,13 +146,61 @@ h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
 .forwarded dt { margin: 0 0 6px; color: #808780; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .forwarded dd { margin: 0; font-weight: 700; color: #1a281f; }
 .forwarded-actions { margin-top: 22px; justify-content: flex-start; }
+.payment-prep {
+  padding: 28px 28px 24px; border-radius: 20px; border: 1px solid #cfe0d6; background: #f4faf6;
+}
+.payment-prep h2 { margin: 8px 0 10px; font: 500 28px Georgia, serif; max-width: 640px; }
+.prep-lead { margin: 0 0 20px; color: #5f6a63; font-size: 14px; line-height: 1.55; max-width: 560px; }
+.prep-fields {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 12px;
+}
+.prep-field { display: grid; gap: 8px; font-size: 12px; font-weight: 700; color: #556057; }
+.prep-note {
+  margin: 0 0 14px; padding: 10px 12px; border-radius: 10px;
+  background: #fbf8ef; border: 1px solid #e2d6b8; color: #7a5a12; font-size: 13px; line-height: 1.45;
+}
+.price-summary {
+  margin: 8px 0 18px; padding: 16px 18px; border-radius: 14px;
+  border: 1px solid #dedbd1; background: white;
+}
+.price-summary .eyebrow { margin-bottom: 10px; }
+.price-summary dl {
+  margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+}
+.price-summary dl div,
+.forwarded dl .total-row {
+  padding: 12px 14px; border-radius: 12px; background: #f6f7f5; border: 1px solid #e5e7e3;
+}
+.price-summary .total-row,
+.forwarded dl .total-row {
+  background: #eef6f1; border-color: #cfe0d6;
+}
+.price-summary dt,
+.forwarded dt {
+  margin: 0 0 6px; color: #808780; font-size: 11px; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.price-summary dd { margin: 0; font-weight: 700; color: #1a281f; font-size: 18px; }
+.price-summary .total-row dd { color: #1a6541; font-size: 22px; }
+.prep-meta { margin: 12px 0 0; color: #667069; font-size: 13px; line-height: 1.45; }
+.prep-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;
+}
 .product-pack {
   display: flex; justify-content: space-between; align-items: start; gap: 24px;
   margin-top: 22px; padding: 24px; border-radius: 16px;
   border: 1px solid #dedbd1; background: white;
 }
 .product-pack h2 { margin: 8px 0 10px; font: 500 26px Georgia, serif; }
-.product-pack > div > p { margin: 0 0 16px; color: #667069; font-size: 14px; line-height: 1.55; max-width: 560px; }
+.product-pack > div > p { margin: 0 0 12px; color: #667069; font-size: 14px; line-height: 1.55; max-width: 560px; }
+.pack-explain-extra { margin: 0 0 14px !important; color: #556057 !important; font-weight: 600; }
+.bucket-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.bucket-chip {
+  border: 1px solid #d8d4c8; border-radius: 999px; padding: 8px 14px;
+  background: #fff; color: #36453b; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.bucket-chip.active { border-color: #1a6541; background: #eef3ef; color: #1a6541; }
+.pack-chip-hint { margin: 0 0 16px !important; color: #1a6541 !important; font-size: 13px !important; font-weight: 700; }
 .pack-stats {
   margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
 }
@@ -130,6 +221,8 @@ h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
 @media (max-width: 980px) {
   .plan-grid { grid-template-columns: 1fr; }
   header, .status, .shop-needed, .confirm-actions, .product-pack { flex-direction: column; align-items: start; }
-  .forwarded dl, .pack-stats { grid-template-columns: 1fr; }
+  .forwarded dl, .pack-stats, .prep-fields, .price-summary dl { grid-template-columns: 1fr; }
   .pack-actions { width: 100%; min-width: 0; }
+  .prep-actions { justify-content: stretch; }
+  .prep-actions .primary, .prep-actions .ghost { flex: 1; }
 }

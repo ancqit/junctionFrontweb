@@ -1,5 +1,5 @@
 import { computed, inject, Injectable } from '@angular/core';
-import { catchError, Observable, of, tap } from 'rxjs';
+import { catchError, Observable, of, tap, throwError } from 'rxjs';
 import { CurrentShopService } from './current-shop.service';
 import { PlanSummary } from './models';
 import { Shop, ShopsApi } from './shops.api';
@@ -107,6 +107,7 @@ export class ShopLockService {
     if (!shop.id || !name) {
       return of(shop);
     }
+    // Optimistic local flag; rolled back by caller on error.
     this.currentShop.writeShopLocked(shop.id, locked);
     return this.shopsApi.updateLockStatus({ name, is_locked: locked, lock_reason: reason }).pipe(
       tap((updated) => {
@@ -114,25 +115,27 @@ export class ShopLockService {
         this.currentShop.setShop(merged);
       }),
       catchError((err: unknown) => {
-        if (this.isUnprocessable(err)) {
-          return this.shopsApi.update(shop.id, { is_locked: locked }).pipe(
-            tap((updated) => {
-              const merged = this.applyLockFromRecord({
-                ...updated,
-                lock_reason: reason ?? updated.lock_reason ?? null,
-              });
-              this.currentShop.setShop(merged);
-            }),
-          );
+        // Never fall back to full PUT /shops/{id} with a partial body — that
+        // triggers "give fields" / 422 validation on incomplete shop payloads.
+        this.currentShop.writeShopLocked(shop.id, !locked);
+        const status = (err as { status?: number })?.status;
+        const detail = (err as { error?: { detail?: string } })?.error?.detail;
+        if (typeof detail === 'string' && detail.trim()) {
+          return throwError(() => err);
         }
-        throw err;
+        const message =
+          status === 422
+            ? 'Could not update owner/viewer lock. The lock endpoint rejected the request — shop details were not changed.'
+            : status === 404 || status === 405
+              ? 'Owner/viewer lock is not available on the server yet.'
+              : 'Could not update shop access.';
+        return throwError(() => ({
+          ...(typeof err === 'object' && err ? err : {}),
+          status,
+          error: { detail: message },
+        }));
       }),
     );
-  }
-
-  private isUnprocessable(err: unknown): boolean {
-    const status = (err as { status?: number })?.status;
-    return status === 404 || status === 405 || status === 422;
   }
 }
 

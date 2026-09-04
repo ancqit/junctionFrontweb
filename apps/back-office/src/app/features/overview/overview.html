@@ -228,12 +228,18 @@
           type="button"
           class="ghost compact"
           (click)="clearNotice()"
-          [disabled]="!noticeForm.controls.message.value.trim()"
+          [disabled]="noticeSaving() || (!todayNotice() && !noticeForm.controls.message.value.trim())"
         >
-          {{ 'overview.clear' | t }}
+          {{ todayNotice() ? ('overview.deleteNotice' | t) : ('overview.clear' | t) }}
         </button>
         <button type="button" class="primary compact" (click)="saveNotice()" [disabled]="noticeSaving()">
-          {{ noticeSaving() ? ('overview.posting' | t) : ('overview.postNotice' | t) }}
+          @if (noticeSaving()) {
+            {{ todayNotice() ? ('overview.updating' | t) : ('overview.posting' | t) }}
+          } @else if (todayNotice()) {
+            {{ 'overview.updateNotice' | t }}
+          } @else {
+            {{ 'overview.postNotice' | t }}
+          }
         </button>
       </div>
     </section>

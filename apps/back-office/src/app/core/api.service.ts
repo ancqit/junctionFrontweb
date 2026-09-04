@@ -46,9 +46,12 @@ export class BackOfficeApiService {
     );
   }
 
-  delete(path: string, auth?: ApiAuthMode): Observable<void> {
+  delete(path: string, params?: Record<string, string>, auth?: ApiAuthMode): Observable<void> {
     return this.withAuthHeaders('DELETE', path, auth, (headers) =>
-      this.http.delete<void>(this.url(path), { headers }),
+      this.http.delete<void>(this.url(path), {
+        params: new HttpParams({ fromObject: params ?? {} }),
+        headers,
+      }),
     );
   }
 

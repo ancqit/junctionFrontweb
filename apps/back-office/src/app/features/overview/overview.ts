@@ -464,17 +464,56 @@ export class OverviewPage implements OnInit {
       .pipe(finalize(() => this.noticeSaving.set(false)))
       .subscribe({
         next: (notice) => {
+          const wasUpdate = !!this.todayNotice();
           this.todayNotice.set(notice);
           this.noticeForm.patchValue({ message: notice.message });
-          this.noticeSuccess.set('Today’s notice posted above orders.');
+          this.noticeSuccess.set(
+            wasUpdate
+              ? 'Today’s notice updated above orders.'
+              : 'Today’s notice posted above orders.',
+          );
         },
         error: (err: unknown) => {
-          this.noticeError.set(this.describeApiError(err, 'Could not post notice.'));
+          this.noticeError.set(
+            this.describeApiError(
+              err,
+              this.todayNotice() ? 'Could not update notice.' : 'Could not post notice.',
+            ),
+          );
         },
       });
   }
 
   clearNotice(): void {
+    const posted = this.todayNotice();
+    const shop = this.shop();
+    if (!posted?.id || !shop?.id) {
+      this.resetNoticeForm();
+      return;
+    }
+    if (!confirm('Delete today’s notice? This removes it from the shop for today.')) {
+      return;
+    }
+
+    this.noticeSaving.set(true);
+    this.noticeError.set('');
+    this.noticeSuccess.set('');
+    this.noticesApi
+      .deleteToday(shop.id)
+      .pipe(finalize(() => this.noticeSaving.set(false)))
+      .subscribe({
+        next: () => {
+          this.todayNotice.set(null);
+          this.resetNoticeForm();
+          this.noticeSuccess.set('Today’s notice deleted.');
+        },
+        error: (err: unknown) => {
+          this.noticeError.set(this.describeApiError(err, 'Could not delete notice.'));
+        },
+      });
+  }
+
+  private resetNoticeForm(): void {
     this.noticeForm.reset({ message: '' });
     this.noticeError.set('');
     this.noticeSuccess.set('');

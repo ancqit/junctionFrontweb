@@ -348,6 +348,48 @@ input:not([type]) {
   cursor: not-allowed;
 }
 
+.lock-countdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f5ecd4;
+  color: #7a5a12;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.countdown-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a6541;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cancel-countdown {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.cooldown-hint {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f8ecec;
+  color: #7a2a2a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 @media (max-width: 720px) {
   header {
     flex-direction: column;

@@ -61,23 +61,54 @@
 @if (loading()) {
   <p class="muted">{{ 'plans.loading' | t }}</p>
 } @else if (viewMode() === 'payments') {
-  @if (paymentPlan(); as plan) {
+  @if (pendingPayment(); as pending) {
     <section class="forwarded" role="status">
       <p class="eyebrow">{{ 'plans.paymentsEyebrow' | t }}</p>
-      <h2>{{ 'plans.paymentsTitle' | t: { plan: plan.name } }}</h2>
+      <h2>
+        @if (prepSummary(); as summary) {
+          {{ 'plans.paymentsTitleReady' | t }}
+        } @else if (paymentPlan(); as plan) {
+          {{ 'plans.paymentsTitle' | t: { plan: plan.name } }}
+        } @else {
+          {{ 'plans.paymentsTitleReady' | t }}
+        }
+      </h2>
       <p>{{ 'plans.paymentsPending' | t }}</p>
       <dl>
-        <div>
-          <dt>{{ 'plans.paymentsPlan' | t }}</dt>
-          <dd>{{ plan.name }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'plans.paymentsAmount' | t }}</dt>
-          <dd>{{ paymentAmount() | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
-        </div>
+        @if (prepSummary(); as summary) {
+          <div>
+            <dt>{{ 'plans.prep.planPrice' | t }}</dt>
+            <dd>
+              {{ summary.planName }}
+              · {{ summary.planPrice | currency:'INR':'symbol-narrow':'1.0-0' }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'plans.prep.bucketPrice' | t }}</dt>
+            <dd>
+              {{ summary.bucketLabel }}
+              · {{ summary.bucketPrice | currency:'INR':'symbol-narrow':'1.0-0' }}
+            </dd>
+          </div>
+          <div class="total-row">
+            <dt>{{ 'plans.prep.total' | t }}</dt>
+            <dd>{{ summary.total | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
+          </div>
+        } @else {
+          @if (paymentPlan(); as plan) {
+            <div>
+              <dt>{{ 'plans.paymentsPlan' | t }}</dt>
+              <dd>{{ plan.name }}</dd>
+            </div>
+          }
+          <div>
+            <dt>{{ 'plans.paymentsAmount' | t }}</dt>
+            <dd>{{ paymentAmount() | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
+          </div>
+        }
         <div>
           <dt>{{ 'plans.dt.status' | t }}</dt>
-          <dd>{{ (pendingPayment()?.status || 'pending') | titlecase }}</dd>
+          <dd>{{ (pending.status || 'pending') | titlecase }}</dd>
         </div>
         @if (shop(); as shop) {
           <div>
@@ -100,11 +131,82 @@
       </div>
     </section>
   } @else {
-    <section class="empty-waitlist" role="status">
+    <section class="payment-prep" aria-labelledby="payment-prep-title">
       <p class="eyebrow">{{ 'plans.paymentsEyebrow' | t }}</p>
-      <h2>{{ 'plans.paymentsEmptyTitle' | t }}</h2>
-      <p>{{ 'plans.paymentsEmptySub' | t }}</p>
-      <button type="button" class="primary" (click)="setViewMode('plans')">{{ 'plans.viewPlans' | t }}</button>
+      <h2 id="payment-prep-title">{{ 'plans.prep.title' | t }}</h2>
+      <p class="prep-lead">{{ 'plans.prep.sub' | t }}</p>
+
+      <div class="prep-fields">
+        <label class="prep-field">
+          <span>{{ 'plans.prep.planLabel' | t }}</span>
+          <app-inline-select
+            [options]="prepPlanOptions()"
+            [value]="prepPlanType()"
+            (valueChange)="onPrepPlanChange($event)"
+            [placeholder]="'plans.prep.planPlaceholder' | t"
+            [searchable]="true"
+            [searchPlaceholder]="'plans.prep.searchPlans' | t"
+          />
+        </label>
+        <label class="prep-field">
+          <span>{{ 'plans.prep.bucketLabelField' | t }}</span>
+          <app-inline-select
+            [options]="prepBucketOptions()"
+            [value]="selectedBucketSlots() ? '' + selectedBucketSlots() : ''"
+            (valueChange)="onPrepBucketChange($event)"
+            [placeholder]="'plans.prep.bucketPlaceholder' | t"
+            [searchable]="true"
+            [searchPlaceholder]="'plans.prep.searchBuckets' | t"
+          />
+        </label>
+      </div>
+
+      @if (selectedBucketSlots() === 100) {
+        <p class="prep-note" role="note">{{ 'plans.prep.bucket100Note' | t }}</p>
+      }
+
+      <div class="price-summary" aria-live="polite">
+        <p class="eyebrow">{{ 'plans.prep.summaryEyebrow' | t }}</p>
+        <dl>
+          <div>
+            <dt>{{ 'plans.prep.planPrice' | t }}</dt>
+            <dd>{{ prepPlanPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'plans.prep.bucketPrice' | t }}</dt>
+            <dd>{{ prepBucketPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
+          </div>
+          <div class="total-row">
+            <dt>{{ 'plans.prep.total' | t }}</dt>
+            <dd>{{ prepTotal() | currency:'INR':'symbol-narrow':'1.0-0' }}</dd>
+          </div>
+        </dl>
+        @if (prepPacks() > 0) {
+          <p class="prep-meta">
+            {{
+              'plans.prep.bucketMeta'
+                | t
+                  : {
+                      packs: prepPacks(),
+                      billed: prepBilledSlots(),
+                      packPrice: (packPrice() | currency:'INR':'symbol-narrow':'1.0-0'),
+                    }
+            }}
+          </p>
+        }
+      </div>
+
+      <div class="prep-actions">
+        <button type="button" class="ghost" (click)="setViewMode('plans')">{{ 'plans.browsePlans' | t }}</button>
+        <button
+          type="button"
+          class="primary"
+          (click)="preparePayment()"
+          [disabled]="!canPreparePayment()"
+        >
+          {{ preparing() ? ('plans.prep.preparing' | t) : ('plans.prep.cta' | t) }}
+        </button>
+      </div>
     </section>
   }
 } @else {
@@ -119,13 +221,27 @@
     </section>
   }
 
-  @if (current(); as plan) {
+  @if (displayPlan(); as plan) {
     <section class="status" [attr.data-status]="plan.status" [attr.data-type]="plan.type">
       <div>
         <p class="eyebrow">{{ 'plans.yourPlan' | t }}</p>
         <h2>{{ plan.name }}</h2>
+        <p class="status-badge" [attr.data-status]="plan.status">{{ planStatusHeadline(plan) }}</p>
         <p>
-          @if (plan.type === 'free_trial' && plan.is_active) {
+          @if (isViewerMode()) {
+            {{ 'plans.status.viewer' | t }}
+          }
+          @if (plan.in_grace_period || plan.status === 'grace_period') {
+            {{
+              'plans.graceDetail'
+                | t
+                  : {
+                      date: plan.grace_ends_at
+                        ? ((plan.grace_ends_at | date:'mediumDate') ?? '')
+                        : ('plans.soon' | t),
+                    }
+            }}
+          } @else if (plan.type === 'free_trial' && plan.is_active) {
             {{
               'plans.trialActive'
                 | t
@@ -140,7 +256,10 @@
             }
           } @else if (plan.is_active) {
             {{ 'plans.activeLimit' | t: { limit: productLimitLabel(plan) } }}
-          } @else if (plan.status === 'expired') {
+            @if (plan.days_remaining != null) {
+              · {{ 'plans.daysLeft' | t: { days: plan.days_remaining } }}
+            }
+          } @else if (plan.status === 'expired' || plan.status === 'deactivated') {
             {{ 'plans.trialEnded' | t }}
           } @else {
             {{ plan.description }}
@@ -152,6 +271,38 @@
       }
     </section>
   }
+
+  <section class="queue-card" aria-labelledby="plan-queue-title">
+    <div class="queue-head">
+      <p class="eyebrow">{{ 'plans.queue.eyebrow' | t }}</p>
+      <h2 id="plan-queue-title">{{ 'plans.queue.title' | t }}</h2>
+      <p class="sub">{{ 'plans.queue.sub' | t }}</p>
+    </div>
+    @if (queueItems().length === 0) {
+      <p class="muted queue-empty">{{ 'plans.queue.empty' | t }}</p>
+    } @else {
+      <ol class="fifo-queue">
+        @for (item of queueItems(); track item.id; let idx = $index) {
+          <li [attr.data-kind]="item.kind" [class.is-front]="idx === 0">
+            <span class="queue-pos" aria-hidden="true">{{ idx + 1 }}</span>
+            <div class="queue-body">
+              <strong>{{ item.title }}</strong>
+              <span class="queue-meta">
+                <span class="queue-status">{{ item.status | titlecase }}</span>
+                @if (item.detail) {
+                  <span>{{ item.detail }}</span>
+                }
+                <time [attr.datetime]="item.created_at">{{ item.created_at | date:'short' }}</time>
+              </span>
+            </div>
+            @if (idx === 0) {
+              <span class="queue-front-tag">{{ 'plans.queue.front' | t }}</span>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </section>
 
   @if (shopReady()) {
     @if (shop(); as shop) {
@@ -232,11 +383,25 @@
     <div>
       <p class="eyebrow">{{ 'plans.bucketEyebrow' | t }}</p>
       <h2 id="product-pack-title">{{ 'plans.packTitle' | t }}</h2>
-      <p>
-        {{ 'plans.packSubPrefix' | t: { size: packSize() } }}
-        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}
-        {{ 'plans.packSubSuffix' | t }}
-      </p>
+      <p>{{ 'plans.pack.explain' | t: { size: packSize() } }}</p>
+      <p class="pack-explain-extra">{{ 'plans.pack.explainAddOn' | t }}</p>
+      <div class="bucket-chips" role="group" [attr.aria-label]="'plans.pack.chipGroup' | t">
+        @for (slots of bucketAddonOptions; track slots) {
+          <button
+            type="button"
+            class="bucket-chip"
+            [class.active]="isBucketSlotSelected(slots)"
+            (click)="selectBucketSlots(slots)"
+          >
+            @if (slots === 100) {
+              {{ 'plans.pack.chip100Btn' | t }}
+            } @else {
+              {{ slots }}
+            }
+          </button>
+        }
+      </div>
+      <p class="pack-chip-hint">{{ bucketChipHint() }}</p>
       @if (bucket(); as bucket) {
         <dl class="pack-stats">
           <div>
@@ -268,14 +433,28 @@
     </div>
     <div class="pack-actions">
       <p class="pack-price">
-        {{ packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}
-        <small>{{ 'plans.packPlus' | t: { size: packSize() } }}</small>
+        {{ (prepPacks() || 1) * packPrice() | currency:'INR':'symbol-narrow':'1.0-0' }}
+        <small>
+          @if (prepPacks() > 0) {
+            {{ 'plans.packPlusSelected' | t: { packs: prepPacks(), billed: prepBilledSlots() } }}
+          } @else {
+            {{ 'plans.packPlus' | t: { size: packSize() } }}
+          }
+        </small>
       </p>
       <button
         type="button"
         class="primary"
+        (click)="setViewMode('payments')"
+        [disabled]="!shop()?.id"
+      >
+        {{ 'plans.pack.goPayments' | t }}
+      </button>
+      <button
+        type="button"
+        class="ghost"
         (click)="purchaseProductPack()"
-        [disabled]="bucketBusy() || !shop()?.id"
+        [disabled]="bucketBusy() || !shop()?.id || !selectedBucketSlots()"
       >
         {{ bucketBusy() ? ('plans.purchasing' | t) : ('plans.buyPack' | t) }}
       </button>
