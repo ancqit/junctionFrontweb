@@ -4,14 +4,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, of, switchMap } from 'rxjs';
 import { CurrentShopService } from '../../core/current-shop.service';
-import { EmployeesApi } from '../../core/employees.api';
+import { EmployeesStore } from '../../core/employees.store';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { buildPlanCountdown, PlanCountdown } from '../../core/plan-countdown';
 import { Notice, NoticesApi } from '../../core/notices.api';
 import { OrdersApi } from '../../core/orders.api';
 import { PlansApi } from '../../core/plans.api';
-import { ProductsApi } from '../../core/products.api';
+import { ProductsStore } from '../../core/products.store';
 import { ProfileApi } from '../../core/profile.api';
 import {
   DEFAULT_CLOSED_TIME,
@@ -60,8 +60,8 @@ function fallbackShopTypeOptions(): InlineSelectOption[] {
   styleUrl: './overview.scss',
 })
 export class OverviewPage implements OnInit {
-  private readonly employeesApi = inject(EmployeesApi);
-  private readonly productsApi = inject(ProductsApi);
+  private readonly employeesStore = inject(EmployeesStore);
+  private readonly productsStore = inject(ProductsStore);
   private readonly ordersApi = inject(OrdersApi);
   private readonly plansApi = inject(PlansApi);
   private readonly profileApi = inject(ProfileApi);
@@ -674,7 +674,17 @@ export class OverviewPage implements OnInit {
       },
     });
     this.loadTodayNotice();
-    this.productsApi.list().subscribe({
+    const cachedProducts = this.productsStore.getSnapshot();
+    if (cachedProducts.length > 0) {
+      this.productCount.set(cachedProducts.length);
+      this.inventoryValue.set(
+        cachedProducts.reduce(
+          (sum, product) => sum + Number(product.price || 0) * Number(product.stock_quantity || 0),
+          0,
+        ),
+      );
+    }
+    this.productsStore.refresh().subscribe({
       next: (products) => {
         this.productCount.set(products.length);
         this.inventoryValue.set(
@@ -685,11 +695,22 @@ export class OverviewPage implements OnInit {
         );
       },
       error: () => {
-        this.productCount.set(0);
-        this.inventoryValue.set(0);
+        if (this.productCount() === 0) {
+          this.productCount.set(0);
+          this.inventoryValue.set(0);
+        }
       },
     });
-    this.employeesApi.list().subscribe({
+    const cachedEmployees = this.employeesStore.getSnapshot();
+    if (cachedEmployees.length > 0) {
+      this.employeeCount.set(cachedEmployees.length);
+      this.employeeSalaryTotal = cachedEmployees.reduce(
+        (sum, employee) => sum + Number(employee.salary || 0),
+        0,
+      );
+      this.recomputeExpenditure();
+    }
+    this.employeesStore.refresh().subscribe({
       next: (employees) => {
         this.employeeCount.set(employees.length);
         this.employeeSalaryTotal = employees.reduce(
@@ -699,9 +720,11 @@ export class OverviewPage implements OnInit {
         this.recomputeExpenditure();
       },
       error: () => {
-        this.employeeCount.set(0);
-        this.employeeSalaryTotal = 0;
-        this.recomputeExpenditure();
+        if (this.employeeCount() === 0) {
+          this.employeeCount.set(0);
+          this.employeeSalaryTotal = 0;
+          this.recomputeExpenditure();
+        }
       },
     });
     this.ordersApi
