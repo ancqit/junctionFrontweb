@@ -4,25 +4,29 @@
     @if (shopReady()) {
       @if (shop(); as shop) {
         <h1>{{ shop.name }}</h1>
-        <p class="meta">{{ shop.locality }} · {{ shop.city }}</p>
+        <p class="hero-place">{{ shop.locality }} · {{ shop.city }}</p>
         @if (shop.address) {
           <p class="meta address">{{ shop.address }}</p>
         }
-        @if (shopTypeLabelText()) {
-          <p class="meta type">{{ shopTypeLabelText() }}</p>
-        }
-        @if (ownerPhone()) {
-          <p class="meta phone-line">{{ 'overview.mobile' | t: { phone: ownerPhone() } }}</p>
-        }
-        @if (countdown(); as plan) {
-          <p class="plan-mini">
-            {{ plan.planName }}
-            @if (plan.endsAt) {
-              · {{ 'overview.expires' | t: { date: (plan.endsAt | date:'mediumDate') ?? '' } }}
-            }
-          </p>
-        }
-        <button type="button" class="ghost compact edit-btn" (click)="openShopEditor()">{{ 'overview.editShop' | t }}</button>
+        <div class="hero-chips" aria-label="Shop details">
+          @if (shopTypeLabelText()) {
+            <span class="chip chip-type">{{ shopTypeLabelText() }}</span>
+          }
+          @if (ownerPhone()) {
+            <span class="chip">{{ 'overview.mobile' | t: { phone: ownerPhone() } }}</span>
+          }
+          @if (countdown(); as plan) {
+            <span class="chip chip-plan">
+              {{ plan.planName }}
+              @if (plan.endsAt) {
+                · {{ 'overview.expires' | t: { date: (plan.endsAt | date:'mediumDate') ?? '' } }}
+              }
+            </span>
+          }
+        </div>
+        <button type="button" class="ghost compact edit-btn" (click)="openShopEditor()">
+          {{ 'overview.editShop' | t }}
+        </button>
       }
     } @else if (shopCreated()) {
       <h1>{{ 'overview.editDetails' | t }}</h1>
@@ -33,39 +37,42 @@
       <a routerLink="/back-office/shops" class="ghost compact edit-btn">{{ 'overview.goShops' | t }}</a>
     }
   </div>
+
   @if (shopReady()) {
     <div class="head-actions">
-      <div class="open-toggle-wrap">
-        <span class="status-pill" [class.is-open]="shopOpen()">{{ shopStatusLabel() }}</span>
-        <label class="open-toggle" [attr.aria-label]="shopOpen() ? ('overview.markClosed' | t) : ('overview.markOpen' | t)">
-          <input type="checkbox" [checked]="shopOpen()" (change)="toggleShopOpen()" />
-          <span class="slider"></span>
-        </label>
-      </div>
-      @if (hasOwnerPhone()) {
-        <div class="open-toggle-wrap phone-toggle-wrap">
-          <span class="status-pill phone-pill" [class.is-visible]="phoneVisible()">{{ phoneStatusLabel() }}</span>
-          <label
-            class="open-toggle"
-            [attr.aria-label]="phoneVisible() ? ('overview.hidePhone' | t) : ('overview.showPhone' | t)"
-          >
-            <input
-              type="checkbox"
-              [checked]="phoneVisible()"
-              [disabled]="phoneBusy()"
-              (change)="togglePhoneVisible()"
-            />
+      <div class="control-rail">
+        <div class="open-toggle-wrap">
+          <span class="status-pill" [class.is-open]="shopOpen()">{{ shopStatusLabel() }}</span>
+          <label class="open-toggle" [attr.aria-label]="shopOpen() ? ('overview.markClosed' | t) : ('overview.markOpen' | t)">
+            <input type="checkbox" [checked]="shopOpen()" (change)="toggleShopOpen()" />
             <span class="slider"></span>
           </label>
         </div>
-      }
+        @if (hasOwnerPhone()) {
+          <div class="open-toggle-wrap phone-toggle-wrap">
+            <span class="status-pill phone-pill" [class.is-visible]="phoneVisible()">{{ phoneStatusLabel() }}</span>
+            <label
+              class="open-toggle"
+              [attr.aria-label]="phoneVisible() ? ('overview.hidePhone' | t) : ('overview.showPhone' | t)"
+            >
+              <input
+                type="checkbox"
+                [checked]="phoneVisible()"
+                [disabled]="phoneBusy()"
+                (change)="togglePhoneVisible()"
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
+        }
+      </div>
       @if (statusError()) {
         <p class="error head-error" role="alert">{{ statusError() }}</p>
       }
       @if (phoneError()) {
         <p class="error head-error" role="alert">{{ phoneError() }}</p>
       }
-      <a routerLink="/back-office/billing" class="primary compact">{{ 'common.newBill' | t }}</a>
+      <a routerLink="/back-office/billing" class="primary compact head-bill">{{ 'common.newBill' | t }}</a>
     </div>
   }
 </header>
@@ -169,30 +176,45 @@
     <p class="success" role="status">{{ shopSuccess() }}</p>
   }
 
-  <div class="dashboard-grid">
-    <section class="metrics">
-      <article>
-        <p>{{ 'overview.orders' | t }}</p>
-        <strong>{{ loading() ? '…' : orderCount() }}</strong>
-      </article>
-      <article>
-        <p>{{ 'overview.employees' | t }}</p>
-        <strong>{{ loading() ? '…' : employeeCount() }}</strong>
-      </article>
-      <article>
-        <p>{{ 'overview.products' | t }}</p>
-        <strong>{{ loading() ? '…' : productCount() }}</strong>
-      </article>
-      <article>
-        <p>{{ 'overview.inventoryValue' | t }}</p>
-        <strong>{{ loading() ? '…' : (inventoryValue() | currency: 'INR' : 'symbol-narrow' : '1.0-0') }}</strong>
-      </article>
-      <article>
-        <p>{{ 'overview.expenditure' | t }}</p>
-        <strong>{{ loading() ? '…' : (expenditure() | currency: 'INR' : 'symbol-narrow' : '1.0-0') }}</strong>
-      </article>
-    </section>
+  <section class="metrics" aria-label="Shop metrics">
+    <article>
+      <p>{{ 'overview.orders' | t }}</p>
+      <strong>{{ loading() ? '…' : orderCount() }}</strong>
+    </article>
+    <article>
+      <p>{{ 'overview.employees' | t }}</p>
+      <strong>{{ loading() ? '…' : employeeCount() }}</strong>
+    </article>
+    <article>
+      <p>{{ 'overview.products' | t }}</p>
+      <strong>{{ loading() ? '…' : productCount() }}</strong>
+    </article>
+    <article>
+      <p>{{ 'overview.inventoryValue' | t }}</p>
+      <strong>{{ loading() ? '…' : (inventoryValue() | currency: 'INR' : 'symbol-narrow' : '1.0-0') }}</strong>
+    </article>
+    <article>
+      <p>{{ 'overview.expenditure' | t }}</p>
+      <strong>{{ loading() ? '…' : (expenditure() | currency: 'INR' : 'symbol-narrow' : '1.0-0') }}</strong>
+    </article>
+  </section>
 
+  <nav class="quick-row" aria-label="{{ 'overview.quickActions' | t }}">
+    <a routerLink="/back-office/billing" class="quick-link">
+      <strong>{{ 'overview.starterBill' | t }}</strong>
+      <span>{{ 'overview.starterBillSub' | t }}</span>
+    </a>
+    <a routerLink="/back-office/orders" class="quick-link">
+      <strong>{{ 'overview.reviewOrders' | t }}</strong>
+      <span>{{ 'overview.reviewOrdersSub' | t }}</span>
+    </a>
+    <a routerLink="/back-office/products" class="quick-link">
+      <strong>{{ 'overview.reviewProducts' | t }}</strong>
+      <span>{{ 'overview.reviewProductsSub' | t }}</span>
+    </a>
+  </nav>
+
+  <div class="overview-main">
     <section class="card notice-card" [formGroup]="noticeForm">
       <div class="card-head inline">
         <div>
@@ -207,11 +229,18 @@
         <p class="muted small">{{ 'overview.loadingNotice' | t }}</p>
       }
 
+      @if (todayNotice(); as notice) {
+        <aside class="notice-live" [attr.aria-label]="'overview.noticeBanner' | t">
+          <p class="eyebrow">{{ 'overview.noticeShort' | t }}</p>
+          <p class="notice-message">{{ notice.message }}</p>
+        </aside>
+      }
+
       <label>
         {{ 'overview.noticeLabel' | t }}
         <textarea
           formControlName="message"
-          rows="2"
+          rows="3"
           maxlength="1000"
           [placeholder]="'overview.noticePh' | t"
         ></textarea>
@@ -254,13 +283,6 @@
         <a routerLink="/back-office/orders" class="ghost compact">{{ 'overview.viewAll' | t }}</a>
       </div>
 
-      @if (todayNotice(); as notice) {
-        <aside class="notice-banner" [attr.aria-label]="'overview.noticeBanner' | t">
-          <p class="eyebrow">{{ 'overview.noticeShort' | t }}</p>
-          <p class="notice-message">{{ notice.message }}</p>
-        </aside>
-      }
-
       @if (loading()) {
         <p class="muted small">{{ 'overview.loadingOrders' | t }}</p>
       } @else if (recentOrders().length === 0) {
@@ -289,24 +311,6 @@
           }
         </ul>
       }
-    </section>
-
-    <section class="card next-card">
-      <p class="eyebrow">{{ 'overview.quickActions' | t }}</p>
-      <div class="next-links three">
-        <a routerLink="/back-office/billing" class="next-link">
-          <strong>{{ 'overview.starterBill' | t }}</strong>
-          <span>{{ 'overview.starterBillSub' | t }}</span>
-        </a>
-        <a routerLink="/back-office/orders" class="next-link">
-          <strong>{{ 'overview.reviewOrders' | t }}</strong>
-          <span>{{ 'overview.reviewOrdersSub' | t }}</span>
-        </a>
-        <a routerLink="/back-office/products" class="next-link">
-          <strong>{{ 'overview.reviewProducts' | t }}</strong>
-          <span>{{ 'overview.reviewProductsSub' | t }}</span>
-        </a>
-      </div>
     </section>
   </div>
 }
