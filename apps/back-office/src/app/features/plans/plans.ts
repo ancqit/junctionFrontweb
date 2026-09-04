@@ -22,9 +22,20 @@ import {
   ProductBucket,
   ProductBucketApi,
 } from '../../core/product-bucket.api';
+import { ShopLockService } from '../../core/shop-lock.service';
 import { Shop, ShopsApi } from '../../core/shops.api';
 
 export type PlansViewMode = 'plans' | 'payments';
+
+/** Visual FIFO queue row for waitlist / payment history. */
+export interface PlanQueueItem {
+  id: string;
+  kind: 'waitlist' | 'payment';
+  title: string;
+  status: string;
+  created_at: string;
+  detail: string;
+}
 
 @Component({
   selector: 'app-plans',
@@ -38,11 +49,13 @@ export class PlansPage implements OnInit {
   private readonly bucketApi = inject(ProductBucketApi);
   private readonly paymentsApi = inject(PaymentsApi);
   private readonly shopsApi = inject(ShopsApi);
+  private readonly shopLock = inject(ShopLockService);
   readonly i18n = inject(I18nService);
 
   readonly plans = signal<PlanOption[]>([]);
   readonly current = signal<PlanSummary | null>(null);
   readonly application = signal<PlanApplication | null>(null);
+  readonly payments = signal<ShopPayment[]>([]);
   readonly shop = signal<Shop | null>(null);
   readonly bucket = signal<ProductBucket | null>(null);
   readonly pendingPayment = signal<ShopPayment | null>(null);
@@ -70,9 +83,57 @@ export class PlansPage implements OnInit {
     return !!shop?.id && !!shop.name?.trim() && !!shop.city?.trim() && !!shop.locality?.trim();
   });
 
+  /** Prefer shop-level plan, fall back to /plans/me. */
+  readonly displayPlan = computed((): PlanSummary | null => {
+    return this.shop()?.plan ?? this.current();
+  });
+
+  readonly isViewerMode = computed(() => {
+    const shop = this.shop();
+    return shop ? this.shopLock.isLocked(shop) : false;
+  });
+
   readonly onWaitlist = computed(() => {
     const app = this.application();
     return !!app && String(app.status).toLowerCase() === 'pending';
+  });
+
+  /** FIFO queue: oldest at front (top). */
+  readonly queueItems = computed((): PlanQueueItem[] => {
+    this.i18n.lang();
+    const items: PlanQueueItem[] = [];
+    const app = this.application();
+    if (app) {
+      items.push({
+        id: `waitlist-${app.id}`,
+        kind: 'waitlist',
+        title: this.i18n.t('plans.queue.waitlist', {
+          plan: this.requestedPlanName(app),
+        }),
+        status: String(app.status),
+        created_at: app.created_at,
+        detail: app.shop_name?.trim() || app.switch_message || '',
+      });
+    }
+    for (const payment of this.payments()) {
+      const planLabel =
+        payment.plan_type != null
+          ? planDisplayName(payment.plan_type, this.plans())
+          : payment.kind === 'product_pack'
+            ? this.i18n.t('plans.queue.productPack')
+            : payment.description || this.i18n.t('plans.tab.payments');
+      items.push({
+        id: `payment-${payment.id}`,
+        kind: 'payment',
+        title: this.i18n.t('plans.queue.payment', { label: planLabel }),
+        status: payment.status,
+        created_at: payment.created_at,
+        detail: `₹${payment.amount_inr ?? 0}`,
+      });
+    }
+    return items.sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
   });
 
   readonly paymentPlan = computed(() => {
@@ -135,9 +196,11 @@ export class PlansPage implements OnInit {
               ? localStorage.getItem('junction.activeShopId')?.trim()
               : null;
           const active = activeId ? shops.find((row) => row.id === activeId) : null;
-          this.shop.set(active ?? shops[0] ?? null);
+          const shop = active ?? shops[0] ?? null;
+          this.shop.set(shop);
           this.current.set(current);
           this.bucket.set(bucket);
+          this.loadPayments(shop?.id);
           if (this.pendingPayment()) {
             this.viewMode.set('payments');
           }
@@ -197,6 +260,7 @@ export class PlansPage implements OnInit {
       .subscribe({
         next: (payment) => {
           this.pendingPayment.set(payment);
+          this.prependPayment(payment);
           this.confirmPlanType.set(null);
           this.viewMode.set('payments');
           this.success.set(
@@ -207,7 +271,7 @@ export class PlansPage implements OnInit {
           // Fallback when purchase endpoint is unavailable — still land on Payments with amount.
           const amount = plan?.price_inr ?? 0;
           const now = new Date().toISOString();
-          this.pendingPayment.set({
+          const payment: ShopPayment = {
             id: `local-${planType}`,
             store_id: shop.id,
             owner_user_id: '',
@@ -219,7 +283,9 @@ export class PlansPage implements OnInit {
             description: `${plan?.name ?? planType} plan`,
             created_at: now,
             updated_at: now,
-          });
+          };
+          this.pendingPayment.set(payment);
+          this.prependPayment(payment);
           this.confirmPlanType.set(null);
           this.viewMode.set('payments');
           this.success.set(`Payments opened for ${plan?.name ?? planType} · ₹${amount}.`);
@@ -252,11 +318,13 @@ export class PlansPage implements OnInit {
             return;
           }
           const payment = result as ShopPayment;
+          this.prependPayment(payment);
           if (payment.status === 'pending' && payment.id) {
             this.paymentsApi
               .complete(payment.id, { payment_method: 'other', payment_reference: 'back-office' })
               .subscribe({
                 next: (done) => {
+                  this.prependPayment(done.payment);
                   if (done.bucket) {
                     this.bucket.set(done.bucket);
                     this.success.set(
@@ -299,7 +367,7 @@ export class PlansPage implements OnInit {
   }
 
   isCurrent(planType: PlanType): boolean {
-    const current = this.current();
+    const current = this.displayPlan();
     return !!current && current.is_active && current.type === planType;
   }
 
@@ -311,6 +379,51 @@ export class PlansPage implements OnInit {
       return false;
     }
     return !this.isCurrent(plan.type);
+  }
+
+  planStatusHeadline(plan: PlanSummary): string {
+    this.i18n.lang();
+    if (plan.in_grace_period || plan.status === 'grace_period') {
+      return this.i18n.t('plans.status.grace');
+    }
+    if (plan.status === 'expired' || plan.status === 'deactivated') {
+      return this.i18n.t('plans.status.expired');
+    }
+    if (plan.status === 'cancelled') {
+      return this.i18n.t('plans.status.cancelled');
+    }
+    if (plan.type === 'free_trial' && plan.is_active) {
+      return this.i18n.t('plans.status.trial');
+    }
+    if (plan.is_active) {
+      return this.i18n.t('plans.status.active');
+    }
+    return plan.status;
+  }
+
+  private loadPayments(storeId: string | undefined): void {
+    if (!storeId?.trim()) {
+      this.payments.set([]);
+      return;
+    }
+    this.paymentsApi.list(storeId).subscribe({
+      next: (rows) => {
+        // API may return newest-first; queueItems sorts ascending for FIFO display.
+        this.payments.set(Array.isArray(rows) ? rows : []);
+        const pending = (rows ?? []).find((row) => row.status === 'pending' && row.kind === 'plan');
+        if (pending && !this.pendingPayment()) {
+          this.pendingPayment.set(pending);
+        }
+      },
+      error: () => this.payments.set([]),
+    });
+  }
+
+  private prependPayment(payment: ShopPayment): void {
+    this.payments.update((rows) => {
+      const without = rows.filter((row) => row.id !== payment.id);
+      return [payment, ...without];
+    });
   }
 
   private reloadBucket(): void {

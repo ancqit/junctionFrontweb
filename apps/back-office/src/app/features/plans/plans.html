@@ -119,13 +119,27 @@
     </section>
   }
 
-  @if (current(); as plan) {
+  @if (displayPlan(); as plan) {
     <section class="status" [attr.data-status]="plan.status" [attr.data-type]="plan.type">
       <div>
         <p class="eyebrow">{{ 'plans.yourPlan' | t }}</p>
         <h2>{{ plan.name }}</h2>
+        <p class="status-badge" [attr.data-status]="plan.status">{{ planStatusHeadline(plan) }}</p>
         <p>
-          @if (plan.type === 'free_trial' && plan.is_active) {
+          @if (isViewerMode()) {
+            {{ 'plans.status.viewer' | t }}
+          }
+          @if (plan.in_grace_period || plan.status === 'grace_period') {
+            {{
+              'plans.graceDetail'
+                | t
+                  : {
+                      date: plan.grace_ends_at
+                        ? ((plan.grace_ends_at | date:'mediumDate') ?? '')
+                        : ('plans.soon' | t),
+                    }
+            }}
+          } @else if (plan.type === 'free_trial' && plan.is_active) {
             {{
               'plans.trialActive'
                 | t
@@ -140,7 +154,10 @@
             }
           } @else if (plan.is_active) {
             {{ 'plans.activeLimit' | t: { limit: productLimitLabel(plan) } }}
-          } @else if (plan.status === 'expired') {
+            @if (plan.days_remaining != null) {
+              · {{ 'plans.daysLeft' | t: { days: plan.days_remaining } }}
+            }
+          } @else if (plan.status === 'expired' || plan.status === 'deactivated') {
             {{ 'plans.trialEnded' | t }}
           } @else {
             {{ plan.description }}
@@ -152,6 +169,38 @@
       }
     </section>
   }
+
+  <section class="queue-card" aria-labelledby="plan-queue-title">
+    <div class="queue-head">
+      <p class="eyebrow">{{ 'plans.queue.eyebrow' | t }}</p>
+      <h2 id="plan-queue-title">{{ 'plans.queue.title' | t }}</h2>
+      <p class="sub">{{ 'plans.queue.sub' | t }}</p>
+    </div>
+    @if (queueItems().length === 0) {
+      <p class="muted queue-empty">{{ 'plans.queue.empty' | t }}</p>
+    } @else {
+      <ol class="fifo-queue">
+        @for (item of queueItems(); track item.id; let idx = $index) {
+          <li [attr.data-kind]="item.kind" [class.is-front]="idx === 0">
+            <span class="queue-pos" aria-hidden="true">{{ idx + 1 }}</span>
+            <div class="queue-body">
+              <strong>{{ item.title }}</strong>
+              <span class="queue-meta">
+                <span class="queue-status">{{ item.status | titlecase }}</span>
+                @if (item.detail) {
+                  <span>{{ item.detail }}</span>
+                }
+                <time [attr.datetime]="item.created_at">{{ item.created_at | date:'short' }}</time>
+              </span>
+            </div>
+            @if (idx === 0) {
+              <span class="queue-front-tag">{{ 'plans.queue.front' | t }}</span>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </section>
 
   @if (shopReady()) {
     @if (shop(); as shop) {

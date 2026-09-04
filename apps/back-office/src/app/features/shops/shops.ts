@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -24,6 +24,8 @@ import {
 
 const LOCALITY_GEOCODE_ERROR =
   'Could not verify that locality. Enter a real or prominent locality name.';
+const OWNER_TOGGLE_COUNTDOWN_SEC = 3;
+const OWNER_TOGGLE_COOLDOWN_MS = 10_000;
 
 type ActiveLocationPicker = 'city' | 'locality' | null;
 
@@ -52,7 +54,7 @@ function fallbackShopTypeOptions(): InlineSelectOption[] {
   templateUrl: './shops.html',
   styleUrl: './shops.scss',
 })
-export class ShopsPage implements OnInit {
+export class ShopsPage implements OnInit, OnDestroy {
   private readonly shopsApi = inject(ShopsApi);
   private readonly locationsApi = inject(LocationsApi);
   private readonly currentShop = inject(CurrentShopService);
@@ -72,12 +74,25 @@ export class ShopsPage implements OnInit {
   readonly toggleBusyId = signal<string | null>(null);
   readonly toggleError = signal('');
 
+  /** Owner↔viewer countdown (3…2…1) before applying lock. */
+  readonly countdownShopId = signal<string | null>(null);
+  readonly countdownSeconds = signal(0);
+  readonly countdownTargetLocked = signal<boolean | null>(null);
+  /** shopId → epoch ms when cooldown ends */
+  readonly cooldownUntil = signal<Record<string, number>>({});
+  /** Tick so cooldown remaining text updates. */
+  readonly cooldownTick = signal(0);
+
   readonly cities = signal<string[]>([]);
   readonly localities = signal<string[]>([]);
   readonly localitiesLoading = signal(false);
   readonly activePicker = signal<ActiveLocationPicker>(null);
   readonly localityValidating = signal(false);
   readonly localityPickerError = signal<string | null>(null);
+
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
+  private cooldownTimer: ReturnType<typeof setInterval> | null = null;
+  private pendingCountdownShop: Shop | null = null;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -116,6 +131,11 @@ export class ShopsPage implements OnInit {
       next: (rows) => this.cities.set(rows),
       error: () => this.cities.set([]),
     });
+  }
+
+  ngOnDestroy(): void {
+    this.clearCountdownTimer();
+    this.clearCooldownTimer();
   }
 
   reload(): void {
@@ -280,7 +300,24 @@ export class ShopsPage implements OnInit {
   }
 
   lockToggleDisabled(shop: Shop): boolean {
-    return this.toggleBusyId() === shop.id || !this.shopLock.canManualUnlock(shop);
+    return (
+      this.toggleBusyId() === shop.id ||
+      this.countdownShopId() === shop.id ||
+      this.isInCooldown(shop.id) ||
+      !this.shopLock.canManualUnlock(shop)
+    );
+  }
+
+  isInCooldown(shopId: string): boolean {
+    this.cooldownTick();
+    const until = this.cooldownUntil()[shopId] ?? 0;
+    return until > Date.now();
+  }
+
+  cooldownSecondsLeft(shopId: string): number {
+    this.cooldownTick();
+    const until = this.cooldownUntil()[shopId] ?? 0;
+    return Math.max(0, Math.ceil((until - Date.now()) / 1000));
   }
 
   toggleShopOpen(shop: Shop): void {
@@ -358,18 +395,62 @@ export class ShopsPage implements OnInit {
     });
   }
 
-  toggleOwnerMode(shop: Shop): void {
+  /**
+   * Owner↔viewer: prevent immediate flip. Show 3…2…1 countdown, then apply lock.
+   * Checkbox click is cancelled so UI stays on current mode until countdown finishes.
+   */
+  onOwnerToggleClick(event: Event, shop: Shop): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.beginOwnerToggle(shop);
+  }
+
+  beginOwnerToggle(shop: Shop): void {
     if (!shop.id || this.lockToggleDisabled(shop)) {
+      if (shop.id && this.isInCooldown(shop.id)) {
+        this.toggleError.set(this.i18n.t('shops.toggleCooldown'));
+      }
       return;
     }
+    if (this.countdownShopId()) {
+      return;
+    }
+
     const nextLocked = this.isOwnerMode(shop);
-    const previous = { ...shop };
-    const optimistic = this.shopLock.applyLockFromRecord({
-      ...shop,
-      is_locked: nextLocked,
-      lock_reason: nextLocked ? 'manual' : null,
-    });
-    this.patchShop(optimistic);
+    this.pendingCountdownShop = shop;
+    this.countdownShopId.set(shop.id);
+    this.countdownTargetLocked.set(nextLocked);
+    this.countdownSeconds.set(OWNER_TOGGLE_COUNTDOWN_SEC);
+    this.toggleError.set('');
+    this.clearCountdownTimer();
+    this.countdownTimer = setInterval(() => {
+      const next = this.countdownSeconds() - 1;
+      if (next <= 0) {
+        this.clearCountdownTimer();
+        const target = this.pendingCountdownShop;
+        const locked = this.countdownTargetLocked();
+        this.countdownShopId.set(null);
+        this.countdownSeconds.set(0);
+        this.countdownTargetLocked.set(null);
+        this.pendingCountdownShop = null;
+        if (target && locked != null) {
+          this.applyOwnerLock(target, locked);
+        }
+        return;
+      }
+      this.countdownSeconds.set(next);
+    }, 1000);
+  }
+
+  cancelOwnerCountdown(): void {
+    this.clearCountdownTimer();
+    this.countdownShopId.set(null);
+    this.countdownSeconds.set(0);
+    this.countdownTargetLocked.set(null);
+    this.pendingCountdownShop = null;
+  }
+
+  private applyOwnerLock(shop: Shop, nextLocked: boolean): void {
     this.toggleBusyId.set(shop.id);
     this.toggleError.set('');
     this.shopLock.setManualLock(shop, nextLocked).subscribe({
@@ -379,13 +460,48 @@ export class ShopsPage implements OnInit {
         if (this.isActive(updated)) {
           this.currentShop.setShop(updated);
         }
+        this.startCooldown(shop.id);
       },
       error: (err: unknown) => {
-        this.patchShop(previous);
         this.toggleBusyId.set(null);
         this.toggleError.set(this.readError(err, 'Could not update shop access.'));
       },
     });
+  }
+
+  private startCooldown(shopId: string): void {
+    const until = Date.now() + OWNER_TOGGLE_COOLDOWN_MS;
+    this.cooldownUntil.update((map) => ({ ...map, [shopId]: until }));
+    this.ensureCooldownTicker();
+  }
+
+  private ensureCooldownTicker(): void {
+    if (this.cooldownTimer) {
+      return;
+    }
+    this.cooldownTimer = setInterval(() => {
+      this.cooldownTick.update((n) => n + 1);
+      const now = Date.now();
+      const map = this.cooldownUntil();
+      const stillActive = Object.values(map).some((until) => until > now);
+      if (!stillActive) {
+        this.clearCooldownTimer();
+      }
+    }, 500);
+  }
+
+  private clearCountdownTimer(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+  }
+
+  private clearCooldownTimer(): void {
+    if (this.cooldownTimer) {
+      clearInterval(this.cooldownTimer);
+      this.cooldownTimer = null;
+    }
   }
 
   openCityPicker(): void {

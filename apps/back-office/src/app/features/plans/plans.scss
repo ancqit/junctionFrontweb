@@ -60,8 +60,51 @@ h3 { margin: 8px 0; font: 500 26px Georgia, serif; }
   margin-bottom: 22px; padding: 22px; border-radius: 16px; border: 1px solid #dedbd1; background: white;
 }
 .status[data-type='free_trial'] { border-color: #d5bd6b; background: #fbf8ef; }
-.status[data-status='expired'] { border-color: #e2c4c4; background: #fbf4f4; }
+.status[data-status='expired'],
+.status[data-status='deactivated'] { border-color: #e2c4c4; background: #fbf4f4; }
+.status[data-status='grace_period'] { border-color: #e2d6b8; background: #fbf8ef; }
 .status p:last-child { margin: 0; color: #667069; font-size: 14px; }
+.status-badge {
+  display: inline-block; margin: 0 0 8px; padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  background: #eef3ef; color: #1a6541;
+}
+.status-badge[data-status='grace_period'] { background: #f5ecd4; color: #7a5a12; }
+.status-badge[data-status='expired'],
+.status-badge[data-status='deactivated'] { background: #f8ecec; color: #7a2a2a; }
+.queue-card {
+  margin-bottom: 22px; padding: 22px; border-radius: 16px;
+  border: 1px solid #dedbd1; background: white;
+}
+.queue-head h2 { margin: 8px 0 6px; font: 500 24px Georgia, serif; }
+.queue-head .sub { margin: 0 0 16px; color: #667069; font-size: 13px; max-width: 36rem; }
+.queue-empty { margin: 0; }
+.fifo-queue {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+}
+.fifo-queue li {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  padding: 12px 14px; border-radius: 12px; border: 1px solid #e5e7e3; background: #f8f9f7;
+}
+.fifo-queue li.is-front {
+  border-color: #1a6541; background: #f4faf6;
+}
+.queue-pos {
+  width: 28px; height: 28px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 12px; font-weight: 800;
+  background: #e8ebe6; color: #556057;
+}
+.fifo-queue li.is-front .queue-pos { background: #1a6541; color: #fff; }
+.queue-body { display: grid; gap: 4px; min-width: 0; }
+.queue-body strong { font-size: 14px; color: #1a281f; }
+.queue-meta {
+  display: flex; flex-wrap: wrap; gap: 8px 12px; color: #667069; font-size: 12px;
+}
+.queue-status { font-weight: 700; color: #1a6541; }
+.queue-front-tag {
+  flex-shrink: 0; padding: 4px 8px; border-radius: 999px;
+  background: #dff3e8; color: #1a6541; font-size: 11px; font-weight: 800;
+}
 .plan-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
 }

@@ -169,11 +169,27 @@
                   type="checkbox"
                   [checked]="isOwnerMode(shop)"
                   [disabled]="lockToggleDisabled(shop)"
-                  (change)="toggleOwnerMode(shop)"
+                  (click)="onOwnerToggleClick($event, shop)"
                 />
                 <span class="slider"></span>
               </label>
             </div>
+            @if (countdownShopId() === shop.id) {
+              <div class="lock-countdown" role="status">
+                <span class="countdown-pill">{{ countdownSeconds() }}</span>
+                <span>{{ 'shops.toggleCountdown' | t: { n: countdownSeconds() } }}</span>
+                <button type="button" class="ghost compact cancel-countdown" (click)="cancelOwnerCountdown()">
+                  {{ 'common.cancel' | t }}
+                </button>
+              </div>
+            } @else if (isInCooldown(shop.id)) {
+              <p class="cooldown-hint" role="status">
+                {{ 'shops.toggleCooldown' | t }}
+                @if (cooldownSecondsLeft(shop.id) > 0) {
+                  ({{ cooldownSecondsLeft(shop.id) }}s)
+                }
+              </p>
+            }
           </div>
           @if (shop.created_at) {
             <p class="created">Created {{ shop.created_at | date: 'mediumDate' }}</p>
