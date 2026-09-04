@@ -103,13 +103,14 @@ export class ShopLockService {
     locked: boolean,
     reason: ShopLockReason | null,
   ): Observable<Shop> {
-    const name = shop.name?.trim();
-    if (!shop.id || !name) {
+    if (!shop.id) {
       return of(shop);
     }
     // Optimistic local flag; rolled back by caller on error.
     this.currentShop.writeShopLocked(shop.id, locked);
-    return this.shopsApi.updateLockStatus({ name, is_locked: locked, lock_reason: reason }).pipe(
+    const body = { is_locked: locked, lock_reason: reason };
+    // Prefer id — name-based lookup can fail when multiple shops share a name.
+    return this.shopsApi.updateLockStatusById(shop.id, body).pipe(
       tap((updated) => {
         const merged = this.applyLockFromRecord(updated);
         this.currentShop.setShop(merged);

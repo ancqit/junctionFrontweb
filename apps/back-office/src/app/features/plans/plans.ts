@@ -32,15 +32,15 @@ import {
 export type PlansViewMode = 'plans' | 'payments';
 
 /** User-facing add-on bucket sizes (backend packs are 40 slots @ pack price). */
-export type BucketAddonSlots = 40 | 80 | 100;
+export type BucketAddonSlots = 40 | 80 | 120;
 
-const BUCKET_ADDON_OPTIONS: readonly BucketAddonSlots[] = [40, 80, 100];
+const BUCKET_ADDON_OPTIONS: readonly BucketAddonSlots[] = [40, 80, 120];
 
-/** Map UI size → packs billed (100 request = 3 packs / 120 slots). */
+/** Map UI size → packs billed (120 slots = 3 packs). */
 const BUCKET_ADDON_MAP: Record<BucketAddonSlots, { packs: number; billedSlots: number }> = {
   40: { packs: 1, billedSlots: 40 },
   80: { packs: 2, billedSlots: 80 },
-  100: { packs: 3, billedSlots: 120 },
+  120: { packs: 3, billedSlots: 120 },
 };
 
 /** Visual FIFO queue row for waitlist / payment history. */
@@ -150,22 +150,13 @@ export class PlansPage implements OnInit {
     const rows = BUCKET_ADDON_OPTIONS.map((slots) => {
       const meta = BUCKET_ADDON_MAP[slots];
       const amount = meta.packs * price;
-      const label =
-        slots === 100
-          ? this.i18n.t('plans.prep.bucket100Label', {
-              request: 100,
-              packs: meta.packs,
-              billed: meta.billedSlots,
-              amount: `₹${amount}`,
-            })
-          : this.i18n.t('plans.prep.bucketLabel', {
-              slots,
-              packs: meta.packs,
-              amount: `₹${amount}`,
-            });
       return {
         value: String(slots),
-        label,
+        label: this.i18n.t('plans.prep.bucketLabel', {
+          slots,
+          packs: meta.packs,
+          amount: `₹${amount}`,
+        }),
         hint: this.i18n.t('plans.prep.bucketHint', {
           packs: meta.packs,
           packSize,
@@ -226,13 +217,6 @@ export class PlansPage implements OnInit {
       return this.i18n.t('plans.pack.chipHint');
     }
     const meta = BUCKET_ADDON_MAP[slots];
-    if (slots === 100) {
-      return this.i18n.t('plans.pack.chip100', {
-        request: 100,
-        packs: meta.packs,
-        billed: meta.billedSlots,
-      });
-    }
     return this.i18n.t('plans.pack.chipSelected', {
       slots,
       packs: meta.packs,
@@ -343,7 +327,7 @@ export class PlansPage implements OnInit {
 
   onPrepBucketChange(value: string): void {
     const parsed = Number(value);
-    if (parsed === 40 || parsed === 80 || parsed === 100) {
+    if (parsed === 40 || parsed === 80 || parsed === 120) {
       this.selectedBucketSlots.set(parsed);
       return;
     }
@@ -447,16 +431,9 @@ export class PlansPage implements OnInit {
 
           this.pendingPayment.set(pending);
 
-          const bucketLabel =
-            slots === 100
-              ? this.i18n.t('plans.prep.bucket100Short', {
-                  request: 100,
-                  packs,
-                  billed: billedSlots,
-                })
-              : slots
-                ? this.i18n.t('plans.prep.bucketShort', { slots, packs })
-                : this.i18n.t('plans.prep.bucketNone');
+          const bucketLabel = slots
+            ? this.i18n.t('plans.prep.bucketShort', { slots, packs })
+            : this.i18n.t('plans.prep.bucketNone');
 
           this.prepSummary.set({
             planName: willPlan && plan ? plan.name : this.i18n.t('plans.prep.planSkipped'),
@@ -625,7 +602,7 @@ export class PlansPage implements OnInit {
       });
   }
 
-  /** Buy selected product packs (40/80/100 → 1/2/3 packs) via product-bucket payment. */
+  /** Buy selected product packs (40/80/120 → 1/2/3 packs) via product-bucket payment. */
   purchaseProductPack(): void {
     if (!this.shop()?.id) {
       this.error.set('Select a shop before buying a product pack.');
@@ -659,17 +636,10 @@ export class PlansPage implements OnInit {
             this.prepSummary.set({
               planName: this.i18n.t('plans.prep.planSkipped'),
               planPrice: 0,
-              bucketLabel:
-                slots === 100
-                  ? this.i18n.t('plans.prep.bucket100Short', {
-                      request: 100,
-                      packs,
-                      billed,
-                    })
-                  : this.i18n.t('plans.prep.bucketShort', {
-                      slots: slots ?? billed,
-                      packs,
-                    }),
+              bucketLabel: this.i18n.t('plans.prep.bucketShort', {
+                slots: slots ?? billed,
+                packs,
+              }),
               bucketPrice: packs * this.packPrice(),
               packs,
               billedSlots: billed,

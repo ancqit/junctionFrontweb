@@ -70,6 +70,7 @@
           [placeholder]="'products.chooseCategory' | t"
           [searchable]="true"
           [searchPlaceholder]="'products.searchCategories' | t"
+          [allowNormalize]="true"
         />
       </label>
       <label>{{ 'products.price' | t }}<input formControlName="price" type="number" min="0" step="0.01" /></label>

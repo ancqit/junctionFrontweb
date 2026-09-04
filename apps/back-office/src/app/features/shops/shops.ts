@@ -21,6 +21,7 @@ import {
   LocationPickerModalComponent,
   LocationPickerOption,
 } from '../../shared/location-picker-modal/location-picker-modal';
+import { normalizeSelectValue } from '../../shared/normalize-select-value';
 
 const LOCALITY_GEOCODE_ERROR =
   'Could not verify that locality. Enter a real or prominent locality name.';
@@ -118,13 +119,17 @@ export class ShopsPage implements OnInit, OnDestroy {
         if (!rows.length) {
           return;
         }
-        this.shopTypeSelectOptions.set(
-          rows.map((row) => ({
-            value: row.value,
-            label: row.label,
-            hint: row.description,
-          })),
-        );
+        const options = rows.map((row) => ({
+          value: row.value,
+          label: row.label,
+          hint: row.description,
+        }));
+        this.shopTypeSelectOptions.set(options);
+        const current = this.form.controls.shop_type.value;
+        const normalized = normalizeSelectValue(current, options);
+        if (normalized && normalized !== current) {
+          this.form.controls.shop_type.setValue(normalized);
+        }
       },
     });
     this.locationsApi.cities().subscribe({

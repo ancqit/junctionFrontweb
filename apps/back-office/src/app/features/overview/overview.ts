@@ -28,6 +28,7 @@ import {
   LocationPickerModalComponent,
   LocationPickerOption,
 } from '../../shared/location-picker-modal/location-picker-modal';
+import { normalizeSelectValue } from '../../shared/normalize-select-value';
 
 const RECENT_ORDERS_LIMIT = 8;
 const LOCALITY_GEOCODE_ERROR =
@@ -172,13 +173,17 @@ export class OverviewPage implements OnInit {
         if (!rows.length) {
           return;
         }
-        this.shopTypeSelectOptions.set(
-          rows.map((row) => ({
-            value: row.value,
-            label: row.label,
-            hint: row.description,
-          })),
-        );
+        const options = rows.map((row) => ({
+          value: row.value,
+          label: row.label,
+          hint: row.description,
+        }));
+        this.shopTypeSelectOptions.set(options);
+        const current = this.shopForm.controls.shop_type.value;
+        const normalized = normalizeSelectValue(current, options);
+        if (normalized && normalized !== current) {
+          this.shopForm.controls.shop_type.setValue(normalized);
+        }
       },
     });
     this.loadShopForm();
