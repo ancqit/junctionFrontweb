@@ -13,6 +13,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  normalizeSelectValue,
+  resolveSelectLabel,
+} from '../normalize-select-value';
 
 export interface InlineSelectOption {
   value: string;
@@ -39,15 +43,37 @@ export class InlineSelectComponent implements ControlValueAccessor, AfterViewChe
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
   private focusSearchPending = false;
 
-  @Input() options: InlineSelectOption[] = [];
+  /** Reactive options — setter so displayLabel recomputes when async catalogs load. */
+  private readonly optionsSignal = signal<InlineSelectOption[]>([]);
+
+  @Input()
+  set options(value: InlineSelectOption[] | null | undefined) {
+    this.optionsSignal.set(value ?? []);
+    this.maybeNormalizeSelected();
+  }
+  get options(): InlineSelectOption[] {
+    return this.optionsSignal();
+  }
+
   @Input() placeholder = 'Select…';
   /** Searchable dropdown (category filters, long lists). */
   @Input() searchable = false;
   @Input() searchPlaceholder = 'Search…';
   @Input() allowCustom = false;
+  /**
+   * When true, match the current control value against option value OR label
+   * (case-insensitive) so async-loaded options show the proper label.
+   */
+  @Input() resolveFromOptions = true;
+  /**
+   * When true and resolveFromOptions is on, rewrite a label-shaped stored value
+   * to the matching option.value (emits via CVA onChange once).
+   */
+  @Input() allowNormalize = false;
   @Input() set value(v: string | null | undefined) {
     if (!this.usingFormControl) {
       this.selectedValue.set(v ?? '');
+      this.maybeNormalizeSelected();
     }
   }
   @Output() readonly valueChange = new EventEmitter<string>();
@@ -59,15 +85,29 @@ export class InlineSelectComponent implements ControlValueAccessor, AfterViewChe
 
   readonly filteredOptions = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
+    const rows = this.optionsSignal();
     if (!query) {
-      return this.options;
+      return rows;
     }
-    return this.options.filter(
+    return rows.filter(
       (row) =>
         row.label.toLowerCase().includes(query) ||
         row.value.toLowerCase().includes(query) ||
         (row.hint ?? '').toLowerCase().includes(query),
     );
+  });
+
+  /** Label shown on the closed trigger — reacts to options + selected value. */
+  readonly displayLabel = computed(() => {
+    const current = this.selectedValue();
+    if (!current) {
+      return this.placeholder;
+    }
+    if (!this.resolveFromOptions) {
+      const exact = this.optionsSignal().find((row) => row.value === current);
+      return exact?.label ?? current;
+    }
+    return resolveSelectLabel(current, this.optionsSignal(), current);
   });
 
   private usingFormControl = false;
@@ -105,6 +145,7 @@ export class InlineSelectComponent implements ControlValueAccessor, AfterViewChe
   writeValue(value: string | null): void {
     this.usingFormControl = true;
     this.selectedValue.set(value ?? '');
+    this.maybeNormalizeSelected();
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -120,15 +161,6 @@ export class InlineSelectComponent implements ControlValueAccessor, AfterViewChe
     if (isDisabled) {
       this.close();
     }
-  }
-
-  displayLabel(): string {
-    const current = this.selectedValue();
-    if (!current) {
-      return this.placeholder;
-    }
-    const match = this.options.find((row) => row.value === current);
-    return match?.label ?? current;
   }
 
   toggle(): void {
@@ -184,6 +216,33 @@ export class InlineSelectComponent implements ControlValueAccessor, AfterViewChe
   }
 
   isSelected(value: string): boolean {
-    return this.selectedValue() === value;
+    const current = this.selectedValue();
+    if (current === value) {
+      return true;
+    }
+    if (!this.resolveFromOptions) {
+      return false;
+    }
+    return normalizeSelectValue(current, this.optionsSignal()) === value;
+  }
+
+  private maybeNormalizeSelected(): void {
+    if (!this.resolveFromOptions || !this.allowNormalize) {
+      return;
+    }
+    const current = this.selectedValue();
+    if (!current) {
+      return;
+    }
+    const normalized = normalizeSelectValue(current, this.optionsSignal());
+    if (!normalized || normalized === current) {
+      return;
+    }
+    this.selectedValue.set(normalized);
+    if (this.usingFormControl) {
+      this.onChange(normalized);
+    } else {
+      this.valueChange.emit(normalized);
+    }
   }
 }

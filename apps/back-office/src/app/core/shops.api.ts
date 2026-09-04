@@ -65,9 +65,10 @@ export interface ShopPhoneStatusUpdate {
   show_phone: boolean;
 }
 
-/** junctionBack `ShopLockStatusUpdate` — `PUT /shops/lock-status`. */
+/** junctionBack `ShopLockStatusUpdate` — `PUT /shops/lock-status`. Prefer `id`. */
 export interface ShopLockStatusUpdate {
-  name: string;
+  id?: string;
+  name?: string;
   is_locked: boolean;
   lock_reason?: 'manual' | 'plan_expired' | null;
 }
@@ -119,9 +120,17 @@ export class ShopsApi {
     return this.api.put<Shop>('/shops/phone-status', payload);
   }
 
-  /** Persist owner vs viewer (partial lock) for a shop. */
+  /** Persist owner vs viewer (partial lock) for a shop. Prefer `id` over `name`. */
   updateLockStatus(payload: ShopLockStatusUpdate): Observable<Shop> {
     return this.api.put<Shop>('/shops/lock-status', payload);
+  }
+
+  /** Id-first lock update — avoids ambiguous name matches. */
+  updateLockStatusById(
+    shopId: string,
+    payload: Pick<ShopLockStatusUpdate, 'is_locked' | 'lock_reason'>,
+  ): Observable<Shop> {
+    return this.updateLockStatus({ id: shopId, ...payload });
   }
 
   /** `GET /shops/{shop_id}/plan` — billing/limits are per shop. */
